@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>经典扫雷游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+                <i class="fas fa-arrow-left"></i> 返回游戏大厅
+            </a>
+            <div class="title-area">
+                <h1><i class="fas fa-bomb" aria-hidden="true"></i> 经典扫雷</h1>
+                <p class="subtitle">测试你的逻辑和记忆力！</p>
+            </div>
+        </header>
+
+        <div class="game-controls">
+            <div class="difficulty-selector" role="radiogroup" aria-label="游戏难度选择">
+                <button class="difficulty-btn active" data-difficulty="beginner" role="radio" aria-checked="true">
+                    <i class="fas fa-seedling" aria-hidden="true"></i> 初级 (9×9)
+                </button>
+                <button class="difficulty-btn" data-difficulty="intermediate" role="radio" aria-checked="false">
+                    <i class="fas fa-tree" aria-hidden="true"></i> 中级 (16×16)
+                </button>
+                <button class="difficulty-btn" data-difficulty="expert" role="radio" aria-checked="false">
+                    <i class="fas fa-mountain" aria-hidden="true"></i> 高级 (16×30)
+                </button>
+            </div>
+
+            <div class="game-stats">
+                <div class="stat-box" aria-label="游戏时间">
+                    <div class="stat-icon"><i class="fas fa-clock" aria-hidden="true"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">时间</div>
+                        <div class="stat-value" id="timer" aria-live="polite">000</div>
+                    </div>
+                </div>
+
+                <button class="restart-btn" id="restart-btn" aria-label="重新开始游戏">
+                    <i class="fas fa-smile" id="smile-icon" aria-hidden="true"></i>
+                </button>
+
+                <div class="stat-box" aria-label="剩余地雷数量">
+                    <div class="stat-icon"><i class="fas fa-bomb" aria-hidden="true"></i></div>
+                    <div class="stat-content">
+                        <div class="stat-label">剩余地雷</div>
+                        <div class="stat-value" id="mine-count" aria-live="polite">10</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-board-container">
+            <div class="game-board" id="game-board"></div>
+        </div>
+
+        <div class="game-instructions">
+            <div class="instruction-card">
+                <i class="fas fa-mouse-pointer instruction-icon"></i>
+                <h3>左键点击</h3>
+                <p>翻开格子，查看数字或地雷</p>
+            </div>
+            <div class="instruction-card">
+                <i class="fas fa-flag instruction-icon"></i>
+                <h3>右键/长按</h3>
+                <p>标记可能的地雷位置</p>
+            </div>
+            <div class="instruction-card">
+                <i class="fas fa-expand-arrows-alt instruction-icon"></i>
+                <h3>双击数字</h3>
+                <p>快速翻开周围格子（当标记数量正确时）</p>
+            </div>
+        </div>
+
+        <div class="game-status" id="game-status" role="status" aria-live="polite">
+            <div class="status-message">游戏进行中...</div>
+        </div>
+
+        <div class="game-footer">
+            <p>经典扫雷游戏 - 纯原生 JavaScript 实现</p>
+            <p class="footer-hint">💡 提示：数字表示周围8个格子中的地雷数量</p>
+        </div>
+    </div>
+
+    <div class="mobile-touch-hint" id="touch-hint">
+        <i class="fas fa-hand-pointer"></i> 长按格子可标记旗帜
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

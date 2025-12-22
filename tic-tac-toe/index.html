@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="智能井字棋游戏，挑战不同难度的AI对手。支持键盘导航、屏幕阅读器和触摸设备。">
+    <meta name="keywords" content="井字棋,TicTacToe,AI游戏,可访问性游戏,HTML5游戏">
+    <meta name="author" content="智能井字棋游戏开发者">
+    <title>智能井字棋 - X vs AI | 可访问性优化的井字棋游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">跳转到主要内容</a>
+
+    <div class="container" role="main" aria-label="井字棋游戏">
+        <header class="header" role="banner">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回游戏大厅
+            </a>
+            <h1><i class="fas fa-gamepad" aria-hidden="true"></i> 智能井字棋</h1>
+            <p class="subtitle">挑战不同难度的AI对手</p>
+        </header>
+
+        <main class="game-container" id="main-content" aria-label="游戏区域">
+            <section class="game-sidebar" aria-label="游戏信息和历史">
+                <div class="game-info" role="region" aria-label="游戏信息面板">
+                    <div class="player-turn" aria-live="polite" aria-atomic="true">
+                        <div class="player-icon player-x" role="img" aria-label="玩家X的图标">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </div>
+                        <div class="turn-text">
+                            <span class="turn-label">当前回合:</span>
+                            <span id="currentPlayer" class="player-name" role="status" aria-live="polite">玩家 X</span>
+                        </div>
+                    </div>
+
+                    <div class="game-status" role="region" aria-label="游戏状态">
+                        <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 游戏状态</h3>
+                        <div id="statusText" class="status-text" role="alert" aria-live="assertive">游戏进行中</div>
+                    </div>
+
+                    <div class="stats" role="region" aria-label="游戏统计">
+                        <h3><i class="fas fa-chart-bar" aria-hidden="true"></i> 统计</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">玩家胜利:</span>
+                                <span id="playerWins" class="stat-value" role="status" aria-live="polite">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">AI胜利:</span>
+                                <span id="aiWins" class="stat-value" role="status" aria-live="polite">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">平局:</span>
+                                <span id="draws" class="stat-value" role="status" aria-live="polite">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">总局数:</span>
+                                <span id="totalGames" class="stat-value" role="status" aria-live="polite">0</span>
+                            </div>
+                        </div>
+                        <div class="stats-controls">
+                            <button id="resetStatsBtn" class="control-btn small" aria-label="重置游戏统计">
+                                <i class="fas fa-redo" aria-hidden="true"></i> 重置统计
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-section" role="region" aria-label="走棋历史">
+                    <h3><i class="fas fa-history" aria-hidden="true"></i> 走棋历史</h3>
+                    <div id="historyList" class="history-list" role="log" aria-live="polite">
+                        <div class="history-empty">尚未开始游戏</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="game-board-section" aria-label="游戏棋盘区域">
+                <div class="difficulty-selector" role="group" aria-labelledby="difficulty-heading">
+                    <h3 id="difficulty-heading"><i class="fas fa-robot" aria-hidden="true"></i> AI难度选择</h3>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn active" data-difficulty="easy" aria-pressed="true">
+                            <i class="fas fa-baby" aria-hidden="true"></i> 简单 (随机)
+                        </button>
+                        <button class="difficulty-btn" data-difficulty="medium" aria-pressed="false">
+                            <i class="fas fa-user-graduate" aria-hidden="true"></i> 中等 (策略)
+                        </button>
+                        <button class="difficulty-btn" data-difficulty="hard" aria-pressed="false">
+                            <i class="fas fa-brain" aria-hidden="true"></i> 困难 (Minimax)
+                        </button>
+                    </div>
+                    <div class="difficulty-description">
+                        <p id="difficultyDesc" role="status" aria-live="polite">简单模式：AI随机走棋，适合初学者。</p>
+                    </div>
+                </div>
+
+                <div class="game-board-container" role="region" aria-label="游戏棋盘">
+                    <div class="board" id="board" role="grid" aria-label="井字棋棋盘" aria-rowcount="3" aria-colcount="3">
+                        <!-- 棋盘格子将通过JavaScript动态生成，每个格子都有role="gridcell" -->
+                    </div>
+
+                    <div class="board-controls" role="toolbar" aria-label="棋盘控制工具栏">
+                        <button id="newGameBtn" class="control-btn primary" aria-label="开始新游戏">
+                            <i class="fas fa-play-circle" aria-hidden="true"></i> 新游戏
+                        </button>
+                        <button id="undoBtn" class="control-btn secondary" aria-label="悔棋（撤销上一步）">
+                            <i class="fas fa-undo" aria-hidden="true"></i> 悔棋
+                        </button>
+                        <button id="hintBtn" class="control-btn secondary" aria-label="显示提示（建议下一步）">
+                            <i class="fas fa-lightbulb" aria-hidden="true"></i> 提示
+                        </button>
+                        <button id="soundToggle" class="control-btn secondary sound-on" aria-label="音效开关（当前开启）" aria-pressed="true">
+                            <i class="fas fa-volume-up" aria-hidden="true"></i> 音效
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="game-tutorial" aria-label="游戏教程和说明">
+                <h3><i class="fas fa-graduation-cap" aria-hidden="true"></i> 游戏说明</h3>
+                <div class="tutorial-content" role="region" aria-label="游戏步骤说明">
+                    <div class="tutorial-step">
+                        <div class="step-number" aria-hidden="true">1</div>
+                        <div class="step-text">选择AI难度级别（简单、中等、困难）</div>
+                    </div>
+                    <div class="tutorial-step">
+                        <div class="step-number" aria-hidden="true">2</div>
+                        <div class="step-text">点击棋盘上的格子放置"X"（玩家）</div>
+                    </div>
+                    <div class="tutorial-step">
+                        <div class="step-number" aria-hidden="true">3</div>
+                        <div class="step-text">AI会自动放置"O"作为回应</div>
+                    </div>
+                    <div class="tutorial-step">
+                        <div class="step-number" aria-hidden="true">4</div>
+                        <div class="step-text">率先将三个相同标记连成一线（横、竖、斜）者获胜</div>
+                    </div>
+                    <div class="tutorial-step">
+                        <div class="step-number" aria-hidden="true">5</div>
+                        <div class="step-text">棋盘填满而无获胜者时为平局</div>
+                    </div>
+                </div>
+
+                <div class="ai-info" role="region" aria-label="AI算法说明">
+                    <h4><i class="fas fa-cogs" aria-hidden="true"></i> AI算法说明</h4>
+                    <ul role="list">
+                        <li role="listitem"><strong>简单</strong>: 随机选择一个空位，适合初学者</li>
+                        <li role="listitem"><strong>中等</strong>: 基于基本策略，会尝试阻挡和进攻</li>
+                        <li role="listitem"><strong>困难</strong>: 使用Minimax算法，不可战胜（最优策略）</li>
+                    </ul>
+                </div>
+            </aside>
+        </main>
+
+        <footer class="footer" role="contentinfo">
+            <p>智能井字棋游戏 &copy; 2025 | 使用原生JavaScript、HTML和CSS开发</p>
+            <p class="footer-links">
+                <span>快捷键：空格键 - 新游戏 | R - 悔棋 | H - 提示</span>
+            </p>
+        </footer>
+    </div>
+
+    <!-- 音频元素 -->
+    <audio id="clickSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ" type="audio/wav">
+    </audio>
+
+    <audio id="winSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ" type="audio/wav">
+    </audio>
+
+    <audio id="loseSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ" type="audio/wav">
+    </audio>
+
+    <script src="game.js"></script>
+</body>
+</html>

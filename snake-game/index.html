@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回游戏大厅
+            </a>
+            <h1><i class="fas fa-snake" aria-hidden="true"></i> 贪吃蛇游戏</h1>
+            <div class="game-info" role="status" aria-live="polite">
+                <div class="info-box">
+                    <div class="info-label">分数</div>
+                    <div id="score" class="info-value" aria-live="assertive">0</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">长度</div>
+                    <div id="length" class="info-value">1</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">最高分</div>
+                    <div id="high-score" class="info-value">0</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">速度</div>
+                    <div id="speed" class="info-value">1</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="game-main">
+            <div class="game-board-container">
+                <canvas id="game-canvas"></canvas>
+                <div class="game-overlay" id="start-screen">
+                    <div class="overlay-content">
+                        <h2><i class="fas fa-play-circle"></i> 贪吃蛇游戏</h2>
+                        <p>用方向键控制蛇的移动</p>
+                        <p>吃到彩色食物得分并长大</p>
+                        <p>撞到墙壁或自己身体游戏结束</p>
+                        <div class="controls-info">
+                            <div class="control-item">
+                                <span class="key"><i class="fas fa-arrow-up"></i></span>
+                                <span>上</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key"><i class="fas fa-arrow-down"></i></span>
+                                <span>下</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key"><i class="fas fa-arrow-left"></i></span>
+                                <span>左</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key"><i class="fas fa-arrow-right"></i></span>
+                                <span>右</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key">空格</span>
+                                <span>暂停</span>
+                            </div>
+                        </div>
+                        <button id="start-btn" class="btn btn-primary" aria-label="开始游戏">
+                            <i class="fas fa-play" aria-hidden="true"></i> 开始游戏
+                        </button>
+                    </div>
+                </div>
+                <div class="game-overlay" id="pause-screen" style="display: none;">
+                    <div class="overlay-content">
+                        <h2><i class="fas fa-pause" aria-hidden="true"></i> 游戏暂停</h2>
+                        <button id="resume-btn" class="btn btn-primary" aria-label="继续游戏">
+                            <i class="fas fa-play" aria-hidden="true"></i> 继续游戏
+                        </button>
+                        <button id="restart-pause-btn" class="btn btn-secondary" aria-label="重新开始游戏">
+                            <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                        </button>
+                    </div>
+                </div>
+                <div class="game-overlay" id="game-over-screen" style="display: none;">
+                    <div class="overlay-content">
+                        <h2><i class="fas fa-skull-crossbones" aria-hidden="true"></i> 游戏结束</h2>
+                        <div class="final-score">
+                            <p>最终分数: <span id="final-score">0</span></p>
+                            <p>蛇的长度: <span id="final-length">1</span></p>
+                        </div>
+                        <button id="restart-btn" class="btn btn-primary" aria-label="重新开始游戏">
+                            <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <div class="control-buttons">
+                    <button id="pause-btn" class="btn btn-control" aria-label="暂停游戏">
+                        <i class="fas fa-pause" aria-hidden="true"></i> 暂停
+                    </button>
+                    <button id="restart-game-btn" class="btn btn-control" aria-label="重新开始游戏">
+                        <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                    </button>
+                    <button id="sound-toggle" class="btn btn-control" aria-label="切换声音">
+                        <i class="fas fa-volume-up" aria-hidden="true"></i> 声音
+                    </button>
+                </div>
+
+                <div class="mobile-controls">
+                    <div class="d-pad">
+                        <button id="up-btn" class="direction-btn" aria-label="向上移动">
+                            <i class="fas fa-arrow-up" aria-hidden="true"></i>
+                        </button>
+                        <div class="d-pad-row">
+                            <button id="left-btn" class="direction-btn" aria-label="向左移动">
+                                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                            </button>
+                            <button id="down-btn" class="direction-btn" aria-label="向下移动">
+                                <i class="fas fa-arrow-down" aria-hidden="true"></i>
+                            </button>
+                            <button id="right-btn" class="direction-btn" aria-label="向右移动">
+                                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-instructions">
+                <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 游戏说明</h3>
+                <div class="food-types">
+                    <div class="food-item">
+                        <div class="food-sample red-food" aria-hidden="true"></div>
+                        <span>普通食物 +10分</span>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-sample gold-food" aria-hidden="true"></div>
+                        <span>黄金食物 +30分</span>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-sample green-food" aria-hidden="true"></div>
+                        <span>快速食物 +20分，速度+1</span>
+                    </div>
+                    <div class="food-item">
+                        <div class="food-sample blue-food" aria-hidden="true"></div>
+                        <span>神秘食物 +随机分数</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="game-footer">
+            <p>使用方向键控制蛇的移动 | 空格键暂停/继续 | 祝您游戏愉快！</p>
+            <p class="author">原生JavaScript贪吃蛇游戏 © 2023</p>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

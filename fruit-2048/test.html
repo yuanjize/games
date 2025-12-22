@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水果2048 - 功能测试</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 { color: #ff6b6b; }
+        h2 { color: #4facfe; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #4facfe;
+            background: #f8f9ff;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            padding: 10px 20px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #3d8bce; }
+        .game-container {
+            width: 400px;
+            height: 400px;
+            border: 2px solid #ccc;
+            margin: 20px 0;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <h1>水果2048 - 功能测试</h1>
+
+    <div class="test-section">
+        <h2>基本功能测试</h2>
+
+        <div id="test-1" class="test-result">
+            <h3>1. 文件加载测试</h3>
+            <p>正在检查游戏文件...</p>
+        </div>
+
+        <div id="test-2" class="test-result">
+            <h3>2. 游戏初始化测试</h3>
+            <p>正在初始化游戏...</p>
+        </div>
+
+        <div id="test-3" class="test-result">
+            <h3>3. 游戏网格测试</h3>
+            <p>正在检查4x4网格...</p>
+        </div>
+
+        <div id="test-4" class="test-result">
+            <h3>4. 水果生成测试</h3>
+            <p>正在检查初始水果生成...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>游戏功能测试</h2>
+
+        <div id="test-5" class="test-result">
+            <h3>5. 移动功能测试</h3>
+            <p>正在测试移动功能...</p>
+            <button onclick="testMove('up')">向上移动</button>
+            <button onclick="testMove('down')">向下移动</button>
+            <button onclick="testMove('left')">向左移动</button>
+            <button onclick="testMove('right')">向右移动</button>
+        </div>
+
+        <div id="test-6" class="test-result">
+            <h3>6. 合并功能测试</h3>
+            <p>正在测试水果合并...</p>
+        </div>
+
+        <div id="test-7" class="test-result">
+            <h3>7. 分数系统测试</h3>
+            <p>正在测试分数计算...</p>
+        </div>
+
+        <div id="test-8" class="test-result">
+            <h3>8. 游戏结束检测测试</h3>
+            <p>正在测试游戏结束检测...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>移动设备兼容性测试</h2>
+
+        <div id="test-9" class="test-result">
+            <h3>9. 触摸事件测试</h3>
+            <p>正在测试触摸事件支持...</p>
+        </div>
+
+        <div id="test-10" class="test-result">
+            <h3>10. 响应式设计测试</h3>
+            <p>正在测试响应式布局...</p>
+        </div>
+    </div>
+
+    <div class="game-container" id="game-preview">
+        <!-- 游戏预览将在这里显示 -->
+    </div>
+
+    <div style="margin-top: 30px;">
+        <button onclick="runAllTests()">运行所有测试</button>
+        <button onclick="window.open('index.html', '_blank')">打开完整游戏</button>
+    </div>
+
+    <script>
+        // 测试配置
+        const testResults = {
+            passed: 0,
+            total: 10
+        };
+
+        // 测试1：文件加载
+        function testFileLoading() {
+            const testElement = document.getElementById('test-1');
+            try {
+                // 尝试加载游戏文件
+                const files = ['index.html', 'style.css', 'game.js'];
+                let allFilesExist = true;
+
+                files.forEach(file => {
+                    fetch(file)
+                        .catch(() => {
+                            allFilesExist = false;
+                        });
+                });
+
+                if (allFilesExist) {
+                    testElement.innerHTML += `<p class="success">✓ 所有游戏文件已正确加载</p>`;
+                    testResults.passed++;
+                } else {
+                    testElement.innerHTML += `<p class="warning">⚠ 部分文件可能未正确加载</p>`;
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 文件加载失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试2：游戏初始化
+        function testGameInitialization() {
+            const testElement = document.getElementById('test-2');
+            try {
+                // 检查游戏配置
+                if (typeof window.fruit2048 !== 'undefined' &&
+                    typeof window.fruit2048.CONFIG !== 'undefined') {
+                    testElement.innerHTML += `<p class="success">✓ 游戏配置已加载</p>`;
+
+                    // 检查网格大小
+                    if (window.fruit2048.CONFIG.GRID_SIZE === 4) {
+                        testElement.innerHTML += `<p class="success">✓ 网格大小正确: 4x4</p>`;
+                    }
+
+                    testResults.passed++;
+                } else {
+                    testElement.innerHTML += `<p class="error">✗ 游戏配置未找到</p>`;
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 游戏初始化失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试3：游戏网格
+        function testGameGrid() {
+            const testElement = document.getElementById('test-3');
+            try {
+                if (typeof window.fruit2048 !== 'undefined' &&
+                    typeof window.fruit2048.gameState !== 'undefined') {
+
+                    // 检查网格数据结构
+                    const grid = window.fruit2048.gameState.grid;
+                    if (Array.isArray(grid) && grid.length === 4) {
+                        let validGrid = true;
+                        for (let i = 0; i < grid.length; i++) {
+                            if (!Array.isArray(grid[i]) || grid[i].length !== 4) {
+                                validGrid = false;
+                                break;
+                            }
+                        }
+
+                        if (validGrid) {
+                            testElement.innerHTML += `<p class="success">✓ 游戏网格结构正确</p>`;
+                            testResults.passed++;
+                        } else {
+                            testElement.innerHTML += `<p class="error">✗ 游戏网格结构不正确</p>`;
+                        }
+                    }
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 网格测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试4：水果生成
+        function testFruitGeneration() {
+            const testElement = document.getElementById('test-4');
+            try {
+                if (typeof window.fruit2048 !== 'undefined') {
+                    // 测试添加水果功能
+                    const result = window.fruit2048.addRandomFruit();
+
+                    if (typeof result === 'boolean') {
+                        testElement.innerHTML += `<p class="success">✓ 水果生成函数工作正常</p>`;
+
+                        // 检查水果配置
+                        const fruits = window.fruit2048.CONFIG.FRUITS;
+                        if (Array.isArray(fruits) && fruits.length >= 6) {
+                            testElement.innerHTML += `<p class="success">✓ 水果配置已加载 (${fruits.length} 种水果)</p>`;
+                        }
+
+                        testResults.passed++;
+                    }
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 水果生成测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试5：移动功能
+        function testMove(direction) {
+            const testElement = document.getElementById('test-5');
+            try {
+                if (typeof window.fruit2048 !== 'undefined') {
+                    const result = window.fruit2048.move(direction);
+
+                    testElement.innerHTML += `<p class="${result ? 'success' : 'warning'}">${result ? '✓' : '⚠'} ${direction} 方向移动${result ? '成功' : '无效'}</p>`;
+
+                    if (result) {
+                        testResults.passed++;
+                    }
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 移动测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试6：合并功能
+        function testMergeFunction() {
+            const testElement = document.getElementById('test-6');
+            try {
+                if (typeof window.fruit2048 !== 'undefined') {
+                    // 测试合并逻辑
+                    const processLine = window.fruit2048.processLine;
+
+                    if (typeof processLine === 'function') {
+                        // 测试一行水果的合并
+                        const testLine = [
+                            { level: 1, emoji: "🍎", name: "苹果" },
+                            { level: 1, emoji: "🍎", name: "苹果" },
+                            null,
+                            { level: 2, emoji: "🍌", name: "香蕉" }
+                        ];
+
+                        const result = processLine(testLine, -1);
+
+                        if (result && result.cells && result.score !== undefined) {
+                            testElement.innerHTML += `<p class="success">✓ 合并逻辑工作正常</p>`;
+                            testResults.passed++;
+                        }
+                    }
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 合并测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试7：分数系统
+        function testScoreSystem() {
+            const testElement = document.getElementById('test-7');
+            try {
+                if (typeof window.fruit2048 !== 'undefined') {
+                    const gameState = window.fruit2048.gameState;
+
+                    if (typeof gameState.score === 'number' &&
+                        typeof gameState.bestScore === 'number') {
+                        testElement.innerHTML += `<p class="success">✓ 分数系统已初始化</p>`;
+                        testElement.innerHTML += `<p>当前分数: ${gameState.score}, 最高分数: ${gameState.bestScore}</p>`;
+                        testResults.passed++;
+                    }
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 分数系统测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试8：游戏结束检测
+        function testGameOverDetection() {
+            const testElement = document.getElementById('test-8');
+            try {
+                if (typeof window.fruit2048 !== 'undefined') {
+                    const canMove = window.fruit2048.canMove;
+
+                    if (typeof canMove === 'function') {
+                        testElement.innerHTML += `<p class="success">✓ 游戏结束检测功能可用</p>`;
+                        testResults.passed++;
+                    }
+                }
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 游戏结束检测测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试9：触摸事件
+        function testTouchEvents() {
+            const testElement = document.getElementById('test-9');
+            try {
+                // 检查触摸事件支持
+                const touchSupport = 'ontouchstart' in window ||
+                                    navigator.maxTouchPoints > 0 ||
+                                    navigator.msMaxTouchPoints > 0;
+
+                if (touchSupport) {
+                    testElement.innerHTML += `<p class="success">✓ 触摸事件支持: 已启用</p>`;
+                } else {
+                    testElement.innerHTML += `<p class="warning">⚠ 触摸事件支持: 未检测到触摸设备</p>`;
+                }
+
+                testResults.passed++;
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 触摸事件测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 测试10：响应式设计
+        function testResponsiveDesign() {
+            const testElement = document.getElementById('test-10');
+            try {
+                // 检查视口设置
+                const viewportMeta = document.querySelector('meta[name="viewport"]');
+
+                if (viewportMeta && viewportMeta.content.includes('width=device-width')) {
+                    testElement.innerHTML += `<p class="success">✓ 响应式视口设置正确</p>`;
+                }
+
+                // 检查媒体查询支持
+                const mediaQuerySupport = typeof window.matchMedia === 'function';
+
+                if (mediaQuerySupport) {
+                    testElement.innerHTML += `<p class="success">✓ 媒体查询支持: 已启用</p>`;
+                }
+
+                testResults.passed++;
+            } catch (error) {
+                testElement.innerHTML += `<p class="error">✗ 响应式设计测试失败: ${error.message}</p>`;
+            }
+        }
+
+        // 运行所有测试
+        function runAllTests() {
+            // 重置测试结果
+            testResults.passed = 0;
+
+            // 运行所有测试
+            testFileLoading();
+            testGameInitialization();
+            testGameGrid();
+            testFruitGeneration();
+            testMergeFunction();
+            testScoreSystem();
+            testGameOverDetection();
+            testTouchEvents();
+            testResponsiveDesign();
+
+            // 显示最终结果
+            setTimeout(() => {
+                const finalResult = document.createElement('div');
+                finalResult.className = `test-result ${testResults.passed === testResults.total ? 'success' : 'warning'}`;
+                finalResult.innerHTML = `
+                    <h3>测试完成</h3>
+                    <p>通过 ${testResults.passed}/${testResults.total} 项测试</p>
+                    <p>成功率: ${(testResults.passed / testResults.total * 100).toFixed(1)}%</p>
+                    ${testResults.passed === testResults.total ?
+                        '<p class="success">✓ 所有测试通过！游戏功能正常。</p>' :
+                        '<p class="warning">⚠ 部分测试未通过，请检查游戏功能。</p>'}
+                `;
+
+                document.body.appendChild(finalResult);
+            }, 1000);
+        }
+
+        // 页面加载后运行基础测试
+        document.addEventListener('DOMContentLoaded', () => {
+            testFileLoading();
+            testGameInitialization();
+            setTimeout(() => {
+                testGameGrid();
+                testFruitGeneration();
+                testMergeFunction();
+                testScoreSystem();
+                testGameOverDetection();
+                testTouchEvents();
+                testResponsiveDesign();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

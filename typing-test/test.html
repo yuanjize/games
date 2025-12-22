@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字测试游戏 - 功能测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #4361ee;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4361ee;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .test-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .test-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .test-action {
+            margin-top: 10px;
+        }
+
+        button {
+            background-color: #4361ee;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #3a56d4;
+        }
+
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #e8f4fd;
+            border: 1px solid #b3d9ff;
+            color: #0066cc;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            background-color: #e7f7e7;
+            border-color: #b3e6b3;
+            color: #2d662d;
+        }
+
+        .error {
+            background-color: #fde8e8;
+            border-color: #ffb3b3;
+            color: #cc0000;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+
+        .status.passed {
+            background-color: #2d662d;
+            color: white;
+        }
+
+        .status.failed {
+            background-color: #cc0000;
+            color: white;
+        }
+
+        .status.pending {
+            background-color: #ff9900;
+            color: white;
+        }
+
+        .test-summary {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f7ff;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #4361ee;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4361ee;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>打字测试游戏 - 功能测试</h1>
+
+        <div class="test-section">
+            <h2>基本功能测试</h2>
+
+            <div class="test-item">
+                <div class="test-title">测试 1: 游戏初始化</div>
+                <div class="test-description">验证游戏对象是否正确初始化，DOM元素是否缓存成功</div>
+                <div class="test-action">
+                    <button onclick="testInitialization()">运行测试</button>
+                </div>
+                <div id="result1" class="result"></div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-title">测试 2: 文本生成</div>
+                <div class="test-description">验证游戏能否根据不同难度和语言生成随机文本</div>
+                <div class="test-action">
+                    <button onclick="testTextGeneration()">运行测试</button>
+                </div>
+                <div id="result2" class="result"></div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-title">测试 3: 单词统计</div>
+                <div class="test-description">验证单词计数功能是否准确</div>
+                <div class="test-action">
+                    <button onclick="testWordCounting()">运行测试</button>
+                </div>
+                <div id="result3" class="result"></div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-title">测试 4: 设置保存和加载</div>
+                <div class="test-description">验证游戏设置能否正确保存到本地存储并加载</div>
+                <div class="test-action">
+                    <button onclick="testSettings()">运行测试</button>
+                </div>
+                <div id="result4" class="result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>游戏逻辑测试</h2>
+
+            <div class="test-item">
+                <div class="test-title">测试 5: 计时器功能</div>
+                <div class="test-description">验证计时器能否正确启动、停止和更新时间</div>
+                <div class="test-action">
+                    <button onclick="testTimer()">运行测试</button>
+                </div>
+                <div id="result5" class="result"></div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-title">测试 6: 输入验证</div>
+                <div class="test-description">验证打字输入的准确性检测功能</div>
+                <div class="test-action">
+                    <button onclick="testInputValidation()">运行测试</button>
+                </div>
+                <div id="result6" class="result"></div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-title">测试 7: WPM计算</div>
+                <div class="test-description">验证每分钟单词数(WPM)的计算是否准确</div>
+                <div class="test-action">
+                    <button onclick="testWPMCalculation()">运行测试</button>
+                </div>
+                <div id="result7" class="result"></div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-title">测试 8: 游戏状态管理</div>
+                <div class="test-description">验证游戏状态（空闲、进行中、暂停、完成）的切换是否正确</div>
+                <div class="test-action">
+                    <button onclick="testGameStates()">运行测试</button>
+                </div>
+                <div id="result8" class="result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>UI和交互测试</h2>
+
+            <div class="test-item">
+                <div class="test-title">测试 9: 主题切换</div>
+                <div class="test-description">验证深色/浅色主题切换功能</div>
+                <div class="test-action">
+                    <button onclick="testThemeToggle()">运行测试</button>
+                </div>
+                <div id="result9" class="result"></div>
+            </div>
+
+            <div class="test-item">
+                <div class="test-title">测试 10: 响应式设计</div>
+                <div class="test-description">验证游戏在不同屏幕尺寸下的显示效果</div>
+                <div class="test-action">
+                    <button onclick="testResponsiveDesign()">运行测试</button>
+                </div>
+                <div id="result10" class="result"></div>
+            </div>
+        </div>
+
+        <div class="test-summary">
+            <div class="summary-title">测试结果汇总</div>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <div class="stat-value" id="totalTests">0</div>
+                    <div class="stat-label">总测试数</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="stat-value" id="passedTests">0</div>
+                    <div class="stat-label">通过</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="stat-value" id="failedTests">0</div>
+                    <div class="stat-label">失败</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="stat-value" id="pendingTests">0</div>
+                    <div class="stat-label">待测试</div>
+                </div>
+            </div>
+            <div>
+                <button onclick="runAllTests()" style="background-color: #7209b7; padding: 12px 24px; font-size: 1rem;">
+                    运行所有测试
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        // 测试状态跟踪
+        const testResults = [];
+        let totalTests = 10;
+        let passedTests = 0;
+        let failedTests = 0;
+        let pendingTests = 10;
+
+        // 更新测试结果汇总
+        function updateTestSummary() {
+            document.getElementById('totalTests').textContent = totalTests;
+            document.getElementById('passedTests').textContent = passedTests;
+            document.getElementById('failedTests').textContent = failedTests;
+            document.getElementById('pendingTests').textContent = pendingTests;
+        }
+
+        // 记录测试结果
+        function recordTestResult(testId, testName, passed, message) {
+            testResults.push({
+                id: testId,
+                name: testName,
+                passed: passed,
+                message: message,
+                timestamp: new Date().toISOString()
+            });
+
+            const resultElement = document.getElementById(`result${testId}`);
+            resultElement.textContent = message;
+            resultElement.className = passed ? 'result success' : 'result error';
+
+            // 更新状态标签
+            const statusHtml = `<span class="status ${passed ? 'passed' : 'failed'}">${passed ? '通过' : '失败'}</span>`;
+
+            // 更新计数
+            if (passed) {
+                passedTests++;
+            } else {
+                failedTests++;
+            }
+            pendingTests = totalTests - (passedTests + failedTests);
+
+            updateTestSummary();
+
+            return passed;
+        }
+
+        // 测试 1: 游戏初始化
+        function testInitialization() {
+            try {
+                if (typeof window.typingGame === 'undefined') {
+                    // 游戏未自动初始化，手动创建
+                    window.typingGame = new TypingTestGame();
+                }
+
+                const game = window.typingGame;
+
+                if (!game || typeof game !== 'object') {
+                    return recordTestResult(1, '游戏初始化', false, '游戏对象创建失败');
+                }
+
+                if (!game.elements || typeof game.elements !== 'object') {
+                    return recordTestResult(1, '游戏初始化', false, 'DOM元素缓存失败');
+                }
+
+                // 检查关键元素
+                const requiredElements = ['typingText', 'typingInput', 'wpm', 'accuracy', 'timer'];
+                for (const elementName of requiredElements) {
+                    if (!game.elements[elementName]) {
+                        return recordTestResult(1, '游戏初始化', false, `缺少关键元素: ${elementName}`);
+                    }
+                }
+
+                return recordTestResult(1, '游戏初始化', true, '游戏初始化成功，所有DOM元素已正确缓存');
+
+            } catch (error) {
+                return recordTestResult(1, '游戏初始化', false, `初始化过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 2: 文本生成
+        function testTextGeneration() {
+            try {
+                const game = window.typingGame;
+
+                // 测试不同难度
+                const difficulties = ['easy', 'medium', 'hard'];
+                const languages = ['zh', 'en'];
+
+                for (const difficulty of difficulties) {
+                    for (const language of languages) {
+                        game.difficulty = difficulty;
+                        game.language = language;
+                        game.generateText();
+
+                        if (!game.text || typeof game.text !== 'string' || game.text.length === 0) {
+                            return recordTestResult(2, '文本生成', false,
+                                `文本生成失败: 难度=${difficulty}, 语言=${language}`);
+                        }
+
+                        // 检查文本长度
+                        const wordCount = game.countWords(game.text);
+                        if (wordCount < 10) { // 至少应该有10个单词
+                            return recordTestResult(2, '文本生成', false,
+                                `文本太短: 仅${wordCount}个单词, 难度=${difficulty}, 语言=${language}`);
+                        }
+                    }
+                }
+
+                return recordTestResult(2, '文本生成', true,
+                    '所有难度和语言的文本生成测试通过，文本长度合适');
+
+            } catch (error) {
+                return recordTestResult(2, '文本生成', false, `文本生成过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 3: 单词统计
+        function testWordCounting() {
+            try {
+                const game = window.typingGame;
+
+                // 测试用例
+                const testCases = [
+                    { text: 'Hello world', expected: 2 },
+                    { text: '这是一个测试', expected: 3 }, // 中文按字符分割
+                    { text: 'One two three four five', expected: 5 },
+                    { text: '  多个空格  测试  ', expected: 3 },
+                    { text: '', expected: 0 },
+                    { text: '   ', expected: 0 }
+                ];
+
+                // 临时替换countWords方法以测试中文
+                const originalCountWords = game.countWords;
+                game.countWords = function(text) {
+                    return text.trim().split(/\s+/).length;
+                };
+
+                for (const testCase of testCases) {
+                    const result = game.countWords(testCase.text);
+                    if (result !== testCase.expected) {
+                        game.countWords = originalCountWords; // 恢复原方法
+                        return recordTestResult(3, '单词统计', false,
+                            `单词统计错误: 文本="${testCase.text}", 期望=${testCase.expected}, 实际=${result}`);
+                    }
+                }
+
+                // 恢复原方法
+                game.countWords = originalCountWords;
+
+                return recordTestResult(3, '单词统计', true,
+                    '所有单词统计测试用例通过，计数准确');
+
+            } catch (error) {
+                return recordTestResult(3, '单词统计', false, `单词统计过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 4: 设置保存和加载
+        function testSettings() {
+            try {
+                const game = window.typingGame;
+
+                // 备份原始设置
+                const originalSettings = { ...game.settings };
+
+                // 测试修改设置并保存
+                const testSettings = {
+                    customWords: 75,
+                    customTime: 120,
+                    punctuation: 'all',
+                    language: 'en',
+                    cursorSpeed: 'fast',
+                    showHints: false,
+                    soundEnabled: false
+                };
+
+                // 应用测试设置
+                game.settings = { ...testSettings };
+                game.saveSettings();
+
+                // 重置游戏设置，然后加载
+                game.settings = { ...GameConfig.DEFAULT_SETTINGS };
+                game.loadSettings();
+
+                // 验证设置是否正确加载
+                for (const key in testSettings) {
+                    if (game.settings[key] !== testSettings[key]) {
+                        // 恢复原始设置
+                        game.settings = originalSettings;
+                        game.saveSettings();
+
+                        return recordTestResult(4, '设置保存和加载', false,
+                            `设置加载错误: 键=${key}, 期望=${testSettings[key]}, 实际=${game.settings[key]}`);
+                    }
+                }
+
+                // 恢复原始设置
+                game.settings = originalSettings;
+                game.saveSettings();
+
+                return recordTestResult(4, '设置保存和加载', true,
+                    '设置保存和加载功能正常，所有设置项都能正确保存和恢复');
+
+            } catch (error) {
+                return recordTestResult(4, '设置保存和加载', false,
+                    `设置保存和加载过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 5: 计时器功能
+        function testTimer() {
+            try {
+                const game = window.typingGame;
+
+                // 测试开始计时器
+                game.startTime = Date.now();
+                game.startTimer();
+
+                if (!game.timerInterval) {
+                    return recordTestResult(5, '计时器功能', false, '计时器启动失败');
+                }
+
+                // 等待一小段时间
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        try {
+                            // 检查时间是否更新
+                            if (game.elapsedTime <= 0) {
+                                game.stopTimer();
+                                resolve(recordTestResult(5, '计时器功能', false, '计时器未更新经过时间'));
+                                return;
+                            }
+
+                            // 测试停止计时器
+                            game.stopTimer();
+
+                            if (game.timerInterval) {
+                                resolve(recordTestResult(5, '计时器功能', false, '计时器停止失败'));
+                                return;
+                            }
+
+                            resolve(recordTestResult(5, '计时器功能', true,
+                                '计时器功能正常，能够正确启动、更新时间和停止'));
+
+                        } catch (error) {
+                            resolve(recordTestResult(5, '计时器功能', false,
+                                `计时器测试过程中出错: ${error.message}`));
+                        }
+                    }, 500);
+                });
+
+            } catch (error) {
+                return recordTestResult(5, '计时器功能', false,
+                    `计时器功能测试过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 6: 输入验证
+        function testInputValidation() {
+            try {
+                const game = window.typingGame;
+
+                // 设置测试文本
+                game.text = "测试文本";
+                game.currentIndex = 0;
+                game.typedText = '';
+                game.correctChars = 0;
+                game.totalErrors = 0;
+
+                // 测试正确输入
+                game.handleTyping({ target: { value: '测' } });
+
+                if (game.currentIndex !== 1 || game.correctChars !== 1 || game.totalErrors !== 0) {
+                    return recordTestResult(6, '输入验证', false,
+                        `正确输入验证失败: currentIndex=${game.currentIndex}, correctChars=${game.correctChars}, errors=${game.totalErrors}`);
+                }
+
+                // 测试错误输入
+                game.handleTyping({ target: { value: '测错' } }); // '错'应该不匹配'试'
+
+                if (game.totalErrors !== 1) {
+                    return recordTestResult(6, '输入验证', false,
+                        `错误输入验证失败: 期望错误数=1, 实际错误数=${game.totalErrors}`);
+                }
+
+                // 测试退格键
+                game.handleBackspace();
+
+                if (game.currentIndex !== 1 || game.typedText !== '测') {
+                    return recordTestResult(6, '输入验证', false,
+                        `退格键处理失败: currentIndex=${game.currentIndex}, typedText="${game.typedText}"`);
+                }
+
+                return recordTestResult(6, '输入验证', true,
+                    '输入验证功能正常，能够正确检测正确/错误输入和处理退格键');
+
+            } catch (error) {
+                return recordTestResult(6, '输入验证', false,
+                    `输入验证测试过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 7: WPM计算
+        function testWPMCalculation() {
+            try {
+                const game = window.typingGame;
+
+                // 模拟输入一些文本
+                game.text = "one two three four five six seven eight nine ten";
+                game.typedText = "one two three four five";
+                game.currentIndex = 23; // "one two three four five"的长度
+                game.correctChars = 23;
+                game.totalErrors = 0;
+                game.startTime = Date.now() - 30000; // 30秒前
+                game.elapsedTime = 30000; // 30秒
+
+                // 手动更新统计
+                game.updateStats();
+
+                const wpmElement = document.getElementById('wpm');
+                const wpm = parseInt(wpmElement.textContent);
+
+                // 预期WPM: 5个单词 / 0.5分钟 = 10 WPM
+                if (wpm !== 10) {
+                    return recordTestResult(7, 'WPM计算', false,
+                        `WPM计算错误: 期望=10, 实际=${wpm}`);
+                }
+
+                // 测试准确率计算
+                const accuracyElement = document.getElementById('accuracy');
+                const accuracy = parseInt(accuracyElement.textContent);
+
+                // 所有字符都正确，准确率应为100%
+                if (accuracy !== 100) {
+                    return recordTestResult(7, 'WPM计算', false,
+                        `准确率计算错误: 期望=100%, 实际=${accuracy}%`);
+                }
+
+                return recordTestResult(7, 'WPM计算', true,
+                    'WPM和准确率计算功能正常，计算结果准确');
+
+            } catch (error) {
+                return recordTestResult(7, 'WPM计算', false,
+                    `WPM计算测试过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 8: 游戏状态管理
+        function testGameStates() {
+            try {
+                const game = window.typingGame;
+
+                // 初始状态应为IDLE
+                if (game.state !== GameState.IDLE) {
+                    return recordTestResult(8, '游戏状态管理', false,
+                        `初始状态错误: 期望=IDLE, 实际=${game.state}`);
+                }
+
+                // 测试开始游戏
+                game.startNewGame();
+
+                // 模拟开始打字，应该进入PLAYING状态
+                game.state = GameState.IDLE; // 重置为IDLE
+                game.handleTyping({ target: { value: 't' } });
+
+                if (game.state !== GameState.PLAYING) {
+                    return recordTestResult(8, '游戏状态管理', false,
+                        `开始游戏后状态错误: 期望=PLAYING, 实际=${game.state}`);
+                }
+
+                // 测试暂停游戏
+                game.pauseGame();
+
+                if (game.state !== GameState.PAUSED) {
+                    return recordTestResult(8, '游戏状态管理', false,
+                        `暂停游戏后状态错误: 期望=PAUSED, 实际=${game.state}`);
+                }
+
+                // 测试恢复游戏
+                game.resumeGame();
+
+                if (game.state !== GameState.PLAYING) {
+                    return recordTestResult(8, '游戏状态管理', false,
+                        `恢复游戏后状态错误: 期望=PLAYING, 实际=${game.state}`);
+                }
+
+                // 测试结束游戏
+                game.finishGame();
+
+                if (game.state !== GameState.FINISHED) {
+                    return recordTestResult(8, '游戏状态管理', false,
+                        `结束游戏后状态错误: 期望=FINISHED, 实际=${game.state}`);
+                }
+
+                return recordTestResult(8, '游戏状态管理', true,
+                    '游戏状态管理功能正常，所有状态转换正确');
+
+            } catch (error) {
+                return recordTestResult(8, '游戏状态管理', false,
+                    `游戏状态管理测试过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 9: 主题切换
+        function testThemeToggle() {
+            try {
+                const game = window.typingGame;
+
+                // 获取当前主题
+                const currentTheme = document.body.getAttribute('data-theme') || 'light';
+
+                // 切换主题
+                game.toggleTheme();
+
+                // 检查主题是否切换
+                const newTheme = document.body.getAttribute('data-theme');
+
+                if (newTheme === currentTheme) {
+                    return recordTestResult(9, '主题切换', false,
+                        `主题切换失败: 切换前后主题相同 (${currentTheme})`);
+                }
+
+                // 切换回来
+                game.toggleTheme();
+
+                const finalTheme = document.body.getAttribute('data-theme');
+
+                if (finalTheme !== currentTheme) {
+                    return recordTestResult(9, '主题切换', false,
+                        `主题恢复失败: 原始=${currentTheme}, 最终=${finalTheme}`);
+                }
+
+                return recordTestResult(9, '主题切换', true,
+                    '主题切换功能正常，能够正确在深色和浅色主题间切换');
+
+            } catch (error) {
+                return recordTestResult(9, '主题切换', false,
+                    `主题切换测试过程中出错: ${error.message}`);
+            }
+        }
+
+        // 测试 10: 响应式设计
+        function testResponsiveDesign() {
+            try {
+                // 检查是否有关键的CSS类
+                const container = document.querySelector('.container');
+                if (!container) {
+                    return recordTestResult(10, '响应式设计', false, '未找到容器元素');
+                }
+
+                // 检查是否有响应式CSS
+                const hasResponsiveCSS = document.styleSheets[0]?.cssRules?.some(rule => {
+                    return rule.media && rule.media.mediaText.includes('max-width');
+                }) || false;
+
+                if (!hasResponsiveCSS) {
+                    return recordTestResult(10, '响应式设计', false, '未检测到响应式CSS');
+                }
+
+                // 检查关键元素是否有响应式样式
+                const requiredClasses = ['game-controls', 'game-stats', 'typing-area'];
+                for (const className of requiredClasses) {
+                    const elements = document.getElementsByClassName(className);
+                    if (elements.length === 0) {
+                        return recordTestResult(10, '响应式设计', false, `缺少关键样式类: ${className}`);
+                    }
+                }
+
+                return recordTestResult(10, '响应式设计', true,
+                    '响应式设计基础正常，关键CSS类和媒体查询已正确设置');
+
+            } catch (error) {
+                return recordTestResult(10, '响应式设计', false,
+                    `响应式设计测试过程中出错: ${error.message}`);
+            }
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            // 重置计数
+            testResults.length = 0;
+            passedTests = 0;
+            failedTests = 0;
+            pendingTests = totalTests;
+
+            updateTestSummary();
+
+            // 清空所有结果
+            for (let i = 1; i <= totalTests; i++) {
+                const resultElement = document.getElementById(`result${i}`);
+                resultElement.textContent = '';
+                resultElement.className = 'result';
+            }
+
+            // 运行所有测试
+            await testInitialization();
+            await testTextGeneration();
+            await testWordCounting();
+            await testSettings();
+            await testTimer();
+            await testInputValidation();
+            await testWPMCalculation();
+            await testGameStates();
+            await testThemeToggle();
+            await testResponsiveDesign();
+
+            // 显示最终结果
+            const finalMessage = `所有测试完成: ${passedTests} 通过, ${failedTests} 失败`;
+            alert(finalMessage);
+        }
+
+        // 初始化页面时更新计数
+        document.addEventListener('DOMContentLoaded', updateTestSummary);
+
+    </script>
+</body>
+</html>

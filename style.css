@@ -1,0 +1,323 @@
+/* 主页面样式 */
+:root {
+    --primary: #00dbde;
+    --secondary: #fc00ff;
+    --dark: #1a1a2e;
+    --darker: #16213e;
+    --light: #f0f0f0;
+    --gray: #a0a0c0;
+    --success: #00ff88;
+    --warning: #ffc107;
+    --danger: #ff6b6b;
+    --info: #118ab2;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+    color: var(--light);
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 头部样式 */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+h1 {
+    font-size: 3.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+h1 i {
+    margin-right: 15px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: var(--gray);
+    margin-bottom: 20px;
+}
+
+/* 说明区域 */
+.instructions {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    border-left: 5px solid var(--primary);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.instructions h2 {
+    margin-bottom: 15px;
+    color: var(--primary);
+    font-size: 1.8rem;
+}
+
+.instructions h2 i {
+    margin-right: 10px;
+}
+
+.instructions p {
+    color: var(--gray);
+    font-size: 1.05rem;
+}
+
+/* 游戏网格布局 */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+/* 游戏卡片 */
+.game-card {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 15px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.game-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.game-card:hover::before {
+    opacity: 1;
+}
+
+.game-card:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.game-card.coming-soon {
+    opacity: 0.7;
+    filter: grayscale(30%);
+}
+
+.game-card.coming-soon:hover {
+    transform: none;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+}
+
+.game-card.coming-soon:hover::before {
+    opacity: 0;
+}
+
+/* 游戏图标 */
+.game-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* 游戏标题 */
+.game-title {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* 游戏描述 */
+.game-description {
+    color: #b0b0d0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    flex-grow: 1;
+}
+
+/* 游戏状态标签 */
+.game-status {
+    display: inline-block;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    align-self: flex-start;
+}
+
+.status-ready {
+    background: rgba(0, 255, 136, 0.2);
+    color: var(--success);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.status-dev {
+    background: rgba(255, 193, 7, 0.2);
+    color: var(--warning);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+/* 页脚 */
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 25px;
+    color: #8080a0;
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+}
+
+footer p {
+    margin-bottom: 5px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2.5rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .games-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .game-card {
+        padding: 20px;
+    }
+
+    .game-icon {
+        font-size: 2.5rem;
+    }
+
+    .game-title {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+
+    header {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .games-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .instructions {
+        padding: 20px;
+    }
+
+    .instructions h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.game-card {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* 为每个游戏卡片添加延迟动画 */
+.game-card:nth-child(1) { animation-delay: 0.1s; }
+.game-card:nth-child(2) { animation-delay: 0.2s; }
+.game-card:nth-child(3) { animation-delay: 0.3s; }
+.game-card:nth-child(4) { animation-delay: 0.4s; }
+.game-card:nth-child(5) { animation-delay: 0.5s; }
+.game-card:nth-child(6) { animation-delay: 0.6s; }
+.game-card:nth-child(7) { animation-delay: 0.7s; }
+.game-card:nth-child(8) { animation-delay: 0.8s; }
+.game-card:nth-child(9) { animation-delay: 0.9s; }
+.game-card:nth-child(10) { animation-delay: 1.0s; }
+
+/* 返回按钮样式（用于游戏页面） */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    margin-bottom: 20px;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.back-button i {
+    font-size: 1.1rem;
+}

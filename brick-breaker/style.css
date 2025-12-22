@@ -1,0 +1,782 @@
+:root {
+    /* 主色调 */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+
+    /* 文本色 */
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+
+    /* 品牌色 */
+    --brand-blue: #3b82f6;
+    --brand-green: #10b981;
+    --brand-yellow: #f59e0b;
+    --brand-red: #ef4444;
+    --brand-purple: #8b5cf6;
+
+    /* 状态色 */
+    --state-success: #10b981;
+    --state-warning: #f59e0b;
+    --state-error: #ef4444;
+    --state-info: #3b82f6;
+
+    /* 透明度 */
+    --opacity-10: 0.1;
+    --opacity-20: 0.2;
+    --opacity-30: 0.3;
+    --opacity-50: 0.5;
+    --opacity-70: 0.7;
+
+    /* 排版 */
+    --font-primary: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', monospace;
+
+    /* 字号层级 */
+    --text-xs: 0.75rem;   /* 12px */
+    --text-sm: 0.875rem;  /* 14px */
+    --text-base: 1rem;    /* 16px */
+    --text-lg: 1.125rem;  /* 18px */
+    --text-xl: 1.25rem;   /* 20px */
+    --text-2xl: 1.5rem;   /* 24px */
+    --text-3xl: 1.875rem; /* 30px */
+    --text-4xl: 2.25rem;  /* 36px */
+    --text-5xl: 3rem;     /* 48px */
+
+    /* 行高 */
+    --leading-none: 1;
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+    --leading-loose: 2;
+
+    /* 间距尺度 */
+    --space-1: 0.25rem;   /* 4px */
+    --space-2: 0.5rem;    /* 8px */
+    --space-3: 0.75rem;   /* 12px */
+    --space-4: 1rem;      /* 16px */
+    --space-5: 1.25rem;   /* 20px */
+    --space-6: 1.5rem;    /* 24px */
+    --space-8: 2rem;      /* 32px */
+    --space-10: 2.5rem;   /* 40px */
+    --space-12: 3rem;     /* 48px */
+    --space-16: 4rem;     /* 64px */
+
+    /* 容器宽度 */
+    --container-sm: 640px;
+    --container-md: 768px;
+    --container-lg: 1024px;
+    --container-xl: 1280px;
+
+    /* 圆角 */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
+    --radius-full: 9999px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-primary);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    line-height: var(--leading-normal);
+    font-size: var(--text-base);
+}
+
+.container {
+    width: 100%;
+    max-width: var(--container-lg);
+    padding: var(--space-6) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+/* 页眉样式 */
+.header {
+    width: 100%;
+    text-align: center;
+    margin: 0;
+}
+
+.header h1 {
+    font-size: var(--text-4xl);
+    font-weight: 700;
+    margin: var(--space-2) 0 var(--space-3);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+}
+
+.header h1 i {
+    color: var(--brand-blue);
+}
+
+.subtitle {
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 返回按钮 */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    transition: all 150ms ease-in-out;
+    position: absolute;
+    top: var(--space-6);
+    left: var(--space-6);
+}
+
+.back-button:hover {
+    background-color: var(--bg-tertiary);
+    transform: translateY(-1px);
+}
+
+.back-button:focus {
+    outline: 2px solid var(--brand-blue);
+    outline-offset: 2px;
+}
+
+/* 游戏区域 */
+.game-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.game-info {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary);
+    padding: var(--space-5) var(--space-6);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, var(--opacity-10));
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* 记分板 */
+.score-board {
+    display: flex;
+    gap: var(--space-8);
+}
+
+.score-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.score-item i {
+    font-size: var(--text-xl);
+}
+
+.score-item:nth-child(1) i {
+    color: var(--brand-yellow);
+}
+
+.score-item:nth-child(2) i {
+    color: var(--brand-red);
+}
+
+.score-item:nth-child(3) i {
+    color: var(--brand-green);
+}
+
+/* 控制按钮区域 */
+.controls {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+
+.game-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 8/6;
+    background: var(--bg-primary);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, var(--opacity-10));
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(59, 130, 246, var(--opacity-20));
+    margin: 0 auto;
+}
+
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* 屏幕覆盖层 */
+.screen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.screen-content {
+    text-align: center;
+    background: var(--bg-secondary);
+    padding: var(--space-10) var(--space-8);
+    border-radius: var(--radius-2xl);
+    border: 2px solid rgba(255, 255, 255, var(--opacity-10));
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(59, 130, 246, var(--opacity-30));
+    max-width: 90%;
+    width: 500px;
+}
+
+.screen-content h2 {
+    font-size: var(--text-4xl);
+    margin: 0 0 var(--space-4);
+    color: var(--text-primary);
+}
+
+.screen-content p {
+    font-size: var(--text-xl);
+    color: var(--text-secondary);
+    margin: var(--space-3) 0;
+}
+
+.final-score {
+    background: rgba(255, 255, 255, var(--opacity-10));
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    margin: var(--space-6) 0;
+}
+
+.final-score p {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    margin: var(--space-2) 0;
+}
+
+.final-score span {
+    color: var(--brand-yellow);
+    font-weight: 700;
+}
+
+/* 按钮组件 */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-lg);
+    border: 2px solid transparent;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    cursor: pointer;
+    transition: all 150ms ease-in-out;
+    min-height: 48px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--brand-blue);
+    color: var(--text-primary);
+    border-color: var(--brand-blue);
+}
+
+.btn-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--bg-tertiary);
+}
+
+.btn-warning {
+    background-color: var(--brand-yellow);
+    color: var(--text-primary);
+    border-color: var(--brand-yellow);
+}
+
+/* 按钮交互状态 */
+.btn:hover,
+.btn:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.btn:focus {
+    outline: 2px solid var(--brand-blue);
+    outline-offset: 2px;
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn i {
+    font-size: var(--text-lg);
+}
+
+/* 游戏说明区域 */
+.instructions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-6);
+    width: 100%;
+    margin-top: var(--space-2);
+}
+
+.instruction-card {
+    background: var(--bg-secondary);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(255, 255, 255, var(--opacity-10));
+    transition: transform 150ms ease-in-out, box-shadow 150ms ease-in-out;
+}
+
+.instruction-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.instruction-card h3 {
+    font-size: var(--text-xl);
+    margin: 0 0 var(--space-4);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.instruction-card h3 i {
+    color: var(--brand-blue);
+}
+
+.instruction-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.instruction-card li {
+    padding: var(--space-2) 0;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, var(--opacity-10));
+}
+
+.instruction-card li:last-child {
+    border-bottom: none;
+}
+
+/* 砖块类型展示 */
+.brick-types {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.brick-type {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-weight: 600;
+    border: 2px solid;
+}
+
+.brick-type.normal {
+    background-color: rgba(52, 152, 219, var(--opacity-30));
+    border-color: var(--brand-blue);
+    color: var(--text-primary);
+}
+
+.brick-type.strong {
+    background-color: rgba(243, 156, 18, var(--opacity-30));
+    border-color: var(--brand-yellow);
+    color: var(--text-primary);
+}
+
+.brick-type.special {
+    background-color: rgba(155, 89, 182, var(--opacity-30));
+    border-color: var(--brand-purple);
+    color: var(--text-primary);
+}
+
+/* 道具效果展示 */
+.powerups {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+}
+
+.powerup {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    text-align: center;
+    background-color: rgba(255, 255, 255, var(--opacity-10));
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.powerup i {
+    color: var(--brand-green);
+}
+
+/* 页脚 */
+.footer {
+    width: 100%;
+    text-align: center;
+    margin-top: var(--space-8);
+    padding: var(--space-6) 0;
+    border-top: 1px solid rgba(255, 255, 255, var(--opacity-10));
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+}
+
+.footer p {
+    margin: var(--space-2) 0;
+}
+
+.hint {
+    background-color: rgba(59, 130, 246, var(--opacity-10));
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-4) !important;
+    border: 1px solid rgba(59, 130, 246, var(--opacity-20));
+}
+
+.hint i {
+    color: var(--brand-yellow);
+    margin-right: var(--space-2);
+}
+
+/* 响应式设计 */
+/* 平板和桌面之间 */
+@media (max-width: 1024px) {
+    .container {
+        max-width: 90%;
+        padding: var(--space-4);
+    }
+
+    .game-container {
+        max-width: 90%;
+    }
+}
+
+/* 平板 */
+@media (max-width: 768px) {
+    .container {
+        gap: var(--space-6);
+        padding: var(--space-4) var(--space-3);
+    }
+
+    .header h1 {
+        font-size: var(--text-3xl);
+    }
+
+    .subtitle {
+        font-size: var(--text-base);
+    }
+
+    .game-info {
+        flex-direction: column;
+        gap: var(--space-4);
+        padding: var(--space-4);
+    }
+
+    .score-board {
+        width: 100%;
+        justify-content: center;
+        gap: var(--space-6);
+    }
+
+    .controls {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .screen-content {
+        padding: var(--space-6) var(--space-4);
+        max-width: 95%;
+    }
+
+    .screen-content h2 {
+        font-size: var(--text-3xl);
+    }
+
+    .screen-content p {
+        font-size: var(--text-lg);
+    }
+
+    .footer {
+        margin-top: var(--space-6);
+        padding: var(--space-4) 0;
+    }
+}
+
+/* 移动设备 */
+@media (max-width: 640px) {
+    .header h1 {
+        font-size: var(--text-2xl);
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .back-button {
+        position: relative;
+        top: auto;
+        left: auto;
+        margin-bottom: var(--space-4);
+        align-self: flex-start;
+    }
+
+    .game-area {
+        gap: var(--space-4);
+    }
+
+    .score-item {
+        font-size: var(--text-base);
+        flex-direction: column;
+        text-align: center;
+        gap: var(--space-2);
+    }
+
+    .score-item i {
+        font-size: var(--text-lg);
+    }
+
+    .instructions {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+
+    .instruction-card {
+        padding: var(--space-4);
+    }
+
+    .btn {
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--text-sm);
+        min-height: 44px;
+    }
+
+    .powerups {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 超小屏幕 */
+@media (max-width: 480px) {
+    :root {
+        --space-4: 0.75rem;
+        --space-6: 1rem;
+    }
+
+    .container {
+        padding: var(--space-3);
+    }
+
+    .game-info {
+        padding: var(--space-3);
+    }
+
+    .controls {
+        gap: var(--space-2);
+    }
+
+    .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .screen-content h2 {
+        font-size: var(--text-2xl);
+    }
+
+    .screen-content p {
+        font-size: var(--text-base);
+    }
+}
+
+/* Canvas焦点状态 */
+#gameCanvas:focus {
+    outline: 3px solid var(--brand-blue);
+    outline-offset: 3px;
+}
+
+#gameCanvas.focused {
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.3),
+        0 0 30px rgba(59, 130, 246, 0.4),
+        inset 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+    .btn {
+        padding: var(--space-4) var(--space-6);
+        min-height: 56px;
+        font-size: var(--text-lg);
+    }
+
+    .controls {
+        gap: var(--space-4);
+    }
+
+    .score-item {
+        font-size: var(--text-lg);
+    }
+}
+
+/* 游戏状态增强 */
+#gameCanvas {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+/* 游戏状态动画 */
+@keyframes scorePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.score-item span span {
+    display: inline-block;
+    transition: transform 0.2s ease-out;
+}
+
+.score-item span span.changed {
+    animation: scorePulse 0.3s ease-out;
+    color: var(--brand-green);
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    :root {
+        --text-primary: #ffffff;
+        --text-secondary: #e0e0e0;
+        --bg-primary: #000000;
+        --bg-secondary: #1a1a1a;
+        --brand-blue: #0078d4;
+        --brand-yellow: #ffb900;
+        --brand-red: #d13438;
+        --brand-green: #107c10;
+    }
+
+    .instruction-card,
+    .game-info,
+    .screen-content {
+        border-width: 2px;
+        border-color: var(--text-primary);
+    }
+
+    .btn {
+        border-width: 2px;
+    }
+
+    .hint {
+        border-width: 2px;
+        border-color: var(--brand-blue);
+    }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .instruction-card,
+    .screen-overlay,
+    .score-item span span {
+        transition: none;
+        animation: none;
+    }
+
+    @keyframes fadeIn {
+        from, to { opacity: 1; }
+    }
+}
+
+/* 黑暗模式支持 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #1a1a1a;
+        --text-primary: #e0e0e0;
+        --text-secondary: #a0a0a0;
+    }
+
+    .game-container {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+}
+
+/* 打印模式优化 */
+@media print {
+    .game-container,
+    .instructions,
+    .controls {
+        display: none;
+    }
+
+    .header,
+    .footer {
+        color: black;
+    }
+}

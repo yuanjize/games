@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>记忆翻牌匹配游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container" role="main">
+        <header class="game-header" role="banner">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回游戏大厅
+            </a>
+            <h1><i class="fas fa-brain" aria-hidden="true"></i> <span class="sr-only">图标：</span>记忆翻牌大挑战</h1>
+            <p class="subtitle">测试你的记忆力！翻开卡片找出所有匹配的图案</p>
+        </header>
+
+        <main class="game-container" role="main">
+            <div class="game-controls" aria-label="游戏控制面板">
+                <div class="difficulty-selector">
+                    <span id="difficulty-label">难度：</span>
+                    <div class="difficulty-buttons" role="radiogroup" aria-labelledby="difficulty-label">
+                        <button class="difficulty-btn active"
+                                data-difficulty="easy"
+                                role="radio"
+                                aria-checked="true"
+                                tabindex="0"
+                                id="difficulty-easy"
+                                aria-labelledby="difficulty-label difficulty-easy-label">
+                            <span id="difficulty-easy-label">简单 (4x4)</span>
+                        </button>
+                        <button class="difficulty-btn"
+                                data-difficulty="medium"
+                                role="radio"
+                                aria-checked="false"
+                                tabindex="-1"
+                                id="difficulty-medium"
+                                aria-labelledby="difficulty-label difficulty-medium-label">
+                            <span id="difficulty-medium-label">中等 (6x6)</span>
+                        </button>
+                        <button class="difficulty-btn"
+                                data-difficulty="hard"
+                                role="radio"
+                                aria-checked="false"
+                                tabindex="-1"
+                                id="difficulty-hard"
+                                aria-labelledby="difficulty-label difficulty-hard-label">
+                            <span id="difficulty-hard-label">困难 (8x8)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="game-stats" aria-label="游戏统计数据">
+                    <div class="stat-box" aria-labelledby="time-label">
+                        <div class="stat-icon" aria-hidden="true">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label" id="time-label">时间</div>
+                            <div class="stat-value" id="timer" aria-live="polite" aria-atomic="true">00:00</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-box" aria-labelledby="moves-label">
+                        <div class="stat-icon" aria-hidden="true">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label" id="moves-label">翻牌次数</div>
+                            <div class="stat-value" id="moves" aria-live="polite" aria-atomic="true">0</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-box" aria-labelledby="matches-label">
+                        <div class="stat-icon" aria-hidden="true">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label" id="matches-label">匹配数</div>
+                            <div class="stat-value" id="matches" aria-live="polite" aria-atomic="true">0 / 8</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons" aria-label="操作按钮">
+                    <button class="btn btn-restart" id="restartBtn" aria-label="重新开始游戏">
+                        <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                    </button>
+                    <button class="btn btn-theme" id="themeBtn" aria-label="更换游戏主题，当前主题：动物">
+                        <i class="fas fa-palette" aria-hidden="true"></i> 更换主题
+                    </button>
+                </div>
+            </div>
+
+            <div class="game-board-container">
+                <div class="game-board" id="gameBoard" role="grid" aria-label="记忆卡片游戏板">
+                    <!-- 卡片会通过JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <div class="best-scores" aria-labelledby="best-scores-heading">
+                <h3 id="best-scores-heading"><i class="fas fa-trophy" aria-hidden="true"></i> 最佳成绩</h3>
+                <div class="score-cards">
+                    <div class="score-card" aria-labelledby="easy-score-title">
+                        <div class="score-title" id="easy-score-title">简单模式</div>
+                        <div class="score-details">
+                            <div class="score-item">
+                                <i class="fas fa-clock" aria-hidden="true"></i>
+                                <span>时间: <span id="bestTimeEasy">--:--</span></span>
+                            </div>
+                            <div class="score-item">
+                                <i class="fas fa-mouse-pointer" aria-hidden="true"></i>
+                                <span>步数: <span id="bestMovesEasy">--</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="score-card" aria-labelledby="medium-score-title">
+                        <div class="score-title" id="medium-score-title">中等模式</div>
+                        <div class="score-details">
+                            <div class="score-item">
+                                <i class="fas fa-clock" aria-hidden="true"></i>
+                                <span>时间: <span id="bestTimeMedium">--:--</span></span>
+                            </div>
+                            <div class="score-item">
+                                <i class="fas fa-mouse-pointer" aria-hidden="true"></i>
+                                <span>步数: <span id="bestMovesMedium">--</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="score-card" aria-labelledby="hard-score-title">
+                        <div class="score-title" id="hard-score-title">困难模式</div>
+                        <div class="score-details">
+                            <div class="score-item">
+                                <i class="fas fa-clock" aria-hidden="true"></i>
+                                <span>时间: <span id="bestTimeHard">--:--</span></span>
+                            </div>
+                            <div class="score-item">
+                                <i class="fas fa-mouse-pointer" aria-hidden="true"></i>
+                                <span>步数: <span id="bestMovesHard">--</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="game-footer" role="contentinfo">
+            <p>© 2025 记忆翻牌游戏 | 使用纯HTML、CSS和JavaScript开发</p>
+            <p class="instructions">游戏说明：点击卡片翻开，找出所有匹配的图案。尽量用最少的步数和时间完成游戏！</p>
+        </footer>
+    </div>
+
+    <!-- 游戏胜利弹窗 -->
+    <div class="win-modal" id="winModal" role="dialog" aria-labelledby="win-modal-title" aria-describedby="win-modal-description">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fas fa-trophy" aria-hidden="true"></i>
+                <h2 id="win-modal-title">恭喜！游戏完成！</h2>
+                <p id="win-modal-description" class="sr-only">游戏已完成，显示了您的时间、步数和匹配数</p>
+            </div>
+            <div class="modal-body">
+                <div class="win-stats" role="list" aria-label="游戏完成统计数据">
+                    <div class="win-stat" role="listitem">
+                        <div class="win-stat-label">总时间</div>
+                        <div class="win-stat-value" id="winTime" aria-live="polite">00:00</div>
+                    </div>
+                    <div class="win-stat" role="listitem">
+                        <div class="win-stat-label">总步数</div>
+                        <div class="win-stat-value" id="winMoves" aria-live="polite">0</div>
+                    </div>
+                    <div class="win-stat" role="listitem">
+                        <div class="win-stat-label">匹配数</div>
+                        <div class="win-stat-value" id="winMatches" aria-live="polite">0</div>
+                    </div>
+                </div>
+
+                <div class="best-record" id="bestRecordMessage" role="status" aria-live="polite" aria-atomic="true">
+                    <i class="fas fa-crown" aria-hidden="true"></i> 恭喜！创造了新的最佳记录！
+                </div>
+
+                <div class="modal-actions" aria-label="弹窗操作">
+                    <button class="btn btn-play-again" id="playAgainBtn" aria-label="再来一局游戏">
+                        <i class="fas fa-redo" aria-hidden="true"></i> 再来一局
+                    </button>
+                    <button class="btn btn-main-menu" id="mainMenuBtn" aria-label="返回游戏大厅主菜单">
+                        <i class="fas fa-home" aria-hidden="true"></i> 返回主菜单
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

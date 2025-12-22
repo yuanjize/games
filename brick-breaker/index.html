@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>经典打砖块游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅，查看所有游戏">
+                <i class="fas fa-arrow-left"></i> 返回游戏大厅
+            </a>
+            <h1><i class="fas fa-gamepad" aria-hidden="true"></i> 经典打砖块</h1>
+            <p class="subtitle">使用鼠标移动或触摸屏幕控制挡板，空格键暂停</p>
+        </header>
+
+        <div class="game-area">
+            <div class="game-info">
+                <div class="score-board" aria-label="游戏状态信息">
+                    <div class="score-item" aria-label="当前得分">
+                        <i class="fas fa-star" aria-hidden="true"></i>
+                        <span>得分: <span id="score" aria-live="polite">0</span></span>
+                    </div>
+                    <div class="score-item" aria-label="剩余生命">
+                        <i class="fas fa-heart" aria-hidden="true"></i>
+                        <span>生命: <span id="lives" aria-live="polite">3</span></span>
+                    </div>
+                    <div class="score-item" aria-label="当前关卡">
+                        <i class="fas fa-layer-group" aria-hidden="true"></i>
+                        <span>关卡: <span id="level" aria-live="polite">1</span></span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="startBtn" class="btn btn-primary"
+                            aria-label="开始游戏，使用空格键或鼠标点击">
+                        <i class="fas fa-play" aria-hidden="true"></i> 开始游戏
+                    </button>
+                    <button id="pauseBtn" class="btn btn-secondary"
+                            aria-label="暂停游戏，按空格键切换暂停状态">
+                        <i class="fas fa-pause" aria-hidden="true"></i> 暂停
+                    </button>
+                    <button id="restartBtn" class="btn btn-warning"
+                            aria-label="重新开始游戏，重置当前关卡">
+                        <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                    </button>
+                </div>
+            </div>
+
+            <div class="game-container">
+                <canvas id="gameCanvas" width="800" height="600"
+                        role="application"
+                        aria-label="打砖块游戏区域，使用鼠标或触摸控制挡板移动，空格键暂停游戏">
+                    您的浏览器不支持Canvas，请使用现代浏览器。
+                </canvas>
+
+                <div id="gameOverScreen" class="screen-overlay" role="alertdialog" aria-labelledby="gameOverTitle" aria-describedby="gameOverMessage">
+                    <div class="screen-content">
+                        <h2 id="gameOverTitle">游戏结束</h2>
+                        <p id="gameOverMessage">您失去了所有生命！</p>
+                        <div class="final-score">
+                            <p>最终得分: <span id="finalScore" aria-live="polite">0</span></p>
+                            <p>最高分: <span id="highScore" aria-live="polite">0</span></p>
+                        </div>
+                        <button id="playAgainBtn" class="btn btn-primary"
+                                aria-label="再玩一次，重新开始游戏">
+                            <i class="fas fa-play-circle" aria-hidden="true"></i> 再玩一次
+                        </button>
+                    </div>
+                </div>
+
+                <div id="levelCompleteScreen" class="screen-overlay" role="alertdialog" aria-labelledby="levelCompleteTitle" aria-describedby="levelCompleteMessage">
+                    <div class="screen-content">
+                        <h2 id="levelCompleteTitle">关卡完成！</h2>
+                        <p id="levelCompleteMessage">恭喜您成功通关！</p>
+                        <div class="final-score">
+                            <p>关卡得分: <span id="levelScore" aria-live="polite">0</span></p>
+                            <p>总得分: <span id="totalScore" aria-live="polite">0</span></p>
+                        </div>
+                        <button id="nextLevelBtn" class="btn btn-primary"
+                                aria-label="下一关，进入更高难度的关卡">
+                            <i class="fas fa-forward" aria-hidden="true"></i> 下一关
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <div class="instruction-card" aria-labelledby="controls-heading">
+                    <h3 id="controls-heading"><i class="fas fa-mouse-pointer" aria-hidden="true"></i> 控制方式</h3>
+                    <ul>
+                        <li><strong>鼠标：</strong>移动鼠标控制挡板</li>
+                        <li><strong>触摸：</strong>在屏幕上滑动控制挡板</li>
+                        <li><strong>空格键：</strong>暂停/继续游戏</li>
+                        <li><strong>方向键：</strong>键盘控制挡板移动</li>
+                        <li><strong>R键：</strong>重新开始当前关卡</li>
+                    </ul>
+                </div>
+
+                <div class="instruction-card" aria-labelledby="bricks-heading">
+                    <h3 id="bricks-heading"><i class="fas fa-cube" aria-hidden="true"></i> 砖块类型</h3>
+                    <div class="brick-types">
+                        <div class="brick-type normal" role="img" aria-label="普通砖块">普通（1击）</div>
+                        <div class="brick-type strong" role="img" aria-label="坚固砖块">坚固（2击）</div>
+                        <div class="brick-type special" role="img" aria-label="特殊砖块">特殊（道具）</div>
+                    </div>
+                </div>
+
+                <div class="instruction-card" aria-labelledby="powerups-heading">
+                    <h3 id="powerups-heading"><i class="fas fa-gift" aria-hidden="true"></i> 道具效果</h3>
+                    <div class="powerups">
+                        <div class="powerup" role="img" aria-label="加长挡板道具"><i class="fas fa-arrows-alt-h"></i> 加长挡板</div>
+                        <div class="powerup" role="img" aria-label="缩短挡板道具"><i class="fas fa-compress-alt"></i> 缩短挡板</div>
+                        <div class="powerup" role="img" aria-label="快速球道具"><i class="fas fa-tachometer-alt"></i> 快速球</div>
+                        <div class="powerup" role="img" aria-label="慢速球道具"><i class="fas fa-snowflake"></i> 慢速球</div>
+                        <div class="powerup" role="img" aria-label="多球道具"><i class="fas fa-basketball-ball"></i> 多球</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>© 2025 经典打砖块游戏 | 使用原生JavaScript、HTML5、CSS3开发</p>
+            <p class="hint">
+                <i class="fas fa-lightbulb" aria-hidden="true"></i> 提示：击中挡板中心反弹角度小，边缘反弹角度大
+            </p>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

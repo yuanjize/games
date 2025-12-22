@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水果2048 - 美味的水果合并游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍎</text></svg>">
+</head>
+<body>
+    <div class="container" role="main" aria-label="水果2048游戏主界面">
+        <header>
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回游戏大厅
+            </a>
+            <h1><i class="fas fa-apple-alt" aria-hidden="true"></i> 水果2048</h1>
+            <p class="subtitle">合并相同水果，创造美味的水果大餐！</p>
+        </header>
+
+        <main>
+            <div class="game-header">
+                <div class="score-container">
+                    <div class="score-box" aria-labelledby="current-score-label">
+                        <div class="score-label" id="current-score-label">当前分数</div>
+                        <div class="score-value" id="current-score" role="status" aria-live="polite">0</div>
+                    </div>
+                    <div class="score-box" aria-labelledby="best-score-label">
+                        <div class="score-label" id="best-score-label">最高分数</div>
+                        <div class="score-value" id="best-score" role="status" aria-live="polite">0</div>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button class="btn" id="restart-btn" aria-label="重新开始游戏">
+                        <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                    </button>
+                    <button class="btn" id="instructions-btn" aria-label="查看游戏说明">
+                        <i class="fas fa-question-circle" aria-hidden="true"></i> 游戏说明
+                    </button>
+                    <button class="btn" id="sound-toggle" aria-label="切换音效，当前状态为开启">
+                        <i class="fas fa-volume-up" aria-hidden="true"></i> 音效: 开
+                    </button>
+                    <div class="difficulty-selector">
+                        <label for="difficulty">难度:</label>
+                        <select id="difficulty" aria-label="选择游戏难度">
+                            <option value="easy">简单</option>
+                            <option value="normal" selected>普通</option>
+                            <option value="hard">困难</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-info">
+                <div class="goal-container">
+                    <h3><i class="fas fa-bullseye" aria-hidden="true"></i> 游戏目标</h3>
+                    <p>合并水果直到获得 <span class="goal-fruit">🍉 西瓜</span>！</p>
+                    <div class="fruit-progress">
+                        <div class="fruit-chain" aria-label="水果合并顺序：苹果、香蕉、橙子、葡萄、草莓、西瓜">
+                            <div class="fruit-item" data-fruit="🍎" aria-label="苹果">🍎</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🍌" aria-label="香蕉">🍌</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🍊" aria-label="橙子">🍊</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🍇" aria-label="葡萄">🍇</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🍓" aria-label="草莓">🍓</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🍉" aria-label="西瓜（最终目标）">🍉</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-info">
+                    <h3><i class="fas fa-gamepad" aria-hidden="true"></i> 操作说明</h3>
+                    <div class="controls-grid" aria-label="键盘控制说明">
+                        <div class="control-item">
+                            <div class="keyboard-key" aria-hidden="true">↑</div>
+                            <span>向上移动</span>
+                        </div>
+                        <div class="control-item">
+                            <div class="keyboard-key" aria-hidden="true">↓</div>
+                            <span>向下移动</span>
+                        </div>
+                        <div class="control-item">
+                            <div class="keyboard-key" aria-hidden="true">←</div>
+                            <span>向左移动</span>
+                        </div>
+                        <div class="control-item">
+                            <div class="keyboard-key" aria-hidden="true">→</div>
+                            <span>向右移动</span>
+                        </div>
+                        <div class="control-item">
+                            <div class="keyboard-key" aria-hidden="true">R</div>
+                            <span>重新开始</span>
+                        </div>
+                    </div>
+                    <div class="next-fruit-preview" aria-label="下一个出现的水果">
+                        <span>下一个水果:</span>
+                        <div class="next-fruit" id="next-fruit" role="status" aria-live="polite">🍎</div>
+                    </div>
+                    <p class="mobile-note">在手机上，也可以使用滑动操作！</p>
+                </div>
+            </div>
+
+            <div class="game-board-container">
+                <div class="game-board" id="game-board" role="application" aria-label="水果2048游戏棋盘" tabindex="0">
+                    <!-- 4x4网格将在这里动态生成 -->
+                </div>
+
+                <div class="game-status" id="game-status" role="status" aria-live="polite" aria-label="游戏状态">
+                    <div class="status-message">游戏进行中</div>
+                </div>
+            </div>
+
+            <div class="mobile-controls" id="mobile-controls">
+                <div class="mobile-controls-title">
+                    <i class="fas fa-gamepad" aria-hidden="true"></i> 手机控制
+                </div>
+                <button class="mobile-btn" data-direction="up" aria-label="向上移动">
+                    <i class="fas fa-chevron-up" aria-hidden="true"></i>
+                </button>
+                <div class="mobile-row">
+                    <button class="mobile-btn" data-direction="left" aria-label="向左移动">
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <button class="mobile-btn" data-direction="right" aria-label="向右移动">
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <button class="mobile-btn" data-direction="down" aria-label="向下移动">
+                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                </button>
+                <p class="mobile-hint">提示：也可在游戏区域滑动操作</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>水果2048 © 2023 | 使用原生JavaScript、HTML和CSS开发 |
+                <a href="#" id="credits-link" aria-label="查看游戏说明">游戏说明</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- 游戏说明模态框 -->
+    <div class="modal" id="instructions-modal" role="dialog" aria-labelledby="instructions-title" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="instructions-title"><i class="fas fa-info-circle" aria-hidden="true"></i> 游戏说明</h2>
+                <button class="modal-close" id="instructions-close" aria-label="关闭游戏说明">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="instructions-section">
+                    <h3 id="rules-title">游戏规则</h3>
+                    <ul aria-labelledby="rules-title">
+                        <li><strong>目标：</strong>通过移动和合并水果，最终获得西瓜（🍉）</li>
+                        <li><strong>操作：</strong>使用键盘方向键或手机滑动来控制水果移动</li>
+                        <li><strong>合并：</strong>当两个相同的水果在移动方向上相邻时，它们会合并成下一个等级的水果</li>
+                        <li><strong>得分：</strong>每次合并都会获得分数，合并的水果等级越高，分数越多</li>
+                        <li><strong>游戏结束：</strong>当棋盘填满且无法进行任何移动时，游戏结束</li>
+                    </ul>
+                </div>
+
+                <div class="instructions-section">
+                    <h3 id="fruit-order-title">水果合并顺序</h3>
+                    <div class="fruit-merging-chain" role="region" aria-labelledby="fruit-order-title">
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="苹果">🍎</div>
+                            <div class="stage-label">苹果</div>
+                        </div>
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <i class="fas fa-equals" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="香蕉">🍌</div>
+                            <div class="stage-label">香蕉</div>
+                        </div>
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <i class="fas fa-equals" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="橙子">🍊</div>
+                            <div class="stage-label">橙子</div>
+                        </div>
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <i class="fas fa-equals" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="葡萄">🍇</div>
+                            <div class="stage-label">葡萄</div>
+                        </div>
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <i class="fas fa-equals" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="草莓">🍓</div>
+                            <div class="stage-label">草莓</div>
+                        </div>
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <i class="fas fa-equals" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="西瓜，最终目标">🍉</div>
+                            <div class="stage-label">西瓜 (最终目标)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="instructions-section">
+                    <h3 id="tips-title">提示与技巧</h3>
+                    <ul aria-labelledby="tips-title">
+                        <li>尽量保持最大水果在角落位置</li>
+                        <li>规划好移动顺序，避免棋盘过早填满</li>
+                        <li>优先合并低等级水果以腾出空间</li>
+                        <li>注意观察下一个即将出现的水果</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束模态框 -->
+    <div class="modal" id="game-over-modal" role="dialog" aria-labelledby="game-over-title" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="game-over-title"><i class="fas fa-trophy" aria-hidden="true"></i> 游戏结束</h2>
+            </div>
+            <div class="modal-body">
+                <div class="game-result">
+                    <div class="result-score">
+                        <h3 id="final-score-title">最终分数</h3>
+                        <div class="final-score" id="final-score" aria-labelledby="final-score-title" role="status" aria-live="polite">0</div>
+                    </div>
+
+                    <div class="result-best">
+                        <h3 id="best-display-title">最高分数</h3>
+                        <div class="best-score-display" id="best-score-display" aria-labelledby="best-display-title">0</div>
+                    </div>
+
+                    <div class="result-message" id="result-message" role="status" aria-live="assertive">
+                        差一点就成功了！再试一次吧！
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-primary" id="play-again-btn" aria-label="重新开始游戏">
+                        <i class="fas fa-play" aria-hidden="true"></i> 再来一局
+                    </button>
+                    <button class="btn" id="share-btn" aria-label="分享游戏成绩">
+                        <i class="fas fa-share-alt" aria-hidden="true"></i> 分享成绩
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

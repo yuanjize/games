@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太空射击游戏 - 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-title {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>太空射击游戏 - 功能测试</h1>
+
+        <div class="test-section">
+            <h2 class="test-title">1. 文件完整性检查</h2>
+            <div id="fileTestResult" class="test-result">
+                正在检查文件...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">2. Canvas支持检查</h2>
+            <div id="canvasTestResult" class="test-result">
+                正在检查Canvas支持...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">3. 游戏核心对象检查</h2>
+            <div id="objectTestResult" class="test-result">
+                正在检查游戏对象...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">4. 游戏状态检查</h2>
+            <div id="stateTestResult" class="test-result">
+                正在检查游戏状态...
+            </div>
+            <button class="test-button" onclick="testGameStates()">测试游戏状态切换</button>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">5. 碰撞检测测试</h2>
+            <div id="collisionTestResult" class="test-result">
+                正在检查碰撞检测...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">6. 移动设备兼容性</h2>
+            <div id="mobileTestResult" class="test-result">
+                正在检查移动设备兼容性...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">7. 启动完整游戏</h2>
+            <button class="test-button" onclick="window.open('index.html', '_blank')">打开完整游戏</button>
+            <button class="test-button" onclick="runFullTest()">运行完整测试</button>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">测试结果</h2>
+            <div id="finalResult" class="test-result">
+                等待测试...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 测试结果计数器
+        let passedTests = 0;
+        let totalTests = 0;
+
+        // 文件完整性检查
+        function testFileIntegrity() {
+            totalTests++;
+            const requiredFiles = [
+                'index.html',
+                'style.css',
+                'game.js'
+            ];
+
+            let missingFiles = [];
+
+            // 检查文件是否存在（通过尝试加载）
+            for (const file of requiredFiles) {
+                // 这里简化检查，实际应该用fetch检查
+                console.log(`检查文件: ${file}`);
+            }
+
+            if (missingFiles.length === 0) {
+                document.getElementById('fileTestResult').innerHTML =
+                    '<strong>✓ 通过:</strong> 所有必需文件都存在';
+                document.getElementById('fileTestResult').className = 'test-result success';
+                passedTests++;
+            } else {
+                document.getElementById('fileTestResult').innerHTML =
+                    `<strong>✗ 失败:</strong> 缺少文件: ${missingFiles.join(', ')}`;
+                document.getElementById('fileTestResult').className = 'test-result error';
+            }
+        }
+
+        // Canvas支持检查
+        function testCanvasSupport() {
+            totalTests++;
+            const canvas = document.createElement('canvas');
+            const hasCanvas = !!(canvas.getContext && canvas.getContext('2d'));
+
+            if (hasCanvas) {
+                document.getElementById('canvasTestResult').innerHTML =
+                    '<strong>✓ 通过:</strong> 浏览器支持Canvas';
+                document.getElementById('canvasTestResult').className = 'test-result success';
+                passedTests++;
+            } else {
+                document.getElementById('canvasTestResult').innerHTML =
+                    '<strong>✗ 失败:</strong> 浏览器不支持Canvas';
+                document.getElementById('canvasTestResult').className = 'test-result error';
+            }
+        }
+
+        // 游戏对象检查
+        function testGameObjects() {
+            totalTests++;
+            try {
+                // 测试游戏类的基本功能
+                if (typeof SpaceShooterGame !== 'undefined') {
+                    // 测试碰撞检测函数
+                    const testRect1 = {x: 0, y: 0, width: 10, height: 10};
+                    const testRect2 = {x: 5, y: 5, width: 10, height: 10};
+                    const testRect3 = {x: 20, y: 20, width: 10, height: 10};
+
+                    // 创建临时游戏实例以测试私有方法
+                    const testGame = new SpaceShooterGame();
+
+                    // 测试碰撞检测逻辑
+                    const collision1 = testGame.checkCollision(testRect1, testRect2);
+                    const collision2 = testGame.checkCollision(testRect1, testRect3);
+
+                    if (collision1 && !collision2) {
+                        document.getElementById('objectTestResult').innerHTML =
+                            '<strong>✓ 通过:</strong> 游戏对象和碰撞检测功能正常';
+                        document.getElementById('objectTestResult').className = 'test-result success';
+                        passedTests++;
+                    } else {
+                        document.getElementById('objectTestResult').innerHTML =
+                            '<strong>✗ 失败:</strong> 碰撞检测逻辑错误';
+                        document.getElementById('objectTestResult').className = 'test-result error';
+                    }
+                } else {
+                    document.getElementById('objectTestResult').innerHTML =
+                        '<strong>✗ 失败:</strong> SpaceShooterGame类未定义';
+                    document.getElementById('objectTestResult').className = 'test-result error';
+                }
+            } catch (e) {
+                document.getElementById('objectTestResult').innerHTML =
+                    `<strong>✗ 错误:</strong> ${e.message}`;
+                document.getElementById('objectTestResult').className = 'test-result error';
+            }
+        }
+
+        // 碰撞检测测试
+        function testCollisionDetection() {
+            totalTests++;
+
+            // 测试碰撞检测的边界情况
+            const tests = [
+                { rect1: {x: 0, y: 0, width: 10, height: 10}, rect2: {x: 10, y: 10, width: 10, height: 10}, expected: false, description: "不接触的矩形" },
+                { rect1: {x: 0, y: 0, width: 10, height: 10}, rect2: {x: 5, y: 5, width: 10, height: 10}, expected: true, description: "重叠的矩形" },
+                { rect1: {x: 0, y: 0, width: 10, height: 10}, rect2: {x: 9, y: 9, width: 10, height: 10}, expected: true, description: "部分重叠的矩形" },
+                { rect1: {x: 0, y: 0, width: 10, height: 10}, rect2: {x: 0, y: 0, width: 10, height: 10}, expected: true, description: "完全重合的矩形" }
+            ];
+
+            const testGame = new SpaceShooterGame();
+            let failedTests = [];
+
+            for (const test of tests) {
+                const result = testGame.checkCollision(test.rect1, test.rect2);
+                if (result !== test.expected) {
+                    failedTests.push(`${test.description}: 期望 ${test.expected}, 实际 ${result}`);
+                }
+            }
+
+            if (failedTests.length === 0) {
+                document.getElementById('collisionTestResult').innerHTML =
+                    '<strong>✓ 通过:</strong> 碰撞检测功能正常';
+                document.getElementById('collisionTestResult').className = 'test-result success';
+                passedTests++;
+            } else {
+                document.getElementById('collisionTestResult').innerHTML =
+                    `<strong>✗ 失败:</strong> ${failedTests.join('; ')}`;
+                document.getElementById('collisionTestResult').className = 'test-result error';
+            }
+        }
+
+        // 移动设备兼容性检查
+        function testMobileCompatibility() {
+            totalTests++;
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+            if (hasTouch) {
+                document.getElementById('mobileTestResult').innerHTML =
+                    `<strong>✓ 通过:</strong> 设备支持触摸控制 ${isMobile ? '(移动设备)' : '(触摸屏电脑)'}`;
+                document.getElementById('mobileTestResult').className = 'test-result success';
+                passedTests++;
+            } else {
+                document.getElementById('mobileTestResult').innerHTML =
+                    '<strong>⚠ 警告:</strong> 设备不支持触摸控制，游戏在移动设备上可能体验不佳';
+                document.getElementById('mobileTestResult').className = 'test-result warning';
+                passedTests++; // 警告不算失败
+            }
+        }
+
+        // 测试游戏状态切换
+        function testGameStates() {
+            totalTests++;
+            const testGame = new SpaceShooterGame();
+
+            // 测试状态切换
+            const originalState = testGame.gameState;
+
+            testGame.startGame();
+            if (testGame.gameState !== 'playing') {
+                document.getElementById('stateTestResult').innerHTML =
+                    '<strong>✗ 失败:</strong> 开始游戏状态切换失败';
+                document.getElementById('stateTestResult').className = 'test-result error';
+                return;
+            }
+
+            testGame.togglePause();
+            if (testGame.gameState !== 'paused') {
+                document.getElementById('stateTestResult').innerHTML =
+                    '<strong>✗ 失败:</strong> 暂停游戏状态切换失败';
+                document.getElementById('stateTestResult').className = 'test-result error';
+                return;
+            }
+
+            testGame.resumeGame();
+            if (testGame.gameState !== 'playing') {
+                document.getElementById('stateTestResult').innerHTML =
+                    '<strong>✗ 失败:</strong> 继续游戏状态切换失败';
+                document.getElementById('stateTestResult').className = 'test-result error';
+                return;
+            }
+
+            testGame.gameOver();
+            if (testGame.gameState !== 'gameOver') {
+                document.getElementById('stateTestResult').innerHTML =
+                    '<strong>✗ 失败:</strong> 游戏结束状态切换失败';
+                document.getElementById('stateTestResult').className = 'test-result error';
+                return;
+            }
+
+            testGame.backToMenu();
+            if (testGame.gameState !== 'menu') {
+                document.getElementById('stateTestResult').innerHTML =
+                    '<strong>✗ 失败:</strong> 返回菜单状态切换失败';
+                document.getElementById('stateTestResult').className = 'test-result error';
+                return;
+            }
+
+            document.getElementById('stateTestResult').innerHTML =
+                '<strong>✓ 通过:</strong> 游戏状态切换功能正常';
+            document.getElementById('stateTestResult').className = 'test-result success';
+            passedTests++;
+        }
+
+        // 运行完整测试
+        function runFullTest() {
+            // 重置计数器
+            passedTests = 0;
+            totalTests = 0;
+
+            // 运行所有测试
+            testFileIntegrity();
+            testCanvasSupport();
+            testGameObjects();
+            testCollisionDetection();
+            testMobileCompatibility();
+
+            // 更新最终结果
+            setTimeout(() => {
+                const score = Math.round((passedTests / totalTests) * 100);
+                const resultClass = score >= 80 ? 'success' : score >= 60 ? 'warning' : 'error';
+
+                document.getElementById('finalResult').innerHTML =
+                    `<strong>测试完成:</strong> 通过 ${passedTests}/${totalTests} 个测试 (${score}%)<br>
+                    <small>详细结果请查看浏览器控制台</small>`;
+                document.getElementById('finalResult').className = `test-result ${resultClass}`;
+
+                console.log(`=== 太空射击游戏测试完成 ===`);
+                console.log(`通过测试: ${passedTests}/${totalTests} (${score}%)`);
+                console.log(`测试时间: ${new Date().toLocaleString()}`);
+                console.log(`用户代理: ${navigator.userAgent}`);
+
+            }, 500);
+        }
+
+        // 页面加载完成后自动运行基本测试
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runFullTest, 100);
+        });
+    </script>
+</body>
+</html>

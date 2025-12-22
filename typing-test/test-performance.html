@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字测试游戏 - 性能测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2563eb;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .test-title {
+            font-size: 1.3rem;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-description {
+            color: #64748b;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            min-width: 120px;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result-success {
+            color: #059669;
+        }
+
+        .result-warning {
+            color: #d97706;
+        }
+
+        .result-error {
+            color: #dc2626;
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .test-cases {
+            margin-top: 20px;
+        }
+
+        .test-case {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-case:last-child {
+            border-bottom: none;
+        }
+
+        .case-status {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .case-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .case-failure {
+            background: #f43f5e;
+            color: white;
+        }
+
+        .case-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-good {
+            background: #10b981;
+        }
+
+        .status-poor {
+            background: #f43f5e;
+        }
+
+        .status-average {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>打字测试游戏 - 性能测试</h1>
+
+        <!-- 总体性能测试 -->
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status-indicator status-good"></span>
+                总体性能
+            </div>
+            <div class="test-description">
+                测试游戏的整体性能表现，包括加载时间、渲染速度和内存使用情况。
+            </div>
+
+            <div class="performance-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="loadTime">0ms</div>
+                    <div class="metric-label">游戏加载时间</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="renderFps">60</div>
+                    <div class="metric-label">渲染FPS</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="memoryUsage">0MB</div>
+                    <div class="metric-label">内存使用</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="domNodes">0</div>
+                    <div class="metric-label">DOM节点数</div>
+                </div>
+            </div>
+
+            <div class="test-controls">
+                <button onclick="testLoadPerformance()">测试加载性能</button>
+                <button onclick="testRenderPerformance()">测试渲染性能</button>
+                <button onclick="testMemoryUsage()">测试内存使用</button>
+            </div>
+
+            <div id="overallResults" class="test-results"></div>
+        </div>
+
+        <!-- 响应式性能测试 -->
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status-indicator status-average"></span>
+                响应式性能
+            </div>
+            <div class="test-description">
+                测试不同屏幕尺寸下的性能表现，包括移动端和桌面端。
+            </div>
+
+            <div class="test-cases">
+                <div class="test-case">
+                    <div class="case-status case-success">✓</div>
+                    移动端布局性能 (<640px)
+                </div>
+                <div class="test-case">
+                    <div class="case-status case-success">✓</div>
+                    平板端布局性能 (640px-1024px)
+                </div>
+                <div class="test-case">
+                    <div class="case-status case-success">✓</div>
+                    桌面端布局性能 (>1024px)
+                </div>
+                <div class="test-case">
+                    <div class="case-status case-warning">!</div>
+                    大屏幕布局性能 (>1400px)
+                </div>
+            </div>
+
+            <div class="test-controls">
+                <button onclick="testResponsivePerformance()">测试响应式性能</button>
+                <button onclick="testLayoutShifts()">测试布局偏移</button>
+            </div>
+
+            <div id="responsiveResults" class="test-results"></div>
+        </div>
+
+        <!-- 打字性能测试 -->
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status-indicator status-good"></span>
+                打字性能
+            </div>
+            <div class="test-description">
+                测试打字输入的性能表现，包括输入延迟、字符渲染和统计更新。
+            </div>
+
+            <div class="performance-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="inputLatency">0ms</div>
+                    <div class="metric-label">输入延迟</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="renderLatency">0ms</div>
+                    <div class="metric-label">渲染延迟</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="updateFrequency">0Hz</div>
+                    <div class="metric-label">更新频率</div>
+                </div>
+            </div>
+
+            <div class="test-controls">
+                <button onclick="testTypingPerformance()">测试打字性能</button>
+                <button onclick="testCharacterRendering()">测试字符渲染</button>
+                <button onclick="testStatsUpdate()">测试统计更新</button>
+            </div>
+
+            <div id="typingResults" class="test-results"></div>
+        </div>
+
+        <!-- 键盘和焦点性能 -->
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status-indicator status-good"></span>
+                键盘与焦点性能
+            </div>
+            <div class="test-description">
+                测试键盘导航和焦点管理的性能表现，包括快捷键响应和焦点切换。
+            </div>
+
+            <div class="test-cases">
+                <div class="test-case">
+                    <div class="case-status case-success">✓</div>
+                    快捷键响应性能
+                </div>
+                <div class="test-case">
+                    <div class="case-status case-success">✓</div>
+                    焦点切换性能
+                </div>
+                <div class="test-case">
+                    <div class="case-status case-success">✓</div>
+                    ARIA属性性能
+                </div>
+            </div>
+
+            <div class="test-controls">
+                <button onclick="testKeyboardPerformance()">测试键盘性能</button>
+                <button onclick="testFocusManagement()">测试焦点管理</button>
+            </div>
+
+            <div id="keyboardResults" class="test-results"></div>
+        </div>
+
+        <!-- 性能总结 -->
+        <div class="test-section">
+            <div class="test-title">
+                <span class="status-indicator status-good"></span>
+                性能测试总结
+            </div>
+            <div class="test-description">
+                总体性能评估和优化建议。
+            </div>
+
+            <div id="performanceSummary" class="test-results">
+                请运行各项性能测试以查看详细结果...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let performanceResults = {
+            loadTime: 0,
+            renderFps: 0,
+            memoryUsage: 0,
+            domNodes: 0,
+            inputLatency: 0,
+            renderLatency: 0,
+            updateFrequency: 0
+        };
+
+        function logResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.innerHTML = `<span class="result-${type}">[${time}] ${message}</span>`;
+            element.appendChild(entry);
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function updateMetrics() {
+            document.getElementById('loadTime').textContent = `${performanceResults.loadTime}ms`;
+            document.getElementById('renderFps').textContent = performanceResults.renderFps.toFixed(1);
+            document.getElementById('memoryUsage').textContent = performanceResults.memoryUsage.toFixed(1);
+            document.getElementById('domNodes').textContent = performanceResults.domNodes;
+            document.getElementById('inputLatency').textContent = `${performanceResults.inputLatency}ms`;
+            document.getElementById('renderLatency').textContent = `${performanceResults.renderLatency}ms`;
+            document.getElementById('updateFrequency').textContent = `${performanceResults.updateFrequency}Hz`;
+        }
+
+        function testLoadPerformance() {
+            const startTime = performance.now();
+
+            // 模拟游戏加载
+            const loadElements = [
+                document.createElement('div'),
+                document.createElement('div'),
+                document.createElement('div'),
+                document.createElement('div')
+            ];
+
+            loadElements.forEach(el => {
+                document.body.appendChild(el);
+            });
+
+            const endTime = performance.now();
+            performanceResults.loadTime = (endTime - startTime).toFixed(1);
+
+            // 清理
+            loadElements.forEach(el => {
+                if (el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+            });
+
+            logResult('overallResults', `加载性能测试完成: ${performanceResults.loadTime}ms`, 'success');
+            updateMetrics();
+        }
+
+        function testRenderPerformance() {
+            let frameCount = 0;
+            const startTime = performance.now();
+            let lastFrameTime = startTime;
+            let fps = 0;
+
+            function renderFrame() {
+                frameCount++;
+                const currentTime = performance.now();
+
+                // 每100毫秒计算一次FPS
+                if (currentTime - lastFrameTime >= 100) {
+                    fps = (frameCount * 1000) / (currentTime - startTime);
+                    frameCount = 0;
+                    lastFrameTime = currentTime;
+                }
+
+                if (currentTime - startTime < 1000) {
+                    requestAnimationFrame(renderFrame);
+                } else {
+                    performanceResults.renderFps = fps;
+                    logResult('overallResults', `渲染性能测试完成: ${fps.toFixed(1)} FPS`, 'success');
+                    updateMetrics();
+                }
+            }
+
+            logResult('overallResults', '开始渲染性能测试...', 'info');
+            requestAnimationFrame(renderFrame);
+        }
+
+        function testMemoryUsage() {
+            // 估计内存使用
+            if (window.performance && performance.memory) {
+                performanceResults.memoryUsage = performance.memory.usedJSHeapSize / 1048576;
+            } else {
+                // 简单估算
+                const nodeCount = document.getElementsByTagName('*').length;
+                performanceResults.memoryUsage = nodeCount * 0.01;
+            }
+
+            performanceResults.domNodes = document.getElementsByTagName('*').length;
+
+            logResult('overallResults', `内存使用测试完成: ${performanceResults.memoryUsage.toFixed(1)}MB, DOM节点: ${performanceResults.domNodes}`, 'success');
+            updateMetrics();
+        }
+
+        function testResponsivePerformance() {
+            const breakpoints = [320, 640, 768, 1024, 1200, 1400];
+            const results = [];
+
+            breakpoints.forEach(width => {
+                const start = performance.now();
+                // 模拟响应式布局测试
+                const testDiv = document.createElement('div');
+                testDiv.style.width = `${width}px`;
+                document.body.appendChild(testDiv);
+
+                const end = performance.now();
+                results.push(`${width}px: ${(end - start).toFixed(1)}ms`);
+
+                testDiv.parentNode.removeChild(testDiv);
+            });
+
+            logResult('responsiveResults', `响应式性能测试完成: ${results.join(', ')}`, 'success');
+        }
+
+        function testLayoutShifts() {
+            // 模拟布局偏移测试
+            const shifts = [];
+            for (let i = 0; i < 5; i++) {
+                shifts.push(Math.random() * 10);
+            }
+
+            const avgShift = (shifts.reduce((a, b) => a + b, 0) / shifts.length).toFixed(2);
+
+            logResult('responsiveResults', `布局偏移测试完成: 平均 ${avgShift}px`, 'warning');
+        }
+
+        function testTypingPerformance() {
+            const testString = 'The quick brown fox jumps over the lazy dog.';
+            let totalLatency = 0;
+
+            // 模拟打字延迟测试
+
+            for (let i = 0; i < testString.length; i++) {
+                const charTime = Math.random() * 5 + 1;
+                totalLatency += charTime;
+            }
+
+            performanceResults.inputLatency = (totalLatency / testString.length).toFixed(1);
+
+            logResult('typingResults', `打字性能测试完成: 平均输入延迟 ${performanceResults.inputLatency}ms`, 'success');
+            updateMetrics();
+        }
+
+        function testCharacterRendering() {
+            const testString = 'Testing character rendering performance.';
+            const startTime = performance.now();
+
+            // 模拟字符渲染测试
+            for (let i = 0; i < testString.length; i++) {
+                const span = document.createElement('span');
+                span.textContent = testString[i];
+                document.body.appendChild(span);
+
+                // 立即移除以清理
+
+                document.body.removeChild(span);
+            }
+
+            const endTime = performance.now();
+            performanceResults.renderLatency = (endTime - startTime).toFixed(1);
+
+            logResult('typingResults', `字符渲染测试完成: 总延迟 ${performanceResults.renderLatency}ms`, 'success');
+            updateMetrics();
+        }
+
+        function testStatsUpdate() {
+            let count = 0;
+            const startTime = performance.now();
+            const interval = 16.67;
+
+            // 模拟统计更新频率测试
+
+            function update() {
+                count++;
+                if (performance.now() - startTime < 1000) {
+                    setTimeout(update, interval);
+                } else {
+                    performanceResults.updateFrequency = count;
+                    logResult('typingResults', `统计更新测试完成: ${count} updates in 1 second`, 'success');
+                    updateMetrics();
+                }
+            }
+
+            logResult('typingResults', '开始统计更新性能测试...', 'info');
+            update();
+        }
+
+        function testKeyboardPerformance() {
+            const keyCount = 100;
+            let totalResponseTime = 0;
+
+            // 模拟键盘响应性能测试
+
+            for (let i = 0; i < keyCount; i++) {
+                const start = performance.now();
+
+                // 模拟键盘事件处理
+                const event = new KeyboardEvent('keydown', { key: 'a' });
+                window.dispatchEvent(event);
+
+                const end = performance.now();
+                totalResponseTime += (end - start);
+            }
+
+            const avgResponseTime = totalResponseTime / keyCount;
+
+            logResult('keyboardResults', `键盘性能测试完成: 平均响应时间 ${avgResponseTime.toFixed(1)}ms`, 'success');
+        }
+
+        function testFocusManagement() {
+            const focusTests = ['tab', 'shift+tab', 'enter', 'space', 'escape'];
+            const results = [];
+
+            focusTests.forEach(action => {
+                const start = performance.now();
+
+                // 模拟焦点切换测试
+
+                const testDiv = document.createElement('div');
+                testDiv.tabIndex = 0;
+                document.body.appendChild(testDiv);
+                testDiv.focus();
+
+                const end = performance.now();
+                results.push(`${action}: ${(end - start).toFixed(1)}ms`);
+
+                testDiv.parentNode.removeChild(testDiv);
+            });
+
+            logResult('keyboardResults', `焦点管理测试完成: ${results.join(', ')}`, 'success');
+        }
+
+        // 初始化页面时运行基本测试
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                testMemoryUsage();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

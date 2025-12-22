@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物理弹球游戏 - Physics Pinball</title>
+    <meta name="description" content="基于真实物理引擎的经典弹球游戏，支持键盘、鼠标和触摸控制">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    </style>
+</head>
+<body>
+    <div class="game-container" role="main" aria-label="物理弹球游戏">
+        <header class="game-header">
+            <nav aria-label="游戏导航">
+                <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回游戏大厅
+                </a>
+            </nav>
+            <div class="header-content">
+                <h1>
+                    <i class="fas fa-star" aria-hidden="true"></i>
+                    物理弹球
+                    <span class="highlight" aria-label="PINBALL">PINBALL</span>
+                    <i class="fas fa-star" aria-hidden="true"></i>
+                </h1>
+                <p class="subtitle">基于真实物理引擎的经典弹球游戏</p>
+            </div>
+        </header>
+
+        <div class="game-main">
+            <section class="game-info-panel" aria-label="游戏信息">
+                <div class="score-display" role="status" aria-live="polite">
+                    <div class="score-title">分数</div>
+                    <div class="score-value" id="score" aria-label="当前分数">0</div>
+                </div>
+
+                <div class="lives-display" role="status">
+                    <div class="lives-title">生命</div>
+                    <div class="lives-value" id="lives" aria-label="剩余生命数">
+                        <i class="fas fa-heart" aria-hidden="true"></i>
+                        <i class="fas fa-heart" aria-hidden="true"></i>
+                        <i class="fas fa-heart" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                <div class="high-score-display">
+                    <div class="high-score-title">最高分</div>
+                    <div class="high-score-value" id="high-score" aria-label="历史最高分">0</div>
+                </div>
+
+                <div class="balls-display" role="status">
+                    <div class="balls-title">剩余球数</div>
+                    <div class="balls-value" id="balls-left" aria-label="剩余球数">3</div>
+                </div>
+
+                <div class="level-display">
+                    <div class="level-title">关卡</div>
+                    <div class="level-value" id="level" aria-label="当前关卡">1</div>
+                </div>
+            </section>
+
+            <section class="game-area-wrapper" aria-label="游戏区域">
+                <div class="instructions" role="region" aria-label="游戏说明">
+                    <p><i class="fas fa-keyboard" aria-hidden="true"></i> 控制: <strong>←</strong> <strong>→</strong> 箭头键 或 鼠标拖动</p>
+                    <p><i class="fas fa-mouse-pointer" aria-hidden="true"></i> 目标: 用挡板反弹球获取高分!</p>
+                </div>
+
+                <div class="game-canvas-container">
+                    <canvas id="game-canvas" aria-label="物理弹球游戏画布" role="img">
+                        您的浏览器不支持HTML5 Canvas。请升级浏览器以体验物理弹球游戏。
+                    </canvas>
+                    <div class="game-overlay" id="game-overlay" role="dialog" aria-labelledby="game-status" aria-modal="true">
+                        <div class="overlay-content">
+                            <h2 id="game-status">游戏准备中...</h2>
+                            <p id="game-message">点击开始按钮或按空格键发射球</p>
+                            <div class="overlay-actions">
+                                <button id="start-btn" class="btn-primary" aria-label="发射球开始游戏">
+                                    <i class="fas fa-play" aria-hidden="true"></i> 发射球
+                                </button>
+                                <button id="restart-btn" class="btn-secondary" aria-label="重新开始游戏">
+                                    <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-info" role="region" aria-label="控制说明">
+                    <div class="control-item">
+                        <span class="control-key"><i class="fas fa-arrow-left" aria-hidden="true"></i></span>
+                        <span class="control-text">左挡板</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+                        <span class="control-text">右挡板</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">空格</span>
+                        <span class="control-text">发射球</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-key">R</span>
+                        <span class="control-text">重新开始</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="game-features-panel">
+                <h3><i class="fas fa-gem"></i> 游戏元素</h3>
+                <div class="features-grid">
+                    <div class="feature-item bumper">
+                        <div class="feature-icon"><i class="fas fa-circle"></i></div>
+                        <div class="feature-text">
+                            <div class="feature-name">反弹器</div>
+                            <div class="feature-points">+100 分</div>
+                        </div>
+                    </div>
+                    <div class="feature-item target">
+                        <div class="feature-icon"><i class="fas fa-bullseye"></i></div>
+                        <div class="feature-text">
+                            <div class="feature-name">目标区域</div>
+                            <div class="feature-points">+250 分</div>
+                        </div>
+                    </div>
+                    <div class="feature-item ramp">
+                        <div class="feature-icon"><i class="fas fa-arrow-up"></i></div>
+                        <div class="feature-text">
+                            <div class="feature-name">斜坡</div>
+                            <div class="feature-points">+50 分</div>
+                        </div>
+                    </div>
+                    <div class="feature-item life">
+                        <div class="feature-icon"><i class="fas fa-heart"></i></div>
+                        <div class="feature-text">
+                            <div class="feature-name">额外生命</div>
+                            <div class="feature-points">+1 生命</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="game-footer">
+            <div class="footer-content">
+                <p>使用纯原生 JavaScript、HTML5 Canvas 和 CSS3 构建</p>
+                <p>物理引擎: 重力、碰撞检测、动量守恒、反弹计算</p>
+                <p class="controls-note">支持键盘、鼠标和触摸控制 | 响应式设计</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 游戏控制选项 -->
+    <div class="game-options" role="region" aria-label="游戏选项">
+        <button class="btn-option" id="sound-toggle" aria-label="切换声音效果">
+            <i class="fas fa-volume-up" aria-hidden="true"></i>
+            <span class="sr-only">声音：开启</span>
+        </button>
+        <button class="btn-option" id="vibration-toggle" aria-label="切换振动反馈">
+            <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+            <span class="sr-only">振动：关闭</span>
+        </button>
+        <button class="btn-option" id="pause-btn" aria-label="暂停游戏">
+            <i class="fas fa-pause" aria-hidden="true"></i>
+            <span class="sr-only">暂停</span>
+        </button>
+    </div>
+
+    <script src="game-enhanced.js"></script>
+    <script src="game-options.js"></script>
+    <script>
+        // 初始化游戏和选项管理器
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.enhancedGame) {
+                window.gameOptions = new GameOptionsManager(window.enhancedGame);
+
+                // 屏幕阅读器用户提示
+                const srHint = document.getElementById('sr-game-instructions');
+                if (srHint) {
+                    srHint.textContent += ' 按F1键查看键盘快捷键说明。';
+                }
+            }
+        });
+
+        // 触摸设备检测和提示
+        if ('ontouchstart' in window) {
+            document.addEventListener('DOMContentLoaded', function() {
+                const touchHint = document.createElement('div');
+                touchHint.className = 'touch-hint';
+                touchHint.innerHTML = `
+                    <div class="touch-hint-content">
+                        <i class="fas fa-hand-point-up"></i>
+                        <p>触摸并拖动来控制挡板移动</p>
+                        <button class="dismiss-hint" aria-label="关闭提示">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    document.body.appendChild(touchHint);
+
+                    // 3秒后自动隐藏
+                    setTimeout(() => {
+                        if (touchHint.parentNode) {
+                            touchHint.style.opacity = '0';
+                            setTimeout(() => {
+                                if (touchHint.parentNode) {
+                                    touchHint.parentNode.removeChild(touchHint);
+                                }
+                            }, 300);
+                        }
+                    }, 3000);
+                }, 1000);
+
+                // 点击关闭
+                document.addEventListener('click', function handleClose(e) {
+                    if (e.target.closest('.dismiss-hint')) {
+                        const hint = e.target.closest('.touch-hint');
+                        if (hint && hint.parentNode) {
+                            hint.parentNode.removeChild(hint);
+                        }
+                        document.removeEventListener('click', handleClose);
+                    }
+                });
+            });
+        }
+    </script>
+
+    <style>
+        /* 触摸提示样式 */
+        .touch-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(99, 102, 241, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease, bounce 2s ease-in-out infinite;
+            transition: opacity 0.3s ease;
+        }
+
+        .touch-hint-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .touch-hint i {
+            font-size: 24px;
+        }
+
+        .touch-hint p {
+            margin: 0;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+        }
+
+        .dismiss-hint {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            transition: background-color 0.2s ease;
+            margin-left: auto;
+        }
+
+        .dismiss-hint:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        /* 减少动画偏好 */
+        @media (prefers-reduced-motion: reduce) {
+            .touch-hint {
+                animation: fadeIn 0.5s ease;
+            }
+        }
+    </style>
+</body>
+</html>

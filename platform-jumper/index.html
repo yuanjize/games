@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
+  <meta name="description" content="平台跳跃大冒险 - 一个使用原生JavaScript开发的2D平台跳跃游戏，收集金币，避开危险，挑战你的极限！">
+  <meta name="keywords" content="平台跳跃游戏, JavaScript游戏, 2D游戏, 网页游戏, 休闲游戏">
+  <meta name="author" content="游戏开发者">
+  <meta name="theme-color" content="#0f172a">
+  <meta property="og:title" content="平台跳跃大冒险">
+  <meta property="og:description" content="收集金币，避开危险，挑战你的极限！">
+  <meta property="og:type" content="website">
+
+  <title>平台跳跃大冒险</title>
+
+  <!-- 字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome图标 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- 样式表 -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- 可访问性特性 -->
+  <style>
+    /* 减少动画偏好 */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container" role="main">
+    <!-- 游戏头部 -->
+    <header class="game-header" role="banner">
+      <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+        <span class="button-text">返回游戏大厅</span>
+      </a>
+
+      <div class="game-header-content">
+        <h1>
+          <i class="fas fa-running" aria-hidden="true"></i>
+          <span class="text-gradient">平台跳跃大冒险</span>
+        </h1>
+        <p class="game-subtitle">收集金币，避开危险，挑战你的极限！</p>
+      </div>
+    </header>
+
+    <!-- 游戏主体 -->
+    <main class="game-main">
+      <!-- 游戏画布区域 -->
+      <div class="canvas-container" id="gameArea">
+        <canvas
+          id="gameCanvas"
+          width="800"
+          height="500"
+          aria-label="游戏画面区域，玩家在这里控制角色进行平台跳跃"
+          role="img"
+        >
+          <p>您的浏览器不支持HTML5 Canvas，请使用现代浏览器如Chrome、Firefox、Edge等来体验游戏。</p>
+        </canvas>
+
+        <!-- 游戏状态覆盖层 -->
+        <div id="gameOverlay" class="game-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+          <!-- 开始屏幕 -->
+          <div id="startScreen" class="overlay-content start-screen" role="document">
+            <h2>
+              <i class="fas fa-play-circle" aria-hidden="true"></i>
+              开始游戏
+            </h2>
+
+            <div class="instructions">
+              <h3>
+                <i class="fas fa-gamepad" aria-hidden="true"></i>
+                控制方式
+              </h3>
+
+              <div class="control-instructions">
+                <div class="control-item" role="listitem">
+                  <span class="key" aria-label="左箭头键">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    左箭头
+                  </span>
+                  <span class="description">向左移动</span>
+                </div>
+
+                <div class="control-item" role="listitem">
+                  <span class="key" aria-label="右箭头键">
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    右箭头
+                  </span>
+                  <span class="description">向右移动</span>
+                </div>
+
+                <div class="control-item" role="listitem">
+                  <span class="key" aria-label="空格键">
+                    <i class="fas fa-arrow-up" aria-hidden="true"></i>
+                    空格键
+                  </span>
+                  <span class="description">跳跃</span>
+                </div>
+              </div>
+
+              <div class="mobile-controls-info">
+                <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+                移动设备：使用屏幕虚拟按钮
+              </div>
+            </div>
+
+            <button
+              id="startButton"
+              class="btn-primary"
+              aria-label="开始游戏"
+            >
+              <i class="fas fa-play" aria-hidden="true"></i>
+              <span class="button-text">开始冒险</span>
+            </button>
+
+            <div class="game-features">
+              <h4>
+                <i class="fas fa-star" aria-hidden="true"></i>
+                游戏特色
+              </h4>
+              <ul role="list">
+                <li role="listitem">
+                  <i class="fas fa-coins" aria-hidden="true"></i>
+                  收集金币获得分数
+                </li>
+                <li role="listitem">
+                  <i class="fas fa-skull-crossbones" aria-hidden="true"></i>
+                  避开尖刺和敌人
+                </li>
+                <li role="listitem">
+                  <i class="fas fa-layer-group" aria-hidden="true"></i>
+                  多个关卡挑战
+                </li>
+                <li role="listitem">
+                  <i class="fas fa-mobile-alt" aria-hidden="true"></i>
+                  支持手机触控
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 游戏结束屏幕 -->
+          <div
+            id="gameOverScreen"
+            class="overlay-content game-over-screen"
+            role="document"
+            aria-hidden="true"
+          >
+            <h2>
+              <i class="fas fa-skull" aria-hidden="true"></i>
+              游戏结束
+            </h2>
+
+            <div class="score-summary" role="region" aria-label="游戏结果统计">
+              <p>最终得分: <span id="finalScore" aria-live="polite">0</span></p>
+              <p>收集金币: <span id="finalCoins" aria-live="polite">0</span></p>
+              <p>关卡进度: <span id="finalLevel" aria-live="polite">1</span></p>
+            </div>
+
+            <button
+              id="restartButton"
+              class="btn-primary"
+              aria-label="重新开始游戏"
+            >
+              <i class="fas fa-redo" aria-hidden="true"></i>
+              <span class="button-text">重新开始</span>
+            </button>
+          </div>
+
+          <!-- 关卡完成屏幕 -->
+          <div
+            id="levelCompleteScreen"
+            class="overlay-content level-complete-screen"
+            role="document"
+            aria-hidden="true"
+          >
+            <h2>
+              <i class="fas fa-flag-checkered" aria-hidden="true"></i>
+              关卡完成！
+            </h2>
+
+            <div class="level-summary" role="region" aria-label="关卡完成统计">
+              <p>关卡 <span id="completedLevel" aria-live="polite">1</span> 完成！</p>
+              <p>获得金币奖励: <span id="levelCoins" aria-live="polite">0</span></p>
+            </div>
+
+            <button
+              id="nextLevelButton"
+              class="btn-primary"
+              aria-label="进入下一关卡"
+            >
+              <i class="fas fa-forward" aria-hidden="true"></i>
+              <span class="button-text">下一关卡</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 游戏侧边栏 -->
+      <aside class="game-sidebar" role="complementary">
+        <!-- 游戏统计信息 -->
+        <div class="game-stats" role="region" aria-label="游戏状态统计">
+          <div class="stat-item" role="listitem">
+            <i class="fas fa-medal" aria-hidden="true"></i>
+            <div class="stat-content">
+              <span class="stat-label">得分</span>
+              <span id="score" class="stat-value" aria-live="polite">0</span>
+            </div>
+          </div>
+
+          <div class="stat-item" role="listitem">
+            <i class="fas fa-coins" aria-hidden="true"></i>
+            <div class="stat-content">
+              <span class="stat-label">金币</span>
+              <span id="coins" class="stat-value" aria-live="polite">0</span>
+            </div>
+          </div>
+
+          <div class="stat-item" role="listitem">
+            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            <div class="stat-content">
+              <span class="stat-label">关卡</span>
+              <span id="currentLevel" class="stat-value" aria-live="polite">1</span>
+            </div>
+          </div>
+
+          <div class="stat-item" role="listitem">
+            <i class="fas fa-heart" aria-hidden="true"></i>
+            <div class="stat-content">
+              <span class="stat-label">生命值</span>
+              <span id="health" class="stat-value" aria-live="polite">3</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 桌面端键盘控制说明 -->
+        <div class="game-controls-desktop" role="region" aria-label="键盘控制说明">
+          <h3>
+            <i class="fas fa-keyboard" aria-hidden="true"></i>
+            键盘控制
+          </h3>
+
+          <div class="keyboard-controls" role="list">
+            <div class="key-row" role="listitem">
+              <div class="key-cap" aria-label="左箭头键">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+              </div>
+              <span>左移</span>
+            </div>
+
+            <div class="key-row" role="listitem">
+              <div class="key-cap" aria-label="右箭头键">
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+              </div>
+              <span>右移</span>
+            </div>
+
+            <div class="key-row" role="listitem">
+              <div class="key-cap" aria-label="上箭头键">
+                <i class="fas fa-arrow-up" aria-hidden="true"></i>
+              </div>
+              <span>跳跃</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 移动设备触控按钮 -->
+        <div class="mobile-controls" role="region" aria-label="移动端触控按钮">
+          <div class="mobile-controls-container">
+            <div class="mobile-control-row">
+              <button
+                id="mobileLeft"
+                class="mobile-btn"
+                aria-label="向左移动"
+              >
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+              </button>
+
+              <button
+                id="mobileJump"
+                class="mobile-btn jump-btn"
+                aria-label="跳跃"
+              >
+                <i class="fas fa-arrow-up" aria-hidden="true"></i>
+              </button>
+
+              <button
+                id="mobileRight"
+                class="mobile-btn"
+                aria-label="向右移动"
+              >
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 游戏元素说明 -->
+        <div class="power-ups-info" role="region" aria-label="游戏元素说明">
+          <h3>
+            <i class="fas fa-bolt" aria-hidden="true"></i>
+            游戏元素说明
+          </h3>
+
+          <ul role="list">
+            <li role="listitem">
+              <span class="coin-icon" aria-hidden="true">🟡</span>
+              金币 - 10分
+            </li>
+            <li role="listitem">
+              <span class="spike-icon" aria-hidden="true">🔺</span>
+              尖刺 - 危险！
+            </li>
+            <li role="listitem">
+              <span class="enemy-icon" aria-hidden="true">👾</span>
+              敌人 - 危险！
+            </li>
+            <li role="listitem">
+              <span class="platform-icon" aria-hidden="true">▬</span>
+              平台 - 可站立
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 游戏页脚 -->
+    <footer class="game-footer" role="contentinfo">
+      <p>
+        <i class="fas fa-code" aria-hidden="true"></i>
+        使用原生JavaScript、HTML5和CSS3开发
+      </p>
+      <p>
+        <i class="fas fa-gamepad" aria-hidden="true"></i>
+        支持键盘和触控操作 |
+        <i class="fas fa-sync-alt" aria-hidden="true"></i>
+        60FPS流畅体验
+      </p>
+    </footer>
+  </div>
+
+  <!-- 音频元素 -->
+  <audio
+    id="jumpSound"
+    preload="auto"
+    aria-hidden="true"
+  ></audio>
+  <audio
+    id="coinSound"
+    preload="auto"
+    aria-hidden="true"
+  ></audio>
+  <audio
+    id="deathSound"
+    preload="auto"
+    aria-hidden="true"
+  ></audio>
+  <audio
+    id="levelCompleteSound"
+    preload="auto"
+    aria-hidden="true"
+  ></audio>
+
+  <!-- 游戏脚本 -->
+  <script src="game.js" defer></script>
+</body>
+</html>

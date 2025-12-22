@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Cards Tests</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #ddd; padding: 20px; }
+        .pass { color: #4ade80; }
+        .fail { color: #f87171; }
+    </style>
+</head>
+<body>
+    <h1>Unit Tests: Memory Cards</h1>
+    <div id="results"></div>
+
+    <!-- Mocks for DOM elements -->
+    <div id="gameBoard" style="display:none"></div>
+    <div id="moves" style="display:none"></div>
+    <div id="matches" style="display:none"></div>
+    <div id="timer" style="display:none"></div>
+    <button id="restartBtn" style="display:none"></button>
+    <button id="themeBtn" style="display:none"></button>
+    <button id="playAgainBtn" style="display:none"></button>
+    <div id="winModal" style="display:none">
+        <span id="winTime"></span>
+        <span id="winMoves"></span>
+    </div>
+    <!-- Difficulty buttons simulation -->
+    <button class="difficulty-btn" data-difficulty="easy"></button>
+
+    <script src="game.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        let passed = 0, failed = 0;
+
+        function assert(cond, msg) {
+            const div = document.createElement('div');
+            if(cond) {
+                div.className = 'pass';
+                div.textContent = `✓ PASS: ${msg}`;
+                passed++;
+            } else {
+                div.className = 'fail';
+                div.textContent = `✗ FAIL: ${msg}`;
+                failed++;
+            }
+            results.appendChild(div);
+        }
+
+        setTimeout(() => {
+            try {
+                const game = window.game;
+                
+                // Test 1: Init
+                assert(game.state.cards.length === 16, "Easy mode initializes 16 cards (4x4)");
+                
+                // Test 2: Flip Logic
+                const card0 = game.state.cards[0];
+                game.flip(0);
+                assert(card0.isFlipped === true, "Card flips when clicked");
+                assert(game.state.flipped.length === 1, "Flipped array tracks 1 card");
+                
+                // Test 3: Match Logic (Mocking)
+                // Force match
+                const icon = card0.icon;
+                // Find another card with same icon
+                const matchIndex = game.state.cards.findIndex((c, i) => i !== 0 && c.icon === icon);
+                
+                game.flip(matchIndex);
+                
+                assert(game.state.locked === true, "Game locks when 2 cards flipped");
+                
+                // Check Match Logic execution (synchronous part)
+                // Since checkMatch uses setTimeout for non-match, but match is immediate logic update
+                assert(game.state.matched.includes(0) && game.state.matched.includes(matchIndex), "Cards marked as matched");
+                
+            } catch(e) {
+                assert(false, `Crash: ${e.message}`);
+            }
+            
+            const h = document.createElement('h3');
+            h.textContent = `Summary: ${passed} Pass / ${failed} Fail`;
+            results.prepend(h);
+        }, 500);
+    </script>
+</body>
+</html>

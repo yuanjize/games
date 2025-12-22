@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页游戏合集 - 十个精彩游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0a0c0;
+            margin-bottom: 20px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #00dbde;
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .game-description {
+            color: #b0b0d0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .game-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-ready {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-dev {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #8080a0;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 5px solid #00dbde;
+        }
+
+        .instructions h2 {
+            margin-bottom: 10px;
+            color: #00dbde;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .games-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        .game-card.coming-soon {
+            opacity: 0.7;
+        }
+
+        .game-card.coming-soon:hover {
+            transform: none;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-gamepad"></i> 网页游戏合集</h1>
+            <p class="subtitle">十个精心设计的网页游戏，纯原生JavaScript实现，点击卡片开始游戏</p>
+        </header>
+
+        <div class="instructions">
+            <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
+            <p>点击下方游戏卡片即可进入游戏页面。所有游戏都使用纯HTML、CSS和JavaScript开发，无需安装任何插件。</p>
+        </div>
+
+        <div class="games-grid" id="games-container">
+            <!-- 游戏卡片将通过JavaScript动态加载 -->
+        </div>
+
+        <footer>
+            <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
+            <p>所有游戏均支持桌面和移动设备</p>
+        </footer>
+    </div>
+
+    <script>
+        // 游戏数据
+        const games = [
+            {
+                id: 'space-shooter',
+                title: '太空射击',
+                description: '控制太空飞船躲避陨石和敌人，发射激光保卫地球。',
+                icon: 'fas fa-rocket',
+                status: 'ready',
+                folder: 'space-shooter',
+                color: '#00dbde'
+            },
+            {
+                id: 'platform-jumper',
+                title: '平台跳跃',
+                description: '控制角色在平台上跳跃，躲避障碍，收集金币。',
+                icon: 'fas fa-running',
+                status: 'ready',
+                folder: 'platform-jumper',
+                color: '#ff6b6b'
+            },
+            {
+                id: 'fruit-2048',
+                title: '水果2048',
+                description: '合并相同水果达到2048，数字游戏的甜美变体。',
+                icon: 'fas fa-apple-alt',
+                status: 'ready',
+                folder: 'fruit-2048',
+                color: '#4cd964'
+            },
+            {
+                id: 'memory-cards',
+                title: '记忆翻牌',
+                description: '翻转卡片匹配相同图案，测试你的记忆力。',
+                icon: 'fas fa-brain',
+                status: 'ready',
+                folder: 'memory-cards',
+                color: '#ffd166'
+            },
+            {
+                id: 'snake-game',
+                title: '贪吃蛇',
+                description: '经典贪吃蛇游戏，控制蛇吃食物长大，避免撞墙。',
+                icon: 'fas fa-snake',
+                status: 'ready',
+                folder: 'snake-game',
+                color: '#06d6a0'
+            },
+            {
+                id: 'brick-breaker',
+                title: '打砖块',
+                description: '用挡板反弹球打碎砖块，挑战高分。',
+                icon: 'fas fa-table-tennis',
+                status: 'ready',
+                folder: 'brick-breaker',
+                color: '#118ab2'
+            },
+            {
+                id: 'tic-tac-toe',
+                title: '井字棋AI',
+                description: '与智能AI对战井字棋，你能战胜电脑吗？',
+                icon: 'fas fa-times-circle',
+                status: 'ready',
+                folder: 'tic-tac-toe',
+                color: '#ef476f'
+            },
+            {
+                id: 'minesweeper',
+                title: '扫雷游戏',
+                description: '经典扫雷游戏的网页版，小心地雷！',
+                icon: 'fas fa-bomb',
+                status: 'ready',
+                folder: 'minesweeper',
+                color: '#ff9e00'
+            },
+            {
+                id: 'typing-test',
+                title: '打字速度测试',
+                description: '测试你的打字速度和准确率，提升键盘技能。',
+                icon: 'fas fa-keyboard',
+                status: 'ready',
+                folder: 'typing-test',
+                color: '#9d4edd'
+            },
+            {
+                id: 'physics-pinball',
+                title: '物理弹球',
+                description: '基于物理引擎的弹球游戏，控制挡板弹跳小球。',
+                icon: 'fas fa-basketball-ball',
+                status: 'ready',
+                folder: 'physics-pinball',
+                color: '#ff9e00'
+            }
+        ];
+
+        // 渲染游戏卡片
+        function renderGames() {
+            const container = document.getElementById('games-container');
+            container.innerHTML = '';
+
+            games.forEach(game => {
+                const card = document.createElement('div');
+                card.className = `game-card ${game.status === 'dev' ? 'coming-soon' : ''}`;
+                card.innerHTML = `
+                    <div class="game-icon" style="color: ${game.color}">
+                        <i class="${game.icon}"></i>
+                    </div>
+                    <h3 class="game-title">${game.title}</h3>
+                    <p class="game-description">${game.description}</p>
+                    <span class="game-status ${game.status === 'ready' ? 'status-ready' : 'status-dev'}">
+                        ${game.status === 'ready' ? '可游玩' : '开发中'}
+                    </span>
+                `;
+
+                // 添加点击事件
+                if (game.status === 'ready') {
+                    card.addEventListener('click', () => {
+                        window.location.href = `./${game.folder}/`;
+                    });
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        // 页面加载完成后渲染游戏
+        document.addEventListener('DOMContentLoaded', renderGames);
+    </script>
+</body>
+</html>

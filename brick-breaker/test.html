@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brick Breaker Tests</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #ddd; padding: 20px; }
+        .pass { color: #4ade80; }
+        .fail { color: #f87171; }
+        .test-group { margin-bottom: 20px; border: 1px solid #333; padding: 10px; border-radius: 8px; }
+        h2 { margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Unit Tests: Brick Breaker</h1>
+    <div id="results">Running tests...</div>
+
+    <!-- Hidden canvas for game logic -->
+    <canvas id="gameCanvas" width="800" height="600" style="display:none;"></canvas>
+    
+    <!-- Load Game Script -->
+    <script src="game.js"></script>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        let passed = 0;
+        let failed = 0;
+
+        function assert(condition, message) {
+            const div = document.createElement('div');
+            if (condition) {
+                div.className = 'pass';
+                div.textContent = `✓ PASS: ${message}`;
+                passed++;
+            } else {
+                div.className = 'fail';
+                div.textContent = `✗ FAIL: ${message}`;
+                failed++;
+            }
+            resultsDiv.appendChild(div);
+        }
+
+        function runTests() {
+            resultsDiv.innerHTML = '';
+            
+            // Test 1: Initialization
+            try {
+                const game = new Game();
+                assert(game.balls.length === 1, "Game initializes with 1 ball");
+                assert(game.lives === 3, "Game initializes with 3 lives");
+            } catch (e) {
+                assert(false, `Initialization crashed: ${e.message}`);
+            }
+
+            // Test 2: Powerup Velocity Normalization (The Fix)
+            try {
+                const game = new Game();
+                // Set up a specific ball velocity (not 45 degrees)
+                // e.g. moving steep upwards
+                const ball = game.balls[0];
+                ball.dx = 1;
+                ball.dy = -10; 
+                ball.speed = Math.sqrt(1*1 + 10*10); // approx 10.05
+                
+                const originalRatio = ball.dx / ball.dy;
+                
+                // Apply Fast Ball
+                game.applyPowerup('ball_fast');
+                
+                const newRatio = ball.dx / ball.dy;
+                
+                // The ratio should be preserved (floating point tolerance)
+                const ratioDiff = Math.abs(originalRatio - newRatio);
+                assert(ratioDiff < 0.001, `Ball angle preserved after speed up (Diff: ${ratioDiff})`);
+                
+                // Speed should be increased
+                const newSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                assert(newSpeed > 14, "Ball speed increased significantly");
+
+            } catch (e) {
+                assert(false, `Powerup test crashed: ${e.message}`);
+            }
+
+            // Test 3: Paddle Movement
+            try {
+                const game = new Game();
+                const initialX = game.paddle.x;
+                
+                // Simulate Right Arrow
+                const event = new KeyboardEvent('keydown', { code: 'ArrowRight' });
+                document.dispatchEvent(event);
+                
+                // We can't easily trigger the event listener directly without mocking, 
+                // but we can test the update logic if we manually set state
+                game.state = 'playing';
+                game.paddle.x += game.paddle.speed;
+                
+                assert(game.paddle.x > initialX, "Paddle moves right");
+            } catch (e) {
+                assert(false, `Paddle test crashed: ${e.message}`);
+            }
+
+            // Summary
+            const summary = document.createElement('h3');
+            summary.textContent = `Total: ${passed + failed} | Passed: ${passed} | Failed: ${failed}`;
+            resultsDiv.prepend(summary);
+        }
+
+        // Wait for DOM
+        setTimeout(runTests, 500);
+    </script>
+</body>
+</html>

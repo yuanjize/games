@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打字速度测试游戏</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回游戏大厅
+            </a>
+            <h1 class="logo">
+                <i class="fas fa-keyboard" aria-hidden="true"></i>
+                <span>打字速度测试</span>
+            </h1>
+            <div class="theme-toggle">
+                <button id="themeToggle" class="theme-btn" title="切换主题" aria-label="切换明暗主题模式">
+                    <i class="fas fa-moon" aria-hidden="true"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- 游戏控制区域 -->
+            <div class="game-controls" role="toolbar" aria-label="游戏控制工具栏">
+                <div class="controls-left">
+                    <button id="newGameBtn" class="btn btn-primary" aria-label="开始新游戏">
+                        <i class="fas fa-play" aria-hidden="true"></i> 开始新游戏
+                    </button>
+                    <button id="restartBtn" class="btn btn-secondary" disabled aria-label="重新开始游戏">
+                        <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                    </button>
+                </div>
+
+                <div class="controls-center">
+                    <div class="mode-selector">
+                        <label for="gameMode" id="gameModeLabel">游戏模式:</label>
+                        <select id="gameMode" class="select-box" aria-labelledby="gameModeLabel">
+                            <option value="words">字数模式 (30词)</option>
+                            <option value="time-1">时间模式 (1分钟)</option>
+                            <option value="time-3">时间模式 (3分钟)</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                    </div>
+
+                    <div class="difficulty-selector">
+                        <label for="difficulty" id="difficultyLabel">难度:</label>
+                        <select id="difficulty" class="select-box" aria-labelledby="difficultyLabel">
+                            <option value="easy">简单 (常用词)</option>
+                            <option value="medium" selected>中等 (普通文本)</option>
+                            <option value="hard">困难 (技术文本)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="controls-right">
+                    <button id="soundToggle" class="btn btn-icon" title="音效开关" aria-label="音效开关">
+                        <i class="fas fa-volume-up" aria-hidden="true"></i>
+                    </button>
+                    <button id="settingsBtn" class="btn btn-icon" title="设置" aria-label="游戏设置">
+                        <i class="fas fa-cog" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 游戏信息显示区域 -->
+            <div class="game-stats">
+                <div class="stat-card" aria-live="polite" aria-label="每分钟字数">
+                    <div class="stat-icon">
+                        <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="wpm">0</div>
+                        <div class="stat-label">WPM</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" aria-live="polite" aria-label="打字准确率">
+                    <div class="stat-icon">
+                        <i class="fas fa-percentage" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="accuracy">100%</div>
+                        <div class="stat-label">准确率</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" aria-live="polite" aria-label="已用时间">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="timer">0:00</div>
+                        <div class="stat-label">时间</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" aria-live="polite" aria-label="正确字符数">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="correct">0</div>
+                        <div class="stat-label">正确字符</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" aria-live="polite" aria-label="错误字符数">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="errors">0</div>
+                        <div class="stat-label">错误</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" aria-live="polite" aria-label="游戏进度">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line" aria-hidden="true"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="progress">0%</div>
+                        <div class="stat-label">进度</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 打字区域 -->
+            <div class="typing-area">
+                <div class="typing-text-container">
+                    <div id="typingText" class="typing-text" aria-live="polite" role="textbox" aria-multiline="true">
+                        请点击"开始新游戏"按钮开始打字测试...
+                    </div>
+                    <div class="cursor-container">
+                        <div id="cursor" class="cursor" aria-hidden="true"></div>
+                    </div>
+                </div>
+
+                <div class="input-container">
+                    <input type="text"
+                           id="typingInput"
+                           class="typing-input"
+                           placeholder="点击此处开始打字..."
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false"
+                           disabled
+                           aria-label="打字输入框"
+                           aria-describedby="typingInstructions">
+                </div>
+
+                <div class="instructions" id="typingInstructions" aria-label="打字说明">
+                    <div class="instruction-item">
+                        <span class="char-correct" aria-label="正确字符显示为绿色">正确字符</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="char-incorrect" aria-label="错误字符显示为红色">错误字符</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="char-current" aria-label="当前字符有蓝色背景">当前字符</span>
+                    </div>
+                    <div class="instruction-item">
+                        <i class="fas fa-backspace" aria-hidden="true"></i> 退格键删除
+                    </div>
+                    <div class="instruction-item">
+                        <i class="fas fa-undo" aria-hidden="true"></i> Esc重置
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自定义设置面板 -->
+            <div id="settingsPanel" class="settings-panel" style="display: none;">
+                <div class="settings-header">
+                    <h3><i class="fas fa-cog"></i> 游戏设置</h3>
+                    <button id="closeSettings" class="btn btn-icon">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="settings-content">
+                    <div class="setting-group">
+                        <label for="customWords">自定义单词数:</label>
+                        <input type="number" id="customWords" class="setting-input" min="10" max="200" value="50">
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="customTime">自定义时间(秒):</label>
+                        <input type="number" id="customTime" class="setting-input" min="30" max="600" value="60">
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="punctuation">标点符号:</label>
+                        <select id="punctuation" class="setting-select">
+                            <option value="none">无标点</option>
+                            <option value="some" selected>基本标点</option>
+                            <option value="all">全标点</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="language">语言:</label>
+                        <select id="language" class="setting-select">
+                            <option value="zh" selected>中文</option>
+                            <option value="en">英文</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="cursorSpeed">光标闪烁速度:</label>
+                        <select id="cursorSpeed" class="setting-select">
+                            <option value="slow">慢</option>
+                            <option value="medium" selected>中</option>
+                            <option value="fast">快</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="showHints">显示提示:</label>
+                        <input type="checkbox" id="showHints" class="setting-checkbox" checked>
+                    </div>
+                </div>
+
+                <div class="settings-footer">
+                    <button id="saveSettings" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 保存设置
+                    </button>
+                    <button id="resetSettings" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> 重置为默认
+                    </button>
+                </div>
+            </div>
+
+            <!-- 历史记录区域 -->
+            <div class="history-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-history"></i> 历史记录</h3>
+                    <button id="clearHistory" class="btn btn-text">
+                        <i class="fas fa-trash"></i> 清空记录
+                    </button>
+                </div>
+
+                <div id="historyList" class="history-list">
+                    <div class="history-empty">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>暂无历史记录</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 结果模态框 -->
+            <div id="resultModal" class="modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="resultMessage">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modalTitle"><i class="fas fa-trophy" aria-hidden="true"></i> 测试完成!</h2>
+                        <button id="closeModal" class="btn btn-icon" aria-label="关闭结果窗口">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="result-stats">
+                            <div class="result-stat">
+                                <div class="result-value" id="resultWpm">0</div>
+                                <div class="result-label">WPM</div>
+                            </div>
+                            <div class="result-stat">
+                                <div class="result-value" id="resultAccuracy">0%</div>
+                                <div class="result-label">准确率</div>
+                            </div>
+                            <div class="result-stat">
+                                <div class="result-value" id="resultTime">0:00</div>
+                                <div class="result-label">时间</div>
+                            </div>
+                            <div class="result-stat">
+                                <div class="result-value" id="resultErrors">0</div>
+                                <div class="result-label">错误</div>
+                            </div>
+                        </div>
+
+                        <div class="result-message">
+                            <p id="resultMessage">计算中...</p>
+                        </div>
+
+                        <div class="result-actions">
+                            <button id="shareResult" class="btn btn-primary" aria-label="分享测试结果">
+                                <i class="fas fa-share" aria-hidden="true"></i> 分享结果
+                            </button>
+                            <button id="playAgain" class="btn btn-secondary" aria-label="开始新一局游戏">
+                                <i class="fas fa-play" aria-hidden="true"></i> 再来一局
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer" role="contentinfo">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4><i class="fas fa-info-circle" aria-hidden="true"></i> 关于</h4>
+                    <p>打字速度测试游戏 - 提升您的打字速度和准确性</p>
+                </div>
+
+                <div class="footer-section">
+                    <h4><i class="fas fa-gamepad" aria-hidden="true"></i> 游戏提示</h4>
+                    <ul>
+                        <li>保持正确坐姿，手腕放松</li>
+                        <li>眼睛看着屏幕而不是键盘</li>
+                        <li>定期练习以提高速度和准确率</li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4><i class="fas fa-keyboard" aria-hidden="true"></i> 键盘快捷键</h4>
+                    <ul>
+                        <li><kbd>Esc</kbd> - 重置游戏</li>
+                        <li><kbd>空格</kbd> - 开始/暂停</li>
+                        <li><kbd>F1</kbd> - 显示帮助</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2025 打字速度测试游戏 | 使用原生 JavaScript、HTML 和 CSS 构建</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 键盘可视化 -->
+    <div id="keyboardOverlay" class="keyboard-overlay">
+        <div class="keyboard-highlight"></div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
