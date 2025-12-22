@@ -4,7 +4,7 @@
   "description": "Collection of 10 web games built with HTML, CSS and JavaScript",
   "main": "index.html",
   "scripts": {
-    "build": "echo 'Static site - no build required'"
+    "build": "echo 'Building static site...'"
   },
   "keywords": ["games", "web-games", "javascript-games"],
   "author": "",
