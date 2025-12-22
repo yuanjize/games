@@ -1,0 +1,12 @@
+{
+  "name": "web-games-collection",
+  "version": "1.0.0",
+  "description": "Collection of 10 web games built with HTML, CSS and JavaScript",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Static site - no build required'"
+  },
+  "keywords": ["games", "web-games", "javascript-games"],
+  "author": "",
+  "license": "MIT"
+}
