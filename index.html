@@ -39,6 +39,11 @@
         </button>
     </div>
 
+    <!-- 布局切换按钮 -->
+    <button class="layout-toggle" id="layout-toggle" aria-label="切换布局">
+        <i class="fas fa-columns"></i>
+    </button>
+
     <!-- 背景装饰 -->
     <div class="bg-decoration">
         <div class="floating-shape shape-1"></div>
@@ -48,107 +53,270 @@
         <div class="floating-shape shape-5"></div>
     </div>
 
-    <div class="container">
-        <!-- 头部 -->
-        <header class="main-header">
-            <div class="header-content">
+    <!-- PC端侧边栏布局 -->
+    <div class="pc-layout" id="pc-layout">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar sidebar-left">
+            <div class="sidebar-header">
                 <div class="logo">
                     <i class="fas fa-gamepad"></i>
                 </div>
-                <div class="header-text">
-                    <h1>网页游戏合集</h1>
-                    <p class="subtitle">十个精心设计的网页游戏，纯原生JavaScript实现</p>
-                </div>
+                <h2>游戏合集</h2>
             </div>
-            <div class="header-actions">
-                <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
-                    <i class="fas fa-moon" aria-hidden="true"></i>
+
+            <!-- 统计面板 -->
+            <section class="stats-panel" id="stats-panel-pc">
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #00dbde;">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="total-games-pc">10</div>
+                        <div class="stat-label">游戏总数</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #4cd964;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="play-time-pc">0</div>
+                        <div class="stat-label">游戏时长(分)</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #ff6b6b;">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="games-played-pc">0</div>
+                        <div class="stat-label">已游玩</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分类筛选 -->
+            <nav class="category-filter">
+                <h3><i class="fas fa-filter"></i> 分类筛选</h3>
+                <button class="category-btn active" data-category="all" data-index="0">
+                    <i class="fas fa-th"></i> 全部
                 </button>
-            </div>
-        </header>
+                <button class="category-btn" data-category="action" data-index="1">
+                    <i class="fas fa-bolt"></i> 动作
+                </button>
+                <button class="category-btn" data-category="puzzle" data-index="2">
+                    <i class="fas fa-puzzle-piece"></i> 益智
+                </button>
+                <button class="category-btn" data-category="strategy" data-index="3">
+                    <i class="fas fa-chess"></i> 策略
+                </button>
+                <button class="category-btn" data-category="casual" data-index="4">
+                    <i class="fas fa-coffee"></i> 休闲
+                </button>
+            </nav>
 
-        <!-- 统计面板 -->
-        <section class="stats-panel" id="stats-panel">
-            <div class="stat-card">
-                <div class="stat-icon" style="color: #00dbde;">
-                    <i class="fas fa-gamepad"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="total-games">10</div>
-                    <div class="stat-label">游戏总数</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="color: #4cd964;">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="play-time">0</div>
-                    <div class="stat-label">游戏时长(分)</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon" style="color: #ff6b6b;">
-                    <i class="fas fa-heart"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-value" id="games-played">0</div>
-                    <div class="stat-label">已游玩</div>
-                </div>
-            </div>
-        </section>
+            <!-- 最近游玩 -->
+            <section class="recent-games" id="recent-games-pc" style="display: none;">
+                <h3><i class="fas fa-history"></i> 最近游玩</h3>
+                <div class="recent-list" id="recent-list-pc"></div>
+            </section>
+        </aside>
 
-        <!-- 分类标签 -->
-        <section class="category-filter">
-            <button class="category-btn active" data-category="all">
-                <i class="fas fa-th"></i> 全部
-            </button>
-            <button class="category-btn" data-category="action">
-                <i class="fas fa-bolt"></i> 动作
-            </button>
-            <button class="category-btn" data-category="puzzle">
-                <i class="fas fa-puzzle-piece"></i> 益智
-            </button>
-            <button class="category-btn" data-category="strategy">
-                <i class="fas fa-chess"></i> 策略
-            </button>
-            <button class="category-btn" data-category="casual">
-                <i class="fas fa-coffee"></i> 休闲
-            </button>
-        </section>
+        <!-- 中央主内容区 -->
+        <main class="main-content">
+            <!-- 搜索框 -->
+            <section class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input-pc" placeholder="搜索游戏..." aria-label="搜索游戏">
+                </div>
+            </section>
 
-        <!-- 搜索框 -->
-        <section class="search-section">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="search-input" placeholder="搜索游戏..." aria-label="搜索游戏">
-            </div>
-        </section>
+            <!-- 游戏网格 -->
+            <section class="games-grid" id="games-container-pc">
+                <!-- 游戏卡片将通过JavaScript动态加载 -->
+            </section>
 
-        <!-- 游戏网格 -->
-        <section class="games-grid" id="games-container">
-            <!-- 游戏卡片将通过JavaScript动态加载 -->
-        </section>
+            <!-- 页脚 -->
+            <footer>
+                <div class="footer-content">
+                    <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
+                    <p>所有游戏均支持桌面和移动设备</p>
+                    <div class="footer-links">
+                        <a href="#" id="about-link-pc"><i class="fas fa-info-circle"></i> 关于</a>
+                        <a href="https://github.com" target="_blank" rel="noopener">
+                            <i class="fab fa-github"></i> GitHub
+                        </a>
+                    </div>
+                </div>
+            </footer>
+        </main>
 
-        <!-- 最近游玩 -->
-        <section class="recent-games" id="recent-games" style="display: none;">
-            <h2><i class="fas fa-history"></i> 最近游玩</h2>
-            <div class="recent-list" id="recent-list"></div>
-        </section>
-
-        <!-- 页脚 -->
-        <footer>
-            <div class="footer-content">
-                <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
-                <p>所有游戏均支持桌面和移动设备</p>
-                <div class="footer-links">
-                    <a href="#" id="about-link"><i class="fas fa-info-circle"></i> 关于</a>
-                    <a href="https://github.com" target="_blank" rel="noopener">
-                        <i class="fab fa-github"></i> GitHub
-                    </a>
+        <!-- 右侧预览面板 -->
+        <aside class="sidebar sidebar-right">
+            <div class="preview-panel" id="sidebar-preview-panel">
+                <div class="preview-header panel-header">
+                    <h3><i class="fas fa-eye"></i> 游戏预览</h3>
+                    <p class="preview-hint">悬停游戏卡片查看详情</p>
+                </div>
+                <div class="preview-content" id="sidebar-preview-content">
+                    <div class="preview-placeholder">
+                        <i class="fas fa-gamepad"></i>
+                        <p>将鼠标悬停在游戏上<br>查看详细信息</p>
+                    </div>
                 </div>
             </div>
-        </footer>
+
+            <!-- 游戏统计小部件 -->
+            <div class="sidebar-widget">
+                <h4><i class="fas fa-chart-bar"></i> 游戏分布</h4>
+                <div class="category-stats">
+                    <div class="category-stat-item">
+                        <span class="stat-label"><i class="fas fa-bolt" style="color: #ff6b6b;"></i> 动作</span>
+                        <span class="stat-value">4</span>
+                    </div>
+                    <div class="category-stat-item">
+                        <span class="stat-label"><i class="fas fa-puzzle-piece" style="color: #4cd964;"></i> 益智</span>
+                        <span class="stat-value">2</span>
+                    </div>
+                    <div class="category-stat-item">
+                        <span class="stat-label"><i class="fas fa-chess" style="color: #ffd166;"></i> 策略</span>
+                        <span class="stat-value">2</span>
+                    </div>
+                    <div class="category-stat-item">
+                        <span class="stat-label"><i class="fas fa-coffee" style="color: #06d6a0;"></i> 休闲</span>
+                        <span class="stat-value">2</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="sidebar-widget">
+                <h4><i class="fas fa-bolt"></i> 快捷操作</h4>
+                <div class="quick-actions">
+                    <button class="quick-action-btn" id="scroll-top">
+                        <i class="fas fa-arrow-up"></i> 返回顶部
+                    </button>
+                    <button class="quick-action-btn" id="refresh-games">
+                        <i class="fas fa-sync-alt"></i> 刷新列表
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 移动端/原始布局 -->
+    <div class="mobile-layout" id="mobile-layout">
+        <div class="container">
+            <!-- 头部 -->
+            <header class="main-header">
+                <div class="header-content">
+                    <div class="logo">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="header-text">
+                        <h1>网页游戏合集</h1>
+                        <p class="subtitle">十个精心设计的网页游戏，纯原生JavaScript实现</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题" title="切换主题 (T)">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
+                    </button>
+                    <button class="shortcuts-help-btn" id="shortcuts-help-btn" aria-label="快捷键帮助" title="快捷键帮助 (?)">
+                        <i class="fas fa-keyboard"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 统计面板 -->
+            <section class="stats-panel" id="stats-panel">
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #00dbde;">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="total-games">10</div>
+                        <div class="stat-label">游戏总数</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #4cd964;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="play-time">0</div>
+                        <div class="stat-label">游戏时长(分)</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #ff6b6b;">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="games-played">0</div>
+                        <div class="stat-label">已游玩</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分类标签 -->
+            <section class="category-filter" id="category-filter">
+                <button class="category-btn active" data-category="all" data-index="0">
+                    <span class="category-key">1</span>
+                    <i class="fas fa-th"></i> 全部
+                </button>
+                <button class="category-btn" data-category="action" data-index="1">
+                    <span class="category-key">2</span>
+                    <i class="fas fa-bolt"></i> 动作
+                </button>
+                <button class="category-btn" data-category="puzzle" data-index="2">
+                    <span class="category-key">3</span>
+                    <i class="fas fa-puzzle-piece"></i> 益智
+                </button>
+                <button class="category-btn" data-category="strategy" data-index="3">
+                    <span class="category-key">4</span>
+                    <i class="fas fa-chess"></i> 策略
+                </button>
+                <button class="category-btn" data-category="casual" data-index="4">
+                    <span class="category-key">5</span>
+                    <i class="fas fa-coffee"></i> 休闲
+                </button>
+            </section>
+
+            <!-- 搜索框 -->
+            <section class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="搜索游戏... (按 / 快速聚焦)" aria-label="搜索游戏">
+                </div>
+            </section>
+
+            <!-- 游戏网格 -->
+            <section class="games-grid" id="games-container">
+                <!-- 游戏卡片将通过JavaScript动态加载 -->
+            </section>
+
+            <!-- 最近游玩 -->
+            <section class="recent-games" id="recent-games" style="display: none;">
+                <h2><i class="fas fa-history"></i> 最近游玩</h2>
+                <div class="recent-list" id="recent-list"></div>
+            </section>
+
+            <!-- 页脚 -->
+            <footer>
+                <div class="footer-content">
+                    <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
+                    <p>所有游戏均支持桌面和移动设备</p>
+                    <div class="footer-links">
+                        <a href="#" id="about-link"><i class="fas fa-info-circle"></i> 关于</a>
+                        <a href="https://github.com" target="_blank" rel="noopener">
+                            <i class="fab fa-github"></i> GitHub
+                        </a>
+                    </div>
+                </div>
+            </footer>
+        </div>
     </div>
 
     <!-- 关于模态框 -->
@@ -173,13 +341,126 @@
         </div>
     </div>
 
+    <!-- 快捷键帮助面板 -->
+    <div class="modal shortcuts-modal" id="shortcuts-modal" role="dialog" aria-labelledby="shortcuts-title">
+        <div class="modal-content shortcuts-content">
+            <div class="modal-header">
+                <h2 id="shortcuts-title"><i class="fas fa-keyboard"></i> 键盘快捷键</h2>
+                <button class="modal-close" aria-label="关闭">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body shortcuts-body">
+                <div class="shortcuts-section">
+                    <h3><i class="fas fa-gamepad"></i> 游戏快捷键</h3>
+                    <div class="shortcuts-list">
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>1</kbd> - <kbd>9</kbd>
+                            </div>
+                            <div class="shortcut-desc">快速启动对应游戏</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>Enter</kbd>
+                            </div>
+                            <div class="shortcut-desc">进入选中的游戏</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h3><i class="fas fa-filter"></i> 筛选快捷键</h3>
+                    <div class="shortcuts-list">
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>1</kbd>
+                            </div>
+                            <div class="shortcut-desc">显示全部游戏</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>2</kbd>
+                            </div>
+                            <div class="shortcut-desc">筛选动作游戏</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>3</kbd>
+                            </div>
+                            <div class="shortcut-desc">筛选益智游戏</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>4</kbd>
+                            </div>
+                            <div class="shortcut-desc">筛选策略游戏</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>5</kbd>
+                            </div>
+                            <div class="shortcut-desc">筛选休闲游戏</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>←</kbd> <kbd>→</kbd>
+                            </div>
+                            <div class="shortcut-desc">切换分类筛选</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h3><i class="fas fa-search"></i> 搜索快捷键</h3>
+                    <div class="shortcuts-list">
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>/</kbd>
+                            </div>
+                            <div class="shortcut-desc">聚焦搜索框</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>Esc</kbd>
+                            </div>
+                            <div class="shortcut-desc">退出搜索/关闭面板</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-section">
+                    <h3><i class="fas fa-cog"></i> 其他快捷键</h3>
+                    <div class="shortcuts-list">
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>?</kbd>
+                            </div>
+                            <div class="shortcut-desc">打开/关闭此帮助面板</div>
+                        </div>
+                        <div class="shortcut-item">
+                            <div class="shortcut-keys">
+                                <kbd>T</kbd>
+                            </div>
+                            <div class="shortcut-desc">切换明暗主题</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="shortcuts-tip">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>提示：按下数字键时，当游戏数量少于9个时，数字键直接启动游戏；当筛选后显示游戏时，数字键对应当前显示的游戏顺序。</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 通知容器 -->
+    <div class="toast-container" id="toast-container"></div>
+
     <script>
         // 游戏数据
         const games = [
             {
                 id: 'space-shooter',
                 title: '太空射击',
-                description: '控制太空飞船躲避陨石和敌人，发射激光保卫地球',
+                description: '控制太空飞船躲避陨石和敌人，发射激光保卫地球。使用方向键或WASD控制飞船移动，空格键发射激光。躲避不断来袭的陨石和敌机，尽可能获得更高分数。',
                 icon: 'fas fa-rocket',
                 category: 'action',
                 folder: 'space-shooter',
@@ -190,7 +471,7 @@
             {
                 id: 'platform-jumper',
                 title: '平台跳跃',
-                description: '控制角色在平台上跳跃，躲避障碍，收集金币',
+                description: '控制角色在平台上跳跃，躲避障碍，收集金币。使用方向键或WASD移动，空格键跳跃。精心设计的关卡考验你的反应能力和操作技巧。',
                 icon: 'fas fa-running',
                 category: 'action',
                 folder: 'platform-jumper',
@@ -201,7 +482,7 @@
             {
                 id: 'fruit-2048',
                 title: '水果2048',
-                description: '合并相同水果达到2048，数字游戏的甜美变体',
+                description: '合并相同水果达到2048，数字游戏的甜美变体。使用方向键滑动水果，相同的水果合并升级。从樱桃开始，目标合成传说中的大西瓜！',
                 icon: 'fas fa-apple-alt',
                 category: 'puzzle',
                 folder: 'fruit-2048',
@@ -212,7 +493,7 @@
             {
                 id: 'memory-cards',
                 title: '记忆翻牌',
-                description: '翻转卡片匹配相同图案，测试你的记忆力',
+                description: '翻转卡片匹配相同图案，测试你的记忆力。点击卡片翻开，寻找相同的图案进行配对。用最少的步数完成所有配对挑战！',
                 icon: 'fas fa-brain',
                 category: 'puzzle',
                 folder: 'memory-cards',
@@ -223,7 +504,7 @@
             {
                 id: 'snake-game',
                 title: '贪吃蛇',
-                description: '经典贪吃蛇游戏，控制蛇吃食物长大，避免撞墙',
+                description: '经典贪吃蛇游戏，控制蛇吃食物长大，避免撞墙。使用方向键控制蛇的移动方向，吃掉食物后蛇会变长。不要撞到墙壁或自己的身体！',
                 icon: 'fas fa-staff-snake',
                 category: 'casual',
                 folder: 'snake-game',
@@ -234,7 +515,7 @@
             {
                 id: 'brick-breaker',
                 title: '打砖块',
-                description: '用挡板反弹球打碎砖块，挑战高分',
+                description: '用挡板反弹球打碎砖块，挑战高分。移动挡板接住小球，反弹击碎所有砖块。有些砖块需要多次击打才能消除，小心不要让球掉落！',
                 icon: 'fas fa-table-tennis-paddle-ball',
                 category: 'action',
                 folder: 'brick-breaker',
@@ -245,7 +526,7 @@
             {
                 id: 'tic-tac-toe',
                 title: '井字棋AI',
-                description: '与智能AI对战井字棋，你能战胜电脑吗？',
+                description: '与智能AI对战井字棋，你能战胜电脑吗？经典的井字棋游戏，AI采用minimax算法，几乎不可战胜。试试看能否至少打个平局！',
                 icon: 'fas fa-xmarks-lines',
                 category: 'strategy',
                 folder: 'tic-tac-toe',
@@ -256,7 +537,7 @@
             {
                 id: 'minesweeper',
                 title: '扫雷游戏',
-                description: '经典扫雷游戏的网页版，小心地雷！',
+                description: '经典扫雷游戏的网页版，小心地雷！点击格子揭开，数字表示周围地雷数量。右键标记地雷，找出所有安全格子即可获胜。',
                 icon: 'fas fa-bomb',
                 category: 'strategy',
                 folder: 'minesweeper',
@@ -267,7 +548,7 @@
             {
                 id: 'typing-test',
                 title: '打字速度测试',
-                description: '测试你的打字速度和准确率，提升键盘技能',
+                description: '测试你的打字速度和准确率，提升键盘技能。屏幕上会出现随机文字，尽可能快速准确地输入。实时显示WPM（每分钟字数）和准确率。',
                 icon: 'fas fa-keyboard',
                 category: 'casual',
                 folder: 'typing-test',
@@ -278,7 +559,7 @@
             {
                 id: 'physics-pinball',
                 title: '物理弹球',
-                description: '基于物理引擎的弹球游戏，控制挡板弹跳小球',
+                description: '基于物理引擎的弹球游戏，控制挡板弹跳小球。使用左右方向键控制挡板，让小球在台上弹跳得分。利用物理引擎的真实弹射效果获得更高分数！',
                 icon: 'fas fa-basketball',
                 category: 'action',
                 folder: 'physics-pinball',
@@ -292,31 +573,200 @@
         let stats = JSON.parse(localStorage.getItem('gameHubStats')) || {
             totalGamesPlayed: 0,
             totalPlayTime: 0,
-            recentlyPlayed: []
+            recentlyPlayed: [],
+            gameStats: {}
         };
+
+        // 布局模式
+        let currentLayout = localStorage.getItem('gameHub-layout') || 'auto';
+        let currentCategory = 'all';
+        let selectedGameIndex = -1;
+        let currentFilteredGames = [...games];
+
+        // ==================== 布局切换功能 ====================
+        function initLayoutToggle() {
+            const layoutToggle = document.getElementById('layout-toggle');
+            const pcLayout = document.getElementById('pc-layout');
+            const mobileLayout = document.getElementById('mobile-layout');
+
+            function updateLayout() {
+                const screenWidth = window.innerWidth;
+                let showPC = false;
+
+                if (currentLayout === 'pc') {
+                    showPC = true;
+                } else if (currentLayout === 'mobile') {
+                    showPC = false;
+                } else {
+                    showPC = screenWidth >= 1200;
+                }
+
+                if (showPC) {
+                    pcLayout.style.display = 'flex';
+                    mobileLayout.style.display = 'none';
+                    layoutToggle.innerHTML = '<i class="fas fa-mobile-alt"></i>';
+                    layoutToggle.title = '切换到移动端布局';
+                    // 渲染PC布局的游戏
+                    renderGames(currentCategory === 'all' ? games : games.filter(g => g.category === currentCategory), 'games-container-pc');
+                } else {
+                    pcLayout.style.display = 'none';
+                    mobileLayout.style.display = 'block';
+                    layoutToggle.innerHTML = '<i class="fas fa-columns"></i>';
+                    layoutToggle.title = '切换到PC端布局';
+                    // 渲染移动端布局的游戏
+                    renderGames(currentCategory === 'all' ? games : games.filter(g => g.category === currentCategory), 'games-container');
+                }
+            }
+
+            layoutToggle.addEventListener('click', () => {
+                if (currentLayout === 'auto') {
+                    currentLayout = window.innerWidth >= 1200 ? 'mobile' : 'pc';
+                } else if (currentLayout === 'pc') {
+                    currentLayout = 'mobile';
+                } else {
+                    currentLayout = 'pc';
+                }
+                localStorage.setItem('gameHub-layout', currentLayout);
+                updateLayout();
+            });
+
+            window.addEventListener('resize', () => {
+                if (currentLayout === 'auto') {
+                    updateLayout();
+                }
+            });
+
+            updateLayout();
+        }
+
+        // ==================== PC侧边栏预览功能 ====================
+        function showSidebarPreview(game) {
+            const previewContent = document.getElementById('sidebar-preview-content');
+            previewContent.innerHTML = `
+                <div class="preview-game">
+                    <div class="preview-game-header" style="background: linear-gradient(135deg, ${game.color}22, ${game.color}44);">
+                        <div class="preview-game-icon" style="color: ${game.color};">
+                            <i class="${game.icon}"></i>
+                        </div>
+                    </div>
+                    <div class="preview-game-body">
+                        <h4>${game.title}</h4>
+                        <p class="preview-description">${game.description}</p>
+                        <div class="preview-stats">
+                            <div class="preview-stat">
+                                <i class="fas fa-signal"></i>
+                                <span>${getDifficultyText(game.difficulty)}</span>
+                            </div>
+                            <div class="preview-stat">
+                                <i class="fas fa-users"></i>
+                                <span>${game.players} 人</span>
+                            </div>
+                            <div class="preview-stat">
+                                <i class="fas fa-tag"></i>
+                                <span>${getCategoryText(game.category)}</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary preview-play-btn" data-folder="${game.folder}" data-game-id="${game.id}">
+                            <i class="fas fa-play"></i> 开始游戏
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            previewContent.querySelector('.preview-play-btn').addEventListener('click', (e) => {
+                launchGame(game);
+            });
+        }
+
+        function hideSidebarPreview() {
+            const previewContent = document.getElementById('sidebar-preview-content');
+            previewContent.innerHTML = `
+                <div class="preview-placeholder">
+                    <i class="fas fa-gamepad"></i>
+                    <p>将鼠标悬停在游戏上<br>查看详细信息</p>
+                </div>
+            `;
+        }
 
         // 更新统计显示
         function updateStats() {
-            document.getElementById('games-played').textContent = stats.totalGamesPlayed;
-            document.getElementById('play-time').textContent = Math.round(stats.totalPlayTime / 60000);
+            ['games-played', 'play-time'].forEach(id => {
+                const el = document.getElementById(id);
+                const elPc = document.getElementById(id + '-pc');
+                if (el) el.textContent = id === 'games-played' ? stats.totalGamesPlayed : Math.round(stats.totalPlayTime / 60000);
+                if (elPc) elPc.textContent = id === 'games-played' ? stats.totalGamesPlayed : Math.round(stats.totalPlayTime / 60000);
+            });
         }
 
-        // 保存统计数据
         function saveStats() {
             localStorage.setItem('gameHubStats', JSON.stringify(stats));
         }
 
+        function getGameStats(gameId) {
+            if (!stats.gameStats) {
+                stats.gameStats = {};
+            }
+            if (!stats.gameStats[gameId]) {
+                stats.gameStats[gameId] = {
+                    highscore: 0,
+                    plays: 0
+                };
+            }
+            return stats.gameStats[gameId];
+        }
+
+        // Toast 通知系统
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            const icons = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'info': 'fa-info-circle',
+                'warning': 'fa-exclamation-triangle'
+            };
+
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || icons.info}"></i>
+                <span>${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
         // 渲染游戏卡片
-        function renderGames(filteredGames = games) {
-            const container = document.getElementById('games-container');
+        function renderGames(filteredGames = games, containerId = 'games-container') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
             container.innerHTML = '';
+            currentFilteredGames = filteredGames;
+            selectedGameIndex = -1;
 
             filteredGames.forEach((game, index) => {
                 const card = document.createElement('div');
                 card.className = 'game-card';
+                card.dataset.gameIndex = index;
+                card.dataset.gameId = game.id;
                 card.style.animationDelay = `${index * 50}ms`;
+
+                const isPcLayout = containerId === 'games-container-pc';
+                const shortcutKey = !isPcLayout && index < 9 ? index + 1 : '';
+
                 card.innerHTML = `
                     <div class="game-card-header" style="background: linear-gradient(135deg, ${game.color}22, ${game.color}44);">
+                        ${shortcutKey ? `<span class="game-shortcut-key">${shortcutKey}</span>` : ''}
                         <div class="game-icon" style="color: ${game.color};">
                             <i class="${game.icon}"></i>
                         </div>
@@ -326,7 +776,7 @@
                     </div>
                     <div class="game-card-body">
                         <h3 class="game-title">${game.title}</h3>
-                        <p class="game-description">${game.description}</p>
+                        <p class="game-description">${game.description.substring(0, 50)}...</p>
                         <div class="game-meta">
                             <span class="game-category">
                                 <i class="fas fa-tag"></i> ${getCategoryText(game.category)}
@@ -334,36 +784,83 @@
                         </div>
                     </div>
                     <div class="game-card-footer">
-                        <button class="btn btn-primary play-btn" data-folder="${game.folder}">
+                        <button class="btn btn-primary play-btn" data-folder="${game.folder}" data-game-id="${game.id}">
                             <i class="fas fa-play"></i> 开始游戏
                         </button>
                     </div>
                 `;
 
-                // 悬停预加载
-                card.addEventListener('mouseenter', () => {
-                    prefetchGame(game.folder);
+                // PC布局的悬停预览
+                if (isPcLayout) {
+                    card.addEventListener('mouseenter', () => {
+                        prefetchGame(game.folder);
+                        showSidebarPreview(game);
+                    });
+
+                    card.addEventListener('mouseleave', () => {
+                        hideSidebarPreview();
+                    });
+                }
+
+                card.querySelector('.play-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    launchGame(game);
                 });
 
-                // 点击按钮
-                card.querySelector('.play-btn').addEventListener('click', () => {
-                    stats.totalGamesPlayed++;
-                    stats.recentlyPlayed = stats.recentlyPlayed.filter(g => g !== game.id);
-                    stats.recentlyPlayed.unshift(game.id);
-                    stats.recentlyPlayed = stats.recentlyPlayed.slice(0, 5);
-                    saveStats();
-                    updateStats();
-                    showSkeletonScreen();
-                    window.location.href = `./${game.folder}/`;
-                });
+                if (!isPcLayout) {
+                    card.addEventListener('click', (e) => {
+                        if (!e.target.closest('.play-btn')) {
+                            selectGame(index);
+                        }
+                    });
+                }
 
                 container.appendChild(card);
             });
         }
 
-        // 预加载游戏页面
+        function selectGame(index) {
+            document.querySelectorAll('.game-card.selected').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            selectedGameIndex = index;
+            const cards = document.querySelectorAll('.game-card');
+            if (cards[index]) {
+                cards[index].classList.add('selected');
+                cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function highlightGame(index) {
+            const cards = document.querySelectorAll('.game-card');
+            cards.forEach(card => card.classList.remove('highlighted'));
+
+            if (cards[index]) {
+                cards[index].classList.add('highlighted');
+                setTimeout(() => {
+                    cards[index].classList.remove('highlighted');
+                }, 500);
+            }
+        }
+
+        function launchGame(game) {
+            stats.totalGamesPlayed++;
+            stats.recentlyPlayed = stats.recentlyPlayed.filter(g => g !== game.id);
+            stats.recentlyPlayed.unshift(game.id);
+            stats.recentlyPlayed = stats.recentlyPlayed.slice(0, 5);
+            saveStats();
+            updateStats();
+
+            showToast(`正在启动 ${game.title}...`, 'info');
+            showSkeletonScreen();
+
+            setTimeout(() => {
+                window.location.href = `./${game.folder}/`;
+            }, 300);
+        }
+
         function prefetchGame(folder) {
-            // 检查是否已经预加载
             if (document.querySelector(`link[rel="prefetch"][href*="${folder}"]`)) return;
 
             const link = document.createElement('link');
@@ -372,7 +869,6 @@
             document.head.appendChild(link);
         }
 
-        // 显示骨架屏
         function showSkeletonScreen() {
             const skeleton = document.createElement('div');
             skeleton.className = 'skeleton-screen';
@@ -384,7 +880,6 @@
             `;
             document.body.appendChild(skeleton);
 
-            // 3秒后自动移除（防止页面加载失败）
             setTimeout(() => {
                 skeleton.remove();
             }, 3000);
@@ -401,172 +896,347 @@
         }
 
         // 分类筛选
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const category = btn.dataset.category;
-                const filtered = category === 'all' ? games : games.filter(g => g.category === category);
-                renderGames(filtered);
+        function filterByCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.category === category) {
+                    btn.classList.add('active');
+                }
             });
-        });
+
+            const filtered = category === 'all' ? games : games.filter(g => g.category === category);
+            renderGames(filtered, 'games-container');
+            renderGames(filtered, 'games-container-pc');
+
+            const categoryNames = {
+                'all': '全部游戏',
+                'action': '动作游戏',
+                'puzzle': '益智游戏',
+                'strategy': '策略游戏',
+                'casual': '休闲游戏'
+            };
+            showToast(`已筛选: ${categoryNames[category]}`, 'success');
+        }
+
+        // 初始化分类筛选
+        function initCategoryFilters() {
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterByCategory(btn.dataset.category);
+                });
+            });
+        }
 
         // 搜索功能
-        const searchInput = document.getElementById('search-input');
-        searchInput.addEventListener('input', () => {
-            const query = searchInput.value.toLowerCase();
-            const filtered = games.filter(g =>
-                g.title.toLowerCase().includes(query) ||
-                g.description.toLowerCase().includes(query)
-            );
-            renderGames(filtered);
-        });
+        function initSearch() {
+            const setupSearch = (inputId) => {
+                const searchInput = document.getElementById(inputId);
+                if (!searchInput) return;
+
+                searchInput.addEventListener('input', () => {
+                    const query = searchInput.value.toLowerCase();
+                    const filtered = games.filter(g =>
+                        g.title.toLowerCase().includes(query) ||
+                        g.description.toLowerCase().includes(query)
+                    );
+                    renderGames(filtered, 'games-container');
+                    renderGames(filtered, 'games-container-pc');
+                });
+
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        searchInput.value = '';
+                        searchInput.blur();
+                        renderGames(games);
+                        renderGames(games, 'games-container-pc');
+                        showToast('已清除搜索', 'info');
+                    }
+                });
+            };
+
+            setupSearch('search-input');
+            setupSearch('search-input-pc');
+        }
 
         // 主题切换
-        const themeToggle = document.getElementById('theme-toggle');
-        const savedTheme = localStorage.getItem('gameHub-theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeIcon(savedTheme);
+        function initThemeToggle() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const savedTheme = localStorage.getItem('gameHub-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
 
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('gameHub-theme', newTheme);
-            updateThemeIcon(newTheme);
-        });
+            function toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('gameHub-theme', newTheme);
+                updateThemeIcon(newTheme);
+                showToast(`已切换到${newTheme === 'dark' ? '暗色' : '亮色'}主题`, 'info');
+            }
 
-        function updateThemeIcon(theme) {
-            themeToggle.querySelector('i').className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            themeToggle.addEventListener('click', toggleTheme);
+
+            function updateThemeIcon(theme) {
+                themeToggle.querySelector('i').className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+            }
+        }
+
+        // 快捷操作按钮
+        function initQuickActions() {
+            const scrollTopBtn = document.getElementById('scroll-top');
+            const refreshBtn = document.getElementById('refresh-games');
+
+            if (scrollTopBtn) {
+                scrollTopBtn.addEventListener('click', () => {
+                    document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    const filtered = currentCategory === 'all' ? games : games.filter(g => g.category === currentCategory);
+                    renderGames(filtered, 'games-container-pc');
+                    showToast('已刷新游戏列表', 'success');
+                });
+            }
+        }
+
+        // 快捷键帮助面板
+        function initShortcutsModal() {
+            const shortcutsModal = document.getElementById('shortcuts-modal');
+            const shortcutsHelpBtn = document.getElementById('shortcuts-help-btn');
+            const shortcutsCloseBtn = shortcutsModal.querySelector('.modal-close');
+
+            function toggleShortcutsModal() {
+                shortcutsModal.classList.toggle('active');
+            }
+
+            shortcutsHelpBtn.addEventListener('click', toggleShortcutsModal);
+            shortcutsCloseBtn.addEventListener('click', toggleShortcutsModal);
+
+            shortcutsModal.addEventListener('click', (e) => {
+                if (e.target === shortcutsModal) {
+                    toggleShortcutsModal();
+                }
+            });
         }
 
         // 关于模态框
-        const aboutModal = document.getElementById('about-modal');
-        const aboutLink = document.getElementById('about-link');
-        const closeBtn = aboutModal.querySelector('.modal-close');
+        function initAboutModal() {
+            const setupModal = (linkId) => {
+                const aboutLink = document.getElementById(linkId);
+                if (!aboutLink) return;
 
-        aboutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            aboutModal.classList.add('active');
-        });
+                const aboutModal = document.getElementById('about-modal');
+                const aboutCloseBtn = aboutModal.querySelector('.modal-close');
 
-        closeBtn.addEventListener('click', () => {
-            aboutModal.classList.remove('active');
-        });
+                aboutLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    aboutModal.classList.add('active');
+                });
 
-        aboutModal.addEventListener('click', (e) => {
-            if (e.target === aboutModal) {
-                aboutModal.classList.remove('active');
-            }
-        });
+                aboutCloseBtn.addEventListener('click', () => {
+                    aboutModal.classList.remove('active');
+                });
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            renderGames();
-            updateStats();
-            initPWAInstall();
-        });
+                aboutModal.addEventListener('click', (e) => {
+                    if (e.target === aboutModal) {
+                        aboutModal.classList.remove('active');
+                    }
+                });
+            };
 
-        // ==================== PWA 安装提示 ====================
-        let deferredPrompt;
-        const pwaBanner = document.getElementById('pwa-banner');
-        const bannerClose = document.getElementById('banner-close');
-        const bannerInstall = document.getElementById('banner-install');
+            setupModal('about-link');
+            setupModal('about-link-pc');
+        }
 
+        // 键盘快捷键系统
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                const shortcutsModal = document.getElementById('shortcuts-modal');
+                const aboutModal = document.getElementById('about-modal');
+                const isInputFocused = document.activeElement.tagName === 'INPUT' ||
+                                      document.activeElement.tagName === 'TEXTAREA';
+
+                if (shortcutsModal.classList.contains('active')) {
+                    if (e.key === 'Escape') {
+                        shortcutsModal.classList.remove('active');
+                    }
+                    return;
+                }
+
+                if (aboutModal.classList.contains('active')) {
+                    if (e.key === 'Escape') {
+                        aboutModal.classList.remove('active');
+                    }
+                    return;
+                }
+
+                if (isInputFocused) {
+                    if (e.key === 'Escape') {
+                        const searchInput = document.getElementById('search-input');
+                        if (searchInput) {
+                            searchInput.value = '';
+                            searchInput.blur();
+                        }
+                        renderGames(games);
+                        renderGames(games, 'games-container-pc');
+                        showToast('已清除搜索', 'info');
+                    }
+                    return;
+                }
+
+                if (e.key >= '1' && e.key <= '9') {
+                    const gameIndex = parseInt(e.key) - 1;
+                    if (gameIndex < currentFilteredGames.length) {
+                        e.preventDefault();
+                        highlightGame(gameIndex);
+                        setTimeout(() => {
+                            launchGame(currentFilteredGames[gameIndex]);
+                        }, 200);
+                    }
+                }
+
+                if (e.key === 'Enter' && selectedGameIndex >= 0) {
+                    e.preventDefault();
+                    if (currentFilteredGames[selectedGameIndex]) {
+                        launchGame(currentFilteredGames[selectedGameIndex]);
+                    }
+                }
+
+                if (e.key === '/') {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('search-input');
+                    if (searchInput) searchInput.focus();
+                    showToast('已聚焦搜索框，输入关键词搜索游戏', 'info');
+                }
+
+                if (e.key === '?') {
+                    e.preventDefault();
+                    shortcutsModal.classList.toggle('active');
+                }
+
+                if (e.key === 't' || e.key === 'T') {
+                    e.preventDefault();
+                    document.getElementById('theme-toggle').click();
+                }
+
+                if (e.key === 'Escape') {
+                    if (selectedGameIndex >= 0) {
+                        selectGame(-1);
+                        showToast('已取消选中', 'info');
+                    }
+                }
+            });
+        }
+
+        // PWA 安装提示
         function initPWAInstall() {
-            // 检查是否已安装
+            let deferredPrompt;
+            const pwaBanner = document.getElementById('pwa-banner');
+            const bannerClose = document.getElementById('banner-close');
+            const bannerInstall = document.getElementById('banner-install');
+
             const isInstalled = localStorage.getItem('pwa-installed');
             if (isInstalled) return;
 
-            // 检查是否已关闭提示
             const dismissedTime = localStorage.getItem('pwa-banner-dismissed');
             if (dismissedTime) {
                 const daysSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60 * 24);
-                if (daysSinceDismissed < 7) return; // 7天内不再显示
+                if (daysSinceDismissed < 7) return;
             }
 
-            // 检测是否在移动设备
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             if (!isMobile) return;
 
-            // 显示横幅
             setTimeout(() => {
                 pwaBanner.classList.add('show');
             }, 3000);
-        }
 
-        // 监听 beforeinstallprompt 事件
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
 
-            // 延迟显示安装横幅
-            setTimeout(() => {
-                const isInstalled = localStorage.getItem('pwa-installed');
-                if (!isInstalled) {
-                    pwaBanner.classList.add('show');
-                }
-            }, 5000);
-        });
-
-        // 监听应用安装成功
-        window.addEventListener('appinstalled', () => {
-            localStorage.setItem('pwa-installed', 'true');
-            pwaBanner.classList.remove('show');
-        });
-
-        // 关闭按钮
-        bannerClose.addEventListener('click', () => {
-            pwaBanner.classList.remove('show');
-            localStorage.setItem('pwa-banner-dismissed', Date.now().toString());
-        });
-
-        // 安装按钮
-        bannerInstall.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    localStorage.setItem('pwa-installed', 'true');
-                }
-                deferredPrompt = null;
-            } else {
-                // iOS 提示
-                showIOSInstallInstructions();
-            }
-            pwaBanner.classList.remove('show');
-        });
-
-        function showIOSInstallInstructions() {
-            const modal = document.createElement('div');
-            modal.className = 'modal active';
-            modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2><i class="fab fa-apple"></i> 安装到主屏幕</h2>
-                        <button class="modal-close"><span>&times;</span></button>
-                    </div>
-                    <div class="modal-body">
-                        <ol style="line-height: 2;">
-                            <li>点击底部的 <i class="fab fa-safari" style="color: #00dbde;"></i> Safari 分享按钮</li>
-                            <li>向下滚动并找到"添加到主屏幕"</li>
-                            <li>点击"添加"按钮</li>
-                        </ol>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            modal.querySelector('.modal-close').addEventListener('click', () => {
-                modal.remove();
+                setTimeout(() => {
+                    const isInstalled = localStorage.getItem('pwa-installed');
+                    if (!isInstalled) {
+                        pwaBanner.classList.add('show');
+                    }
+                }, 5000);
             });
 
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
+            window.addEventListener('appinstalled', () => {
+                localStorage.setItem('pwa-installed', 'true');
+                pwaBanner.classList.remove('show');
+            });
+
+            bannerClose.addEventListener('click', () => {
+                pwaBanner.classList.remove('show');
+                localStorage.setItem('pwa-banner-dismissed', Date.now().toString());
+            });
+
+            bannerInstall.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        localStorage.setItem('pwa-installed', 'true');
+                    }
+                    deferredPrompt = null;
+                } else {
+                    showIOSInstallInstructions();
+                }
+                pwaBanner.classList.remove('show');
+            });
+
+            function showIOSInstallInstructions() {
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2><i class="fab fa-apple"></i> 安装到主屏幕</h2>
+                            <button class="modal-close"><span>&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <ol style="line-height: 2;">
+                                <li>点击底部的 <i class="fab fa-safari" style="color: #00dbde;"></i> Safari 分享按钮</li>
+                                <li>向下滚动并找到"添加到主屏幕"</li>
+                                <li>点击"添加"按钮</li>
+                            </ol>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                modal.querySelector('.modal-close').addEventListener('click', () => {
                     modal.remove();
-                }
-            });
+                });
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
         }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGames(games, 'games-container');
+            renderGames(games, 'games-container-pc');
+            updateStats();
+            initLayoutToggle();
+            initCategoryFilters();
+            initSearch();
+            initThemeToggle();
+            initQuickActions();
+            initShortcutsModal();
+            initAboutModal();
+            initKeyboardShortcuts();
+            initPWAInstall();
+        });
     </script>
 </body>
 </html>
