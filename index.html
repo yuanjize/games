@@ -147,6 +147,7 @@
                 <div class="footer-content">
                     <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
                     <p>所有游戏均支持桌面和移动设备</p>
+                    <p class="version-info">版本: <span id="app-version-pc">1.0.0</span></p>
                     <div class="footer-links">
                         <a href="#" id="about-link-pc"><i class="fas fa-info-circle"></i> 关于</a>
                         <a href="https://github.com" target="_blank" rel="noopener">
@@ -313,6 +314,7 @@
                 <div class="footer-content">
                     <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
                     <p>所有游戏均支持桌面和移动设备</p>
+                    <p class="version-info">版本: <span id="app-version">1.0.0</span></p>
                     <div class="footer-links">
                         <a href="#" id="about-link"><i class="fas fa-info-circle"></i> 关于</a>
                         <a href="https://github.com" target="_blank" rel="noopener">
@@ -1323,6 +1325,13 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
+            // 显示版本号
+            const version = '1.0.0';
+            const versionEl = document.getElementById('app-version');
+            const versionPcEl = document.getElementById('app-version-pc');
+            if (versionEl) versionEl.textContent = version;
+            if (versionPcEl) versionPcEl.textContent = version;
+
             renderGames(games, 'games-container');
             renderGames(games, 'games-container-pc');
             updateStats();
