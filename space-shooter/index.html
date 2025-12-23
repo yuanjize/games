@@ -2,7 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="太空射击游戏 - 一款使用原生JavaScript开发的HTML5 Canvas射击游戏">
+    <meta name="keywords" content="太空射击,HTML5游戏,Canvas游戏,JavaScript游戏">
+    <meta name="theme-color" content="#0f172a">
     <title>太空射击游戏 | Space Shooter</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,15 +17,15 @@
     <div class="game-container">
         <!-- 游戏标题 -->
         <header class="game-header">
-                        <a href="../index.html" class="back-button">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
                 <i class="fas fa-arrow-left"></i> 返回游戏大厅
             </a>
-<h1 class="game-title">
+            <h1 class="game-title">
                 <i class="fas fa-rocket"></i>
                 太空射击
                 <span class="game-subtitle">Space Shooter</span>
             </h1>
-            <div class="version-tag">v1.0</div>
+            <div class="version-tag">v2.0</div>
         </header>
 
         <!-- 游戏主画布 -->
@@ -51,14 +54,11 @@
                             <div class="control-group">
                                 <h3><i class="fas fa-keyboard"></i> 键盘控制</h3>
                                 <div class="control-item">
-                                    <span class="key"><i class="fas fa-arrow-up"></i></span>
-                                    <span class="key"><i class="fas fa-arrow-down"></i></span>
-                                    <span class="key"><i class="fas fa-arrow-left"></i></span>
-                                    <span class="key"><i class="fas fa-arrow-right"></i></span>
-                                    <span class="control-desc">移动飞船</span>
+                                    <span class="key"><i class="fas fa-arrows-alt"></i></span>
+                                    <span class="control-desc">方向键/WASD 移动飞船</span>
                                 </div>
                                 <div class="control-item">
-                                    <span class="key"><i class="fas fa-space-shuttle"></i> 空格</span>
+                                    <span class="key">空格</span>
                                     <span class="control-desc">发射子弹</span>
                                 </div>
                                 <div class="control-item">
@@ -69,17 +69,13 @@
                                     <span class="key">ESC</span>
                                     <span class="control-desc">返回菜单</span>
                                 </div>
-                                <div class="control-item">
-                                    <span class="key">Tab</span>
-                                    <span class="control-desc">切换焦点</span>
-                                </div>
                             </div>
 
                             <div class="control-group">
                                 <h3><i class="fas fa-mobile-alt"></i> 触摸控制</h3>
                                 <div class="control-item">
                                     <span class="key"><i class="fas fa-hand-point-up"></i></span>
-                                    <span class="control-desc">滑动控制飞船</span>
+                                    <span class="control-desc">虚拟摇杆移动</span>
                                 </div>
                                 <div class="control-item">
                                     <span class="key"><i class="fas fa-crosshairs"></i></span>
@@ -113,14 +109,14 @@
                         <div class="difficulty-selector">
                             <h3><i class="fas fa-tachometer-alt"></i> 游戏难度</h3>
                             <div class="difficulty-buttons">
-                                <button class="difficulty-btn active" data-difficulty="easy">
+                                <button class="difficulty-btn active" data-difficulty="easy" aria-label="选择简单难度">
                                     <i class="fas fa-star"></i> 简单
                                 </button>
-                                <button class="difficulty-btn" data-difficulty="medium">
+                                <button class="difficulty-btn" data-difficulty="medium" aria-label="选择中等难度">
                                     <i class="fas fa-star"></i>
                                     <i class="fas fa-star"></i> 中等
                                 </button>
-                                <button class="difficulty-btn" data-difficulty="hard">
+                                <button class="difficulty-btn" data-difficulty="hard" aria-label="选择困难难度">
                                     <i class="fas fa-star"></i>
                                     <i class="fas fa-star"></i>
                                     <i class="fas fa-star"></i> 困难
@@ -133,7 +129,7 @@
                         </button>
 
                         <div class="hint-text">
-                            <i class="fas fa-lightbulb"></i> 提示：游戏难度会随时间增加！
+                            <i class="fas fa-lightbulb"></i> 提示：难度越高，分数越多！
                         </div>
                     </div>
                 </div>
@@ -214,15 +210,18 @@
                         </div>
 
                         <div class="share-game">
-                            <h4><i class="fas fa-share-alt"></i> 分享游戏</h4>
+                            <h4><i class="fas fa-share-alt"></i> 分享成绩</h4>
                             <div class="share-buttons">
-                                <button class="share-btn">
+                                <button class="share-btn" data-platform="twitter" aria-label="分享到Twitter">
                                     <i class="fab fa-twitter"></i>
                                 </button>
-                                <button class="share-btn">
+                                <button class="share-btn" data-platform="facebook" aria-label="分享到Facebook">
                                     <i class="fab fa-facebook"></i>
                                 </button>
-                                <button class="share-btn">
+                                <button class="share-btn" data-platform="weibo" aria-label="分享到微博">
+                                    <i class="fab fa-weibo"></i>
+                                </button>
+                                <button class="share-btn" data-platform="copy" aria-label="复制链接">
                                     <i class="fas fa-link"></i>
                                 </button>
                             </div>
@@ -291,24 +290,24 @@
             <div class="instructions-content" id="gameInstructions" aria-labelledby="instructionsToggle">
                 <div class="instruction-section">
                     <h3><i class="fas fa-bullseye"></i> 游戏目标</h3>
-                    <p>控制你的太空飞船，躲避陨石和敌机，同时发射子弹击毁敌机获得分数。尽可能长时间生存并获得高分！</p>
+                    <p>控制你的太空飞船，躲避敌机，同时发射子弹击毁敌机获得分数。尽可能长时间生存并获得高分！</p>
                 </div>
                 <div class="instruction-section">
                     <h3><i class="fas fa-exclamation-triangle"></i> 注意事项</h3>
                     <ul>
-                        <li>被陨石或敌机撞击会损失1点生命值</li>
+                        <li>被敌机撞击会损失1点生命值</li>
                         <li>初始有3点生命值，生命值耗尽游戏结束</li>
                         <li>击毁一架敌机获得10分</li>
-                        <li>游戏难度会随时间逐渐增加</li>
+                        <li>不同难度下敌机速度和数量不同</li>
                     </ul>
                 </div>
                 <div class="instruction-section">
                     <h3><i class="fas fa-trophy"></i> 高分策略</h3>
                     <ul>
-                        <li>优先躲避陨石，它们数量多且难以预测</li>
-                        <li>集中火力击毁屏幕中间的敌机</li>
-                        <li>利用屏幕边缘作为掩护</li>
+                        <li>选择高难度可获得更高分数</li>
                         <li>保持移动，避免停留在同一位置</li>
+                        <li>集中火力击毁敌机</li>
+                        <li>利用屏幕边缘进行战术移动</li>
                     </ul>
                 </div>
             </div>
@@ -371,16 +370,13 @@
         <!-- 游戏页脚 -->
         <footer class="game-footer">
             <div class="footer-content">
-                <p>© 2023 太空射击游戏 | 使用原生JavaScript开发</p>
+                <p>© 2024 太空射击游戏 | 使用原生JavaScript开发</p>
                 <div class="footer-links">
-                    <a href="#" class="footer-link">
-                        <i class="fas fa-code"></i> 查看源代码
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="footer-link">
+                        <i class="fab fa-github"></i> 查看源代码
                     </a>
-                    <a href="#" class="footer-link">
+                    <a href="#" class="footer-link" id="reportBug">
                         <i class="fas fa-bug"></i> 报告问题
-                    </a>
-                    <a href="#" class="footer-link">
-                        <i class="fas fa-star"></i> 给个好评
                     </a>
                 </div>
             </div>

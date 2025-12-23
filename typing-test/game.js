@@ -29,7 +29,8 @@ class TypingTest {
             saveSettingsBtn: document.getElementById('saveSettings'),
             resetSettingsBtn: document.getElementById('resetSettings'),
             clearHistoryBtn: document.getElementById('clearHistory'),
-            shareResultBtn: document.getElementById('shareResult')
+            shareResultBtn: document.getElementById('shareResult'),
+            themeToggle: document.getElementById('themeToggle')
         };
 
         // 文本库 - 根据难度分类
@@ -39,21 +40,27 @@ class TypingTest {
                 "I like to eat pizza with cheese and pepperoni.",
                 "My cat sleeps on the sofa every afternoon.",
                 "The sun is shining brightly in the sky today.",
-                "We are going to the park to play with friends."
+                "We are going to the park to play with friends.",
+                "Reading books is a great way to learn new things.",
+                "She likes to drink coffee in the morning.",
+                "They walked along the beach at sunset."
             ],
             medium: [
                 "Programming is the art of telling another human being what one wants the computer to do.",
                 "Logic will get you from A to B. Imagination will take you everywhere.",
                 "Stay hungry, stay foolish. Innovation distinguishes between a leader and a follower.",
                 "The best way to predict the future is to invent it.",
-                "Life is what happens when you are busy making other plans."
+                "Life is what happens when you are busy making other plans.",
+                "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+                "In the middle of difficulty lies opportunity."
             ],
             hard: [
                 "The intricate design of modern processors involves billions of transistors working in harmony.",
                 "Quantum computing leverages superposition and entanglement to solve complex computational problems.",
                 "Machine learning algorithms analyze patterns in data to make predictions without explicit programming.",
                 "Neural networks consist of interconnected nodes that mimic the structure of biological brains.",
-                "Blockchain technology provides a decentralized and immutable ledger for secure transactions."
+                "Blockchain technology provides a decentralized and immutable ledger for secure transactions.",
+                "Asynchronous JavaScript allows non-blocking operations through Promises and async/await patterns."
             ]
         };
 
@@ -75,12 +82,11 @@ class TypingTest {
             punctuation: 'some',
             language: 'zh',
             // 历史记录
-            history: JSON.parse(localStorage.getItem('typingHistory')) || []
+            history: []
         };
 
-        // 性能优化
-        this.lastRenderTime = 0;
-        this.renderFrameId = null;
+        // 性能优化 - 防抖
+        this.debounceTimers = {};
 
         // 初始化
         this.init();
@@ -92,22 +98,20 @@ class TypingTest {
     init() {
         this.bindEvents();
         this.loadSettings();
+        this.loadHistory();
+        this.loadTheme();
         this.updateHistoryDisplay();
         this.reset();
-
-        // 添加键盘快捷键
-        this.setupKeyboardShortcuts();
-
-        // 初始化光标
         this.initCursor();
+        this.setupKeyboardShortcuts();
     }
 
     /**
      * 绑定事件监听器
      */
     bindEvents() {
-        // 输入事件
-        this.elements.input.addEventListener('input', (e) => this.handleInput(e));
+        // 输入事件 - 使用防抖优化
+        this.elements.input.addEventListener('input', this.debounce((e) => this.handleInput(e), 10));
         this.elements.input.addEventListener('keydown', (e) => this.handleKeydown(e));
 
         // 按钮事件
@@ -132,9 +136,8 @@ class TypingTest {
         this.elements.difficulty.addEventListener('change', () => this.updateDifficulty());
 
         // 主题切换
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => this.toggleTheme());
+        if (this.elements.themeToggle) {
+            this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
         }
 
         // 点击外部关闭模态框
@@ -142,12 +145,13 @@ class TypingTest {
             if (e.target === this.elements.modal) {
                 this.closeModal();
             }
+            // 只有点击面板背景而不是面板内容时才关闭
             if (e.target === this.elements.settingsPanel) {
                 this.closeSettings();
             }
         });
 
-        // 键盘快捷键 - Escape
+        // Escape键处理
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (this.elements.modal.style.display !== 'none') {
@@ -159,6 +163,63 @@ class TypingTest {
                 }
             }
         });
+
+        // 页面可见性变化时暂停/恢复计时器
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.state.isActive) {
+                this.pauseTimer();
+            } else if (!document.hidden && this.state.isActive && this.state.startTime) {
+                this.resumeTimer();
+            }
+        });
+    }
+
+    /**
+     * 防抖函数
+     */
+    debounce(func, delay) {
+        let timeoutId;
+        return (...args) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    }
+
+    /**
+     * 加载历史记录
+     */
+    loadHistory() {
+        try {
+            const saved = localStorage.getItem('typingHistory');
+            this.state.history = saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            console.error('Failed to load history:', e);
+            this.state.history = [];
+        }
+    }
+
+    /**
+     * 加载主题
+     */
+    loadTheme() {
+        const savedTheme = localStorage.getItem('typingTestTheme');
+        if (savedTheme) {
+            document.body.setAttribute('data-theme', savedTheme);
+            this.updateThemeIcon(savedTheme);
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.body.setAttribute('data-theme', 'light');
+            this.updateThemeIcon('light');
+        }
+    }
+
+    /**
+     * 更新主题图标
+     */
+    updateThemeIcon(theme) {
+        const icon = this.elements.themeToggle?.querySelector('i');
+        if (icon) {
+            icon.className = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+        }
     }
 
     /**
@@ -172,8 +233,8 @@ class TypingTest {
             switch (e.key) {
                 case ' ':
                 case 'Enter':
-                    e.preventDefault();
                     if (!this.state.isActive && !this.state.isFinished) {
+                        e.preventDefault();
                         this.startNewGame();
                     }
                     break;
@@ -201,7 +262,6 @@ class TypingTest {
     initCursor() {
         const cursor = document.getElementById('cursor');
         if (cursor) {
-            // 根据设置调整光标闪烁速度
             const speed = this.state.cursorSpeed;
             const speedMap = {
                 slow: 0.8,
@@ -222,7 +282,6 @@ class TypingTest {
         this.elements.input.focus();
         this.updateButtonStates();
 
-        // 播放音效
         if (this.state.soundEnabled) {
             this.playSound('start');
         }
@@ -232,12 +291,14 @@ class TypingTest {
      * 重置游戏
      */
     reset() {
-        // 停止计时器
         this.stopTimer();
+        this.pauseTimer();
 
         // 重置状态
         this.state.typedText = '';
         this.state.startTime = null;
+        this.state.pausedTime = null;
+        this.state.totalPauseDuration = 0;
         this.state.isActive = false;
         this.state.isFinished = false;
         this.state.totalCorrect = 0;
@@ -255,9 +316,29 @@ class TypingTest {
         this.updateStats();
         this.renderText();
         this.updateButtonStates();
-
-        // 重置光标位置
         this.updateCursorPosition();
+    }
+
+    /**
+     * 暂停计时器
+     */
+    pauseTimer() {
+        if (this.state.timerInterval) {
+            clearInterval(this.state.timerInterval);
+            this.state.timerInterval = null;
+            this.state.pausedTime = Date.now();
+        }
+    }
+
+    /**
+     * 恢复计时器
+     */
+    resumeTimer() {
+        if (this.state.pausedTime) {
+            this.state.totalPauseDuration = (this.state.totalPauseDuration || 0) + (Date.now() - this.state.pausedTime);
+            this.state.pausedTime = null;
+            this.startTimer();
+        }
     }
 
     /**
@@ -283,8 +364,6 @@ class TypingTest {
         const difficulty = this.elements.difficulty.value;
         const texts = this.textLibrary[difficulty] || this.textLibrary.medium;
         this.state.targetText = texts[Math.floor(Math.random() * texts.length)];
-
-        // 更新进度显示
         this.updateProgress();
     }
 
@@ -307,10 +386,8 @@ class TypingTest {
 
         // 分析变化
         if (newText.length > oldText.length) {
-            // 新增字符
             this.handleNewCharacter(newText, oldText);
         } else if (newText.length < oldText.length) {
-            // 删除字符
             this.handleDeleteCharacter(newText, oldText);
         }
 
@@ -337,23 +414,15 @@ class TypingTest {
         const targetChar = this.state.targetText[oldText.length];
 
         if (newChar === targetChar) {
-            // 正确字符
             this.state.totalCorrect++;
-
-            // 播放正确音效
             if (this.state.soundEnabled) {
                 this.playSound('correct');
             }
         } else {
-            // 错误字符
             this.state.totalErrors++;
-
-            // 播放错误音效
             if (this.state.soundEnabled) {
                 this.playSound('error');
             }
-
-            // 错误动画
             this.showErrorFeedback(oldText.length);
         }
     }
@@ -362,20 +431,17 @@ class TypingTest {
      * 处理删除字符
      */
     handleDeleteCharacter(newText, oldText) {
-        // 删除字符逻辑
-        // 暂时不需要特殊处理
+        // 删除字符时不需要特殊处理
+        // 统计会在下次输入时重新计算
     }
 
     /**
      * 处理按键事件
      */
     handleKeydown(e) {
-        // 记录按键统计
         this.recordKeystroke(e.key);
 
-        // 处理特殊按键
         if (e.key === 'Backspace') {
-            // 退格键反馈
             this.showBackspaceFeedback();
         }
     }
@@ -385,7 +451,6 @@ class TypingTest {
      */
     recordKeystroke(key) {
         // 可以扩展来记录按键统计
-        // 例如：按键频率、常见错误等
     }
 
     /**
@@ -394,16 +459,8 @@ class TypingTest {
     showErrorFeedback(position) {
         const spans = this.elements.text.querySelectorAll('span');
         if (spans[position]) {
-            // 添加错误类
-            spans[position].classList.add('char-incorrect');
-
-            // 震动反馈
-            spans[position].style.animation = 'shake 0.3s ease';
-
-            // 清除动画
-            setTimeout(() => {
-                spans[position].style.animation = '';
-            }, 300);
+            // 动画已经在CSS中通过类名应用
+            // 这里只需要确保类名被正确应用
         }
     }
 
@@ -412,7 +469,6 @@ class TypingTest {
      */
     showBackspaceFeedback() {
         if (this.state.soundEnabled) {
-            // 播放退格音效
             this.playSound('backspace');
         }
     }
@@ -426,16 +482,13 @@ class TypingTest {
         }
 
         this.state.timerInterval = setInterval(() => {
-            const elapsed = Date.now() - this.state.startTime;
+            const elapsed = Date.now() - this.state.startTime - (this.state.totalPauseDuration || 0);
             const minutes = Math.floor(elapsed / 60000);
             const seconds = Math.floor((elapsed % 60000) / 1000);
 
-            // 更新计时器显示
             this.elements.timer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-            // 实时更新WPM
             this.updateWPM();
-        }, 1000);
+        }, 100);
     }
 
     /**
@@ -456,13 +509,10 @@ class TypingTest {
         this.stopTimer();
         this.elements.input.disabled = true;
 
-        // 计算最终结果
         this.calculateFinalStats();
-
-        // 保存历史记录
         this.saveToHistory();
+        this.updateHistoryDisplay();
 
-        // 显示结果模态框
         setTimeout(() => {
             this.showResultModal();
         }, 500);
@@ -472,7 +522,8 @@ class TypingTest {
      * 计算最终统计
      */
     calculateFinalStats() {
-        const elapsed = (Date.now() - this.state.startTime) / 1000 / 60; // 分钟
+        const totalElapsed = Date.now() - this.state.startTime - (this.state.totalPauseDuration || 0);
+        const elapsed = totalElapsed / 1000 / 60; // 分钟
         const words = this.state.typedText.length / 5;
         const wpm = elapsed > 0 ? Math.round(words / elapsed) : 0;
 
@@ -480,10 +531,16 @@ class TypingTest {
             ? Math.round(((this.state.typedText.length - this.state.totalErrors) / this.state.typedText.length) * 100)
             : 100;
 
+        // 计算最终时间显示
+        const totalSeconds = Math.floor(totalElapsed / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
         this.finalStats = {
             wpm: wpm,
             accuracy: Math.max(0, accuracy),
-            time: this.elements.timer.textContent,
+            time: timeStr,
             errors: this.state.totalErrors,
             correct: this.state.totalCorrect,
             totalCharacters: this.state.typedText.length
@@ -494,19 +551,14 @@ class TypingTest {
      * 显示结果模态框
      */
     showResultModal() {
-        // 更新模态框内容
         document.getElementById('resultWpm').textContent = this.finalStats.wpm;
         document.getElementById('resultAccuracy').textContent = `${this.finalStats.accuracy}%`;
         document.getElementById('resultTime').textContent = this.finalStats.time;
         document.getElementById('resultErrors').textContent = this.finalStats.errors;
 
-        // 生成结果消息
         this.generateResultMessage();
-
-        // 显示模态框
         this.elements.modal.style.display = 'flex';
 
-        // 播放完成音效
         if (this.state.soundEnabled) {
             this.playSound('finish');
         }
@@ -523,7 +575,6 @@ class TypingTest {
         let message = '';
         let level = '';
 
-        // 根据WPM和准确率评级
         if (wpm >= 70 && accuracy >= 98) {
             level = '专家级';
             message = '你的打字速度和准确率都非常出色！达到了专业水平。';
@@ -538,7 +589,6 @@ class TypingTest {
             message = '保持练习！每天坚持会看到明显进步。';
         }
 
-        // 提供具体建议
         if (accuracy < 90) {
             message += ' 建议放慢速度，优先保证准确性。';
         } else if (wpm < 40) {
@@ -564,13 +614,14 @@ class TypingTest {
      */
     updateWPM() {
         if (this.state.startTime && this.state.isActive) {
-            const elapsed = (Date.now() - this.state.startTime) / 1000 / 60;
+            const totalElapsed = Date.now() - this.state.startTime - (this.state.totalPauseDuration || 0);
+            const elapsed = totalElapsed / 1000 / 60;
             const words = this.state.typedText.length / 5;
             const wpm = elapsed > 0 ? Math.round(words / elapsed) : 0;
 
             this.elements.wpm.textContent = wpm;
         } else {
-            this.elements.wpm.textContent = 0;
+            this.elements.wpm.textContent = '0';
         }
     }
 
@@ -623,7 +674,6 @@ class TypingTest {
      * 渲染文本
      */
     renderText() {
-        // 使用requestAnimationFrame优化性能
         if (this.renderFrameId) {
             cancelAnimationFrame(this.renderFrameId);
         }
@@ -640,10 +690,8 @@ class TypingTest {
         const target = this.state.targetText;
         const typed = this.state.typedText;
 
-        // 清空并重建文本
         this.elements.text.innerHTML = '';
 
-        // 性能优化：批量构建DOM
         const fragment = document.createDocumentFragment();
 
         for (let i = 0; i < target.length; i++) {
@@ -674,7 +722,6 @@ class TypingTest {
         const cursor = document.getElementById('cursor');
         if (!cursor) return;
 
-        // 获取当前字符的位置
         const spans = this.elements.text.querySelectorAll('span');
         const currentIndex = Math.min(this.state.currentPosition, spans.length - 1);
 
@@ -682,7 +729,6 @@ class TypingTest {
             const rect = spans[currentIndex].getBoundingClientRect();
             const textContainer = this.elements.text.parentElement;
 
-            // 计算相对位置
             const x = rect.left - textContainer.getBoundingClientRect().left;
             const y = rect.top - textContainer.getBoundingClientRect().top;
 
@@ -703,6 +749,9 @@ class TypingTest {
                 this.state.showHints = settings.showHints !== false;
                 this.state.punctuation = settings.punctuation || 'some';
                 this.state.language = settings.language || 'zh';
+
+                // 更新UI
+                this.updateSoundButton();
             } catch (e) {
                 console.error('Failed to load settings:', e);
             }
@@ -713,7 +762,6 @@ class TypingTest {
      * 打开设置面板
      */
     openSettings() {
-        // 更新设置表单的值
         document.getElementById('customWords').value = 50;
         document.getElementById('customTime').value = 60;
         document.getElementById('punctuation').value = this.state.punctuation;
@@ -721,7 +769,6 @@ class TypingTest {
         document.getElementById('cursorSpeed').value = this.state.cursorSpeed;
         document.getElementById('showHints').checked = this.state.showHints;
 
-        // 显示设置面板
         this.elements.settingsPanel.style.display = 'block';
     }
 
@@ -736,13 +783,11 @@ class TypingTest {
      * 保存设置
      */
     saveSettings() {
-        // 获取表单值
         this.state.punctuation = document.getElementById('punctuation').value;
         this.state.language = document.getElementById('language').value;
         this.state.cursorSpeed = document.getElementById('cursorSpeed').value;
         this.state.showHints = document.getElementById('showHints').checked;
 
-        // 保存到localStorage
         const settings = {
             soundEnabled: this.state.soundEnabled,
             cursorSpeed: this.state.cursorSpeed,
@@ -752,11 +797,7 @@ class TypingTest {
         };
 
         localStorage.setItem('typingTestSettings', JSON.stringify(settings));
-
-        // 关闭设置面板
         this.closeSettings();
-
-        // 应用设置
         this.applySettings();
     }
 
@@ -770,13 +811,11 @@ class TypingTest {
         this.state.punctuation = 'some';
         this.state.language = 'zh';
 
-        // 更新表单
         document.getElementById('punctuation').value = 'some';
         document.getElementById('language').value = 'zh';
         document.getElementById('cursorSpeed').value = 'medium';
         document.getElementById('showHints').checked = true;
 
-        // 应用设置
         this.applySettings();
     }
 
@@ -785,11 +824,7 @@ class TypingTest {
      */
     applySettings() {
         this.initCursor();
-
-        // 更新音效按钮状态
         this.updateSoundButton();
-
-        // 提示设置已保存
         this.showToast('设置已保存');
     }
 
@@ -800,10 +835,15 @@ class TypingTest {
         this.state.soundEnabled = !this.state.soundEnabled;
         this.updateSoundButton();
 
-        // 保存设置
-        this.saveSettings();
+        const settings = {
+            soundEnabled: this.state.soundEnabled,
+            cursorSpeed: this.state.cursorSpeed,
+            showHints: this.state.showHints,
+            punctuation: this.state.punctuation,
+            language: this.state.language
+        };
+        localStorage.setItem('typingTestSettings', JSON.stringify(settings));
 
-        // 播放反馈音效
         if (this.state.soundEnabled) {
             this.playSound('toggle');
         }
@@ -824,31 +864,20 @@ class TypingTest {
      */
     playSound(type) {
         if (!this.state.soundEnabled) return;
-
-        // 在实际项目中，这里会加载并播放音频文件
-        // 暂时使用控制台输出替代
         console.log(`Playing sound: ${type}`);
-
-        // 可以添加实际音效
-        // const audio = new Audio(`sounds/${type}.mp3`);
-        // audio.play();
+        // 可以添加实际音效文件
     }
 
     /**
      * 切换主题
      */
     toggleTheme() {
-        const isDark = document.body.getAttribute('data-theme') !== 'light';
-        const newTheme = isDark ? 'light' : 'dark';
+        const currentTheme = document.body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
         document.body.setAttribute('data-theme', newTheme);
         localStorage.setItem('typingTestTheme', newTheme);
-
-        // 更新按钮图标
-        const icon = document.querySelector('#themeToggle i');
-        if (icon) {
-            icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        }
+        this.updateThemeIcon(newTheme);
     }
 
     /**
@@ -857,9 +886,6 @@ class TypingTest {
     updateGameMode() {
         const mode = this.elements.gameMode.value;
         console.log(`Game mode changed to: ${mode}`);
-
-        // 根据模式更新游戏
-        // 在实际项目中，这里会有更多的逻辑
     }
 
     /**
@@ -869,7 +895,6 @@ class TypingTest {
         const difficulty = this.elements.difficulty.value;
         console.log(`Difficulty changed to: ${difficulty}`);
 
-        // 重置游戏以应用新难度
         if (this.state.isActive) {
             this.reset();
         }
@@ -881,21 +906,16 @@ class TypingTest {
     saveToHistory() {
         const record = {
             date: new Date().toISOString(),
-            stats: this.finalStats
+            stats: { ...this.finalStats }
         };
 
         this.state.history.unshift(record);
 
-        // 限制历史记录数量
         if (this.state.history.length > 20) {
             this.state.history = this.state.history.slice(0, 20);
         }
 
-        // 保存到localStorage
         localStorage.setItem('typingHistory', JSON.stringify(this.state.history));
-
-        // 更新显示
-        this.updateHistoryDisplay();
     }
 
     /**
@@ -915,22 +935,20 @@ class TypingTest {
             return;
         }
 
-        // 构建历史记录列表
         const fragment = document.createDocumentFragment();
 
-        this.state.history.forEach((record, index) => {
+        this.state.history.forEach((record) => {
             const item = document.createElement('div');
             item.className = 'history-item';
             item.innerHTML = `
-                <div class="history-date">${new Date(record.date).toLocaleDateString()}</div>
+                <div class="history-date">${new Date(record.date).toLocaleDateString('zh-CN')}</div>
                 <div class="history-stats">
                     <span class="stat">${record.stats.wpm} WPM</span>
                     <span class="stat">${record.stats.accuracy}%</span>
                     <span class="stat">${record.stats.time}</span>
-                    <span class="stat">${record.stats.errors} errors</span>
+                    <span class="stat">${record.stats.errors} 错误</span>
                 </div>
             `;
-
             fragment.appendChild(item);
         });
 
@@ -961,8 +979,7 @@ class TypingTest {
                 title: '打字速度测试结果',
                 text: text,
                 url: window.location.href
-            }).catch(err => {
-                console.log('Error sharing:', err);
+            }).catch(() => {
                 this.fallbackShare(text);
             });
         } else {
@@ -974,13 +991,9 @@ class TypingTest {
      * 备用分享方法
      */
     fallbackShare(text) {
-        // 复制到剪贴板
         navigator.clipboard.writeText(text).then(() => {
             this.showToast('结果已复制到剪贴板');
-        }).catch(err => {
-            console.log('Failed to copy:', err);
-
-            // 提示用户手动复制
+        }).catch(() => {
             prompt('复制以下文本分享结果：', text);
         });
     }
@@ -989,7 +1002,6 @@ class TypingTest {
      * 显示提示消息
      */
     showToast(message) {
-        // 创建或更新提示元素
         let toast = document.getElementById('typingToast');
         if (!toast) {
             toast = document.createElement('div');
@@ -1000,7 +1012,7 @@ class TypingTest {
                 right: 20px;
                 background: var(--color-bg-secondary);
                 backdrop-filter: blur(16px);
-                border: 1px solid rgba(255, 255, 255, 0.08);
+                border: 1px solid var(--color-border);
                 border-radius: var(--radius-lg);
                 padding: var(--spacing-sm) var(--spacing-md);
                 color: var(--color-text-primary);
@@ -1018,62 +1030,14 @@ class TypingTest {
         toast.style.opacity = '1';
         toast.style.transform = 'translateY(0)';
 
-        // 自动隐藏
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateY(-20px)';
         }, 3000);
-    }
-
-    /**
-     * 更新游戏模式设置
-     */
-    updateGameModeSettings() {
-        // 根据游戏模式更新设置显示
-        const mode = this.elements.gameMode.value;
-
-        // 显示/隐藏自定义设置
-        const customSettings = document.querySelector('.custom-settings');
-        if (customSettings) {
-            customSettings.style.display = mode === 'custom' ? 'block' : 'none';
-        }
-    }
-
-    /**
-     * 应用设置更改
-     */
-    applySettingsChanges() {
-        // 重新初始化光标
-        this.initCursor();
-
-        // 更新音效按钮状态
-        this.updateSoundButton();
-
-        // 显示成功消息
-        this.showToast('设置已应用');
     }
 }
 
 // 初始化游戏
 document.addEventListener('DOMContentLoaded', () => {
     window.typingTest = new TypingTest();
-});
-
-// 添加全局键盘快捷键
-document.addEventListener('keydown', (e) => {
-    // Ctrl/Cmd + R 重新开始
-    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-        e.preventDefault();
-        if (window.typingTest) {
-            window.typingTest.startNewGame();
-        }
-    }
-
-    // Ctrl/Cmd + S 打开设置
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        if (window.typingTest) {
-            window.typingTest.openSettings();
-        }
-    }
 });

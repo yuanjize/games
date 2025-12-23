@@ -7,6 +7,7 @@
  * - H键：显示提示
  * - 方向键：在棋盘格间导航
  * - Enter键：选择当前聚焦的格子或按钮
+ * - 1/2/3键：快速切换难度
  */
 
 class TicTacToeGame {
@@ -18,6 +19,7 @@ class TicTacToeGame {
         this.history = [];
         this.currentFocus = { row: 0, col: 0 };
         this.soundEnabled = true;
+        this.isAiThinking = false;
 
         this.stats = JSON.parse(localStorage.getItem('ttt_stats') || '{"X":0,"O":0,"Draw":0,"Total":0}');
 
@@ -78,49 +80,86 @@ class TicTacToeGame {
     }
 
     handleKeydown(e) {
-        if (this.gameState !== 'playing') return;
+        // 处理难度切换快捷键
+        if (e.key === '1') {
+            e.preventDefault();
+            this.setDifficulty('easy');
+            return;
+        }
+        if (e.key === '2') {
+            e.preventDefault();
+            this.setDifficulty('medium');
+            return;
+        }
+        if (e.key === '3') {
+            e.preventDefault();
+            this.setDifficulty('hard');
+            return;
+        }
 
-        switch (e.key) {
-            case ' ':
-            case 'Spacebar':
+        // 处理空格键 - 新游戏
+        if (e.key === ' ' || e.key === 'Spacebar') {
+            // 只在非输入元素和非按钮上触发
+            if (document.activeElement.tagName !== 'BUTTON' &&
+                !document.activeElement.classList.contains('cell')) {
                 e.preventDefault();
                 this.reset();
-                break;
-            case 'r':
-            case 'R':
+                return;
+            }
+        }
+
+        // 方向键导航
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.moveFocus(-1, 0);
+            return;
+        }
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.moveFocus(1, 0);
+            return;
+        }
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            this.moveFocus(0, -1);
+            return;
+        }
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            this.moveFocus(0, 1);
+            return;
+        }
+
+        // R键 - 悔棋
+        if (e.key === 'r' || e.key === 'R') {
+            e.preventDefault();
+            this.undo();
+            return;
+        }
+
+        // H键 - 提示
+        if (e.key === 'h' || e.key === 'H') {
+            e.preventDefault();
+            this.showHint();
+            return;
+        }
+
+        // Enter键 - 选择当前元素
+        if (e.key === 'Enter' || e.key === ' ') {
+            if (document.activeElement.classList.contains('cell')) {
                 e.preventDefault();
-                this.undo();
-                break;
-            case 'h':
-            case 'H':
-                e.preventDefault();
-                this.showHint();
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                this.moveFocus(-1, 0);
-                break;
-            case 'ArrowDown':
-                e.preventDefault();
-                this.moveFocus(1, 0);
-                break;
-            case 'ArrowLeft':
-                e.preventDefault();
-                this.moveFocus(0, -1);
-                break;
-            case 'ArrowRight':
-                e.preventDefault();
-                this.moveFocus(0, 1);
-                break;
-            case 'Enter':
-            case ' ':
-                e.preventDefault();
-                if (document.activeElement.classList.contains('cell')) {
-                    this.handleClick(this.currentFocus.row, this.currentFocus.col);
-                } else if (document.activeElement.tagName === 'BUTTON') {
-                    document.activeElement.click();
-                }
-                break;
+                this.handleClick(this.currentFocus.row, this.currentFocus.col);
+            }
+            return;
+        }
+
+        // Escape键 - 确认重新开始
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            if (confirm('是否要重新开始游戏？')) {
+                this.reset();
+            }
+            return;
         }
     }
 
@@ -145,12 +184,14 @@ class TicTacToeGame {
     }
 
     handleClick(row, col) {
-        if (this.gameState !== 'playing' || this.board[row][col] !== '' || this.currentPlayer !== 'X') return;
+        if (this.gameState !== 'playing' || this.board[row][col] !== '' ||
+            this.currentPlayer !== 'X' || this.isAiThinking) return;
 
         this.makeMove(row, col, 'X');
 
         if (this.gameState === 'playing') {
             this.currentPlayer = 'O';
+            this.isAiThinking = true;
             this.updateUI();
             this.announce(`玩家X在${row + 1}行${col + 1}列下子。AI正在思考...`);
             setTimeout(() => this.aiMove(), 500);
@@ -159,10 +200,11 @@ class TicTacToeGame {
 
     makeMove(row, col, player) {
         this.board[row][col] = player;
-        this.history.push({ player, row, col });
+        this.history.push({ player, r: row, c: col });
         this.addHistoryEntry(player, row, col);
-        this.render();
+        this.updateCell(row, col, player);
         this.checkState();
+        this.updateUndoButton();
 
         // 播放点击音效
         if (this.soundEnabled) {
@@ -170,8 +212,22 @@ class TicTacToeGame {
         }
     }
 
+    updateCell(row, col, player) {
+        const cellIndex = row * 3 + col;
+        const cell = this.elements.board.querySelectorAll('.cell')[cellIndex];
+
+        if (cell) {
+            cell.textContent = player;
+            cell.classList.add('occupied', player.toLowerCase());
+            cell.setAttribute('aria-label', `第${row + 1}行第${col + 1}列，已放置${player}`);
+        }
+    }
+
     aiMove() {
-        if (this.gameState !== 'playing') return;
+        if (this.gameState !== 'playing') {
+            this.isAiThinking = false;
+            return;
+        }
 
         let move;
         if (this.difficulty === 'hard') move = this.getBestMove();
@@ -182,9 +238,14 @@ class TicTacToeGame {
             this.makeMove(move.r, move.c, 'O');
             if (this.gameState === 'playing') {
                 this.currentPlayer = 'X';
+                this.isAiThinking = false;
                 this.updateUI();
                 this.announce(`AI在${move.r + 1}行${move.c + 1}列下子。轮到玩家X。`);
+            } else {
+                this.isAiThinking = false;
             }
+        } else {
+            this.isAiThinking = false;
         }
     }
 
@@ -227,15 +288,16 @@ class TicTacToeGame {
             }
         }
 
-        // 优先选择中心或角落
+        // 优先选择中心
+        if(this.board[1][1] === '') return {r: 1, c: 1};
+
+        // 然后选择角落
         const corners = [{r:0,c:0}, {r:0,c:2}, {r:2,c:0}, {r:2,c:2}];
         for(const corner of corners) {
             if(this.board[corner.r][corner.c] === '') {
                 return corner;
             }
         }
-
-        if(this.board[1][1] === '') return {r:1, c:1};
 
         // 否则随机选择
         return this.getRandomMove();
@@ -299,26 +361,88 @@ class TicTacToeGame {
     }
 
     undo() {
-        if (this.history.length === 0 || this.gameState !== 'playing') return;
-
-        const lastMove = this.history.pop();
-        this.board[lastMove.row][lastMove.col] = '';
-        this.currentPlayer = 'X';
-        this.gameState = 'playing';
-
-        // 如果撤销的是AI的走棋，也需要撤销玩家的上一步
-        if (lastMove.player === 'O' && this.history.length > 0) {
-            const playerMove = this.history.pop();
-            this.board[playerMove.row][playerMove.col] = '';
+        if (this.history.length === 0 || this.gameState !== 'playing' || this.isAiThinking) {
+            this.announce('无法悔棋。');
+            return;
         }
 
-        this.render();
+        // 撤销AI的走棋
+        const aiMove = this.history.pop();
+        this.board[aiMove.r][aiMove.c] = '';
+        this.clearCell(aiMove.r, aiMove.c);
+
+        // 撤销玩家的走棋（如果有）
+        if (this.history.length > 0) {
+            const playerMove = this.history.pop();
+            this.board[playerMove.r][playerMove.c] = '';
+            this.clearCell(playerMove.r, playerMove.c);
+        }
+
+        this.currentPlayer = 'X';
+        this.gameState = 'playing';
+        this.isAiThinking = false;
+
+        this.refreshHistoryList();
         this.updateUI();
+        this.updateUndoButton();
         this.announce('已撤销上一步棋。');
     }
 
+    clearCell(row, col) {
+        const cellIndex = row * 3 + col;
+        const cell = this.elements.board.querySelectorAll('.cell')[cellIndex];
+
+        if (cell) {
+            cell.textContent = '';
+            cell.classList.remove('occupied', 'x', 'o', 'winning');
+            cell.setAttribute('aria-label', `第${row + 1}行第${col + 1}列，空位`);
+        }
+    }
+
+    refreshHistoryList() {
+        this.elements.historyList.innerHTML = '';
+
+        if (this.history.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'history-empty';
+            emptyState.textContent = '尚未开始游戏';
+            this.elements.historyList.appendChild(emptyState);
+            return;
+        }
+
+        this.history.forEach(move => {
+            const historyItem = document.createElement('div');
+            historyItem.className = `history-item ${move.player.toLowerCase()}`;
+            historyItem.setAttribute('role', 'listitem');
+
+            const playerMarker = document.createElement('span');
+            playerMarker.className = 'player-marker';
+            playerMarker.textContent = move.player;
+
+            const moveDetails = document.createElement('span');
+            moveDetails.className = 'move-details';
+            moveDetails.textContent = `第${move.r + 1}行第${move.c + 1}列`;
+
+            historyItem.appendChild(playerMarker);
+            historyItem.appendChild(moveDetails);
+            this.elements.historyList.appendChild(historyItem);
+        });
+
+        // 滚动到最新条目
+        this.elements.historyList.scrollTop = this.elements.historyList.scrollHeight;
+    }
+
+    updateUndoButton() {
+        const canUndo = this.history.length >= 2 && this.gameState === 'playing' && !this.isAiThinking;
+        this.elements.undoBtn.disabled = !canUndo;
+        this.elements.undoBtn.setAttribute('aria-disabled', !canUndo);
+    }
+
     showHint() {
-        if (this.gameState !== 'playing' || this.currentPlayer !== 'X') return;
+        if (this.gameState !== 'playing' || this.currentPlayer !== 'X' || this.isAiThinking) {
+            this.announce('现在无法显示提示。');
+            return;
+        }
 
         let bestMove;
         if (this.difficulty === 'hard') {
@@ -328,15 +452,23 @@ class TicTacToeGame {
         }
 
         if (bestMove) {
+            // 先清除所有现有的提示
+            this.clearHints();
+
             const hintCell = this.elements.board.querySelectorAll('.cell')[bestMove.r * 3 + bestMove.c];
             hintCell.classList.add('hint');
 
             setTimeout(() => {
-                hintCell.classList.remove('hint');
+                this.clearHints();
             }, 2000);
 
             this.announce(`提示：建议下在第${bestMove.r + 1}行第${bestMove.c + 1}列。`);
         }
+    }
+
+    clearHints() {
+        const hintCells = this.elements.board.querySelectorAll('.cell.hint');
+        hintCells.forEach(cell => cell.classList.remove('hint'));
     }
 
     setDifficulty(difficulty) {
@@ -362,7 +494,7 @@ class TicTacToeGame {
         }
 
         this.elements.difficultyDesc.textContent = description;
-        this.announce(`AI难度已设置为${difficulty}模式。`);
+        this.announce(`AI难度已设置为${difficulty === 'easy' ? '简单' : difficulty === 'medium' ? '中等' : '困难'}模式。`);
     }
 
     checkState() {
@@ -381,12 +513,15 @@ class TicTacToeGame {
 
             const winCells = this.getWinningCells();
             if (winCells) {
+                // 先清除之前的获胜状态
+                this.clearWinningCells();
                 winCells.forEach(cell => {
                     cell.classList.add('winning');
                 });
             }
 
-            this.announce(winner === 'X' ? '恭喜！玩家X获胜！' : 'AI获胜！再试一次吧！');
+            this.announce(winner === 'X' ? '恭喜！玩家X获胜！按空格键开始新游戏。' : 'AI获胜！按空格键再试一次吧！');
+            this.updateUndoButton();
 
         } else if (this.isFull(this.board)) {
             this.gameState = 'draw';
@@ -394,8 +529,14 @@ class TicTacToeGame {
             this.stats.Total++;
             this.saveStats();
             this.updateUI();
-            this.announce('平局！游戏结束。');
+            this.announce('平局！游戏结束。按空格键开始新游戏。');
+            this.updateUndoButton();
         }
+    }
+
+    clearWinningCells() {
+        const winningCells = this.elements.board.querySelectorAll('.cell.winning');
+        winningCells.forEach(cell => cell.classList.remove('winning'));
     }
 
     checkWinner(board) {
@@ -480,9 +621,14 @@ class TicTacToeGame {
         this.gameState = 'playing';
         this.history = [];
         this.currentFocus = { row: 0, col: 0 };
+        this.isAiThinking = false;
 
+        this.clearWinningCells();
+        this.clearHints();
+        this.refreshHistoryList();
         this.render();
         this.updateUI();
+        this.updateUndoButton();
         this.announce('新游戏已开始。玩家X先下。');
     }
 
@@ -504,16 +650,23 @@ class TicTacToeGame {
     playSound(type) {
         if (!this.soundEnabled) return;
 
-        const soundMap = {
-            'click': document.getElementById('clickSound'),
-            'win': document.getElementById('winSound'),
-            'lose': document.getElementById('loseSound')
-        };
-
-        const sound = soundMap[type];
-        if (sound) {
-            sound.currentTime = 0;
-            sound.play().catch(e => console.log('播放音效失败:', e));
+        // 使用 Web Audio API 音效系统
+        if (window.gameAudio) {
+            try {
+                switch (type) {
+                    case 'click':
+                        window.gameAudio.playClick();
+                        break;
+                    case 'win':
+                        window.gameAudio.playWin();
+                        break;
+                    case 'lose':
+                        window.gameAudio.playLose();
+                        break;
+                }
+            } catch (e) {
+                console.debug('播放音效失败:', e);
+            }
         }
     }
 
@@ -527,7 +680,11 @@ class TicTacToeGame {
     }
 
     saveStats() {
-        localStorage.setItem('ttt_stats', JSON.stringify(this.stats));
+        try {
+            localStorage.setItem('ttt_stats', JSON.stringify(this.stats));
+        } catch (e) {
+            console.warn('无法保存统计数据到localStorage:', e);
+        }
     }
 
     addHistoryEntry(player, row, col) {
@@ -564,9 +721,9 @@ class TicTacToeGame {
         // 更新游戏状态
         const statusTextMap = {
             'playing': this.currentPlayer === 'X' ? '轮到玩家 X 下棋' : 'AI 正在思考...',
-            'player_win': '🎉 恭喜！玩家 X 获胜！',
-            'ai_win': '🤖 AI 获胜！再试一次吧！',
-            'draw': '🤝 平局！游戏结束。'
+            'player_win': '恭喜！玩家 X 获胜！',
+            'ai_win': 'AI 获胜！再试一次吧！',
+            'draw': '平局！游戏结束。'
         };
 
         this.elements.status.textContent = statusTextMap[this.gameState];
@@ -654,9 +811,9 @@ class TicTacToeGame {
             }
         }
 
-        // 设置第一个格子为焦点
+        // 设置第一个格子为焦点（仅在新游戏时）
         const firstCell = this.elements.board.querySelector('.cell');
-        if (firstCell) {
+        if (firstCell && this.history.length === 0) {
             firstCell.focus();
         }
     }
@@ -703,16 +860,4 @@ window.addEventListener('DOMContentLoaded', () => {
             window.game.updateUI();
         }
     }, 100);
-});
-
-// 全局键盘快捷键
-document.addEventListener('keydown', (e) => {
-    // 在游戏加载后提供额外的全局快捷键
-    if (window.game && window.game.gameState === 'playing') {
-        if (e.key === 'Escape') {
-            if (confirm('是否要重新开始游戏？')) {
-                window.game.reset();
-            }
-        }
-    }
 });

@@ -3,6 +3,10 @@
 class GameOptionsManager {
     constructor(gameInstance) {
         this.game = gameInstance;
+        if (!this.game) {
+            console.warn('游戏实例未找到，部分功能可能不可用');
+        }
+
         this.options = {
             soundEnabled: false,
             vibrationEnabled: false,
@@ -11,6 +15,7 @@ class GameOptionsManager {
             largeText: false
         };
 
+        this.modal = null;
         this.init();
     }
 
@@ -80,11 +85,11 @@ class GameOptionsManager {
         // 暂停按钮
         const pauseBtn = document.getElementById('pause-btn');
         if (pauseBtn) {
-            pauseBtn.addEventListener('click', () => this.game.togglePause());
+            pauseBtn.addEventListener('click', () => this.togglePauseGame());
             pauseBtn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    this.game.togglePause();
+                    this.togglePauseGame();
                 }
             });
         }
@@ -93,9 +98,19 @@ class GameOptionsManager {
         this.createKeyboardHelp();
     }
 
+    togglePauseGame() {
+        if (this.game && typeof this.game.togglePause === 'function') {
+            this.game.togglePause();
+        } else {
+            console.warn('游戏暂停功能不可用');
+        }
+    }
+
     toggleSound() {
         this.options.soundEnabled = !this.options.soundEnabled;
-        this.game.soundEnabled = this.options.soundEnabled;
+        if (this.game) {
+            this.game.soundEnabled = this.options.soundEnabled;
+        }
 
         const soundToggle = document.getElementById('sound-toggle');
         if (soundToggle) {
@@ -103,15 +118,15 @@ class GameOptionsManager {
             const srLabel = soundToggle.querySelector('.sr-only');
 
             if (this.options.soundEnabled) {
-                icon.className = 'fas fa-volume-up';
-                srLabel.textContent = '声音：开启';
+                if (icon) icon.className = 'fas fa-volume-up';
+                if (srLabel) srLabel.textContent = '声音：开启';
                 soundToggle.classList.add('active');
-                this.game.announceScreenReaderMessage('声音效果已开启');
+                if (this.game) this.game.announceScreenReaderMessage('声音效果已开启');
             } else {
-                icon.className = 'fas fa-volume-mute';
-                srLabel.textContent = '声音：关闭';
+                if (icon) icon.className = 'fas fa-volume-mute';
+                if (srLabel) srLabel.textContent = '声音：关闭';
                 soundToggle.classList.remove('active');
-                this.game.announceScreenReaderMessage('声音效果已关闭');
+                if (this.game) this.game.announceScreenReaderMessage('声音效果已关闭');
             }
         }
 
@@ -120,7 +135,9 @@ class GameOptionsManager {
 
     toggleVibration() {
         this.options.vibrationEnabled = !this.options.vibrationEnabled;
-        this.game.vibrationEnabled = this.options.vibrationEnabled;
+        if (this.game) {
+            this.game.vibrationEnabled = this.options.vibrationEnabled;
+        }
 
         const vibrationToggle = document.getElementById('vibration-toggle');
         if (vibrationToggle) {
@@ -128,15 +145,20 @@ class GameOptionsManager {
             const srLabel = vibrationToggle.querySelector('.sr-only');
 
             if (this.options.vibrationEnabled) {
-                icon.className = 'fas fa-mobile-alt';
-                srLabel.textContent = '振动：开启';
+                if (icon) icon.className = 'fas fa-mobile-alt';
+                if (srLabel) srLabel.textContent = '振动：开启';
                 vibrationToggle.classList.add('active');
-                this.game.announceScreenReaderMessage('振动反馈已开启');
+                if (this.game) this.game.announceScreenReaderMessage('振动反馈已开启');
+
+                // 触觉反馈
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
             } else {
-                icon.className = 'fas fa-mobile-alt';
-                srLabel.textContent = '振动：关闭';
+                if (icon) icon.className = 'fas fa-mobile-alt';
+                if (srLabel) srLabel.textContent = '振动：关闭';
                 vibrationToggle.classList.remove('active');
-                this.game.announceScreenReaderMessage('振动反馈已关闭');
+                if (this.game) this.game.announceScreenReaderMessage('振动反馈已关闭');
             }
         }
 
@@ -228,9 +250,9 @@ class GameOptionsManager {
     }
 
     setupScoreMonitoring() {
-        let lastScore = this.game.state.score;
+        let lastScore = this.game ? this.game.state.score : 0;
         const observer = new MutationObserver(() => {
-            if (this.game.state.score !== lastScore) {
+            if (this.game && this.game.state.score !== lastScore) {
                 const srScore = document.getElementById('sr-score-update');
                 if (srScore) {
                     srScore.textContent = `分数：${this.game.state.score}`;
@@ -250,6 +272,11 @@ class GameOptionsManager {
     }
 
     createKeyboardHelp() {
+        // 检查是否已存在
+        if (document.getElementById('keyboard-help-btn')) {
+            return;
+        }
+
         const helpButton = document.createElement('button');
         helpButton.id = 'keyboard-help-btn';
         helpButton.className = 'btn-option';
@@ -275,6 +302,12 @@ class GameOptionsManager {
     }
 
     createHelpModal() {
+        // 检查是否已存在
+        if (document.getElementById('help-modal')) {
+            this.modal = document.getElementById('help-modal');
+            return;
+        }
+
         const modal = document.createElement('div');
         modal.id = 'help-modal';
         modal.className = 'modal';
@@ -282,6 +315,7 @@ class GameOptionsManager {
         modal.setAttribute('aria-labelledby', 'modal-title');
         modal.setAttribute('aria-modal', 'true');
         modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
 
         modal.innerHTML = `
             <div class="modal-content">
@@ -296,7 +330,7 @@ class GameOptionsManager {
                     <ul class="shortcut-list">
                         <li><span class="shortcut-key">←</span> 左箭头：向左移动挡板</li>
                         <li><span class="shortcut-key">→</span> 右箭头：向右移动挡板</li>
-                        <li><span class="shortcut-key">空格</span> 空格键：发射球/重新开始游戏</li>
+                        <li><span class="shortcut-key">空格</span> 空格键：发射球/继续游戏</li>
                         <li><span class="shortcut-key">R</span> R键：重新开始游戏</li>
                         <li><span class="shortcut-key">P</span> P键或ESC键：暂停/继续游戏</li>
                         <li><span class="shortcut-key">Enter</span> 回车键：在游戏结束时重新开始</li>
@@ -328,9 +362,43 @@ class GameOptionsManager {
         `;
 
         document.body.appendChild(modal);
+        this.modal = modal;
 
         // 添加模态框样式
+        this.addModalStyles();
+
+        // 绑定关闭事件
+        const closeButtons = modal.querySelectorAll('.modal-close, #close-help-btn');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                this.hideHelp();
+            });
+        });
+
+        // 点击模态框背景关闭
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.hideHelp();
+            }
+        });
+
+        // 按ESC键关闭
+        this.escapeHandler = (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                this.hideHelp();
+            }
+        };
+        document.addEventListener('keydown', this.escapeHandler);
+    }
+
+    addModalStyles() {
+        // 检查是否已添加样式
+        if (document.getElementById('modal-styles')) {
+            return;
+        }
+
         const modalStyle = document.createElement('style');
+        modalStyle.id = 'modal-styles';
         modalStyle.textContent = `
             .modal {
                 position: fixed;
@@ -398,6 +466,11 @@ class GameOptionsManager {
                 color: var(--text-primary);
             }
 
+            .modal-body p {
+                color: var(--text-secondary);
+                line-height: var(--line-height-normal);
+            }
+
             .shortcut-list {
                 list-style: none;
                 padding: 0;
@@ -434,43 +507,35 @@ class GameOptionsManager {
             }
         `;
         document.head.appendChild(modalStyle);
-
-        // 绑定关闭事件
-        const closeButtons = modal.querySelectorAll('.modal-close, #close-help-btn');
-        closeButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                modal.style.display = 'none';
-                modal.setAttribute('aria-hidden', 'true');
-            });
-        });
-
-        // 点击模态框背景关闭
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-                modal.setAttribute('aria-hidden', 'true');
-            }
-        });
-
-        // 按ESC键关闭
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.style.display === 'flex') {
-                modal.style.display = 'none';
-                modal.setAttribute('aria-hidden', 'true');
-            }
-        });
     }
 
     showHelp() {
-        const modal = document.getElementById('help-modal');
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.setAttribute('aria-hidden', 'false');
+        if (this.modal) {
+            this.modal.style.display = 'flex';
+            this.modal.setAttribute('aria-hidden', 'false');
 
             // 将焦点移动到模态框
-            const closeBtn = modal.querySelector('.modal-close');
+            const closeBtn = this.modal.querySelector('.modal-close');
             if (closeBtn) {
                 closeBtn.focus();
+            }
+
+            // 屏幕阅读器提示
+            if (this.game) {
+                this.game.announceScreenReaderMessage('已打开键盘快捷键帮助');
+            }
+        }
+    }
+
+    hideHelp() {
+        if (this.modal) {
+            this.modal.style.display = 'none';
+            this.modal.setAttribute('aria-hidden', 'true');
+
+            // 恢复焦点到帮助按钮
+            const helpBtn = document.getElementById('keyboard-help-btn');
+            if (helpBtn) {
+                helpBtn.focus();
             }
         }
     }
@@ -493,12 +558,16 @@ class GameOptionsManager {
         if (soundToggle) {
             if (this.options.soundEnabled) {
                 soundToggle.classList.add('active');
-                soundToggle.querySelector('i').className = 'fas fa-volume-up';
-                soundToggle.querySelector('.sr-only').textContent = '声音：开启';
+                const icon = soundToggle.querySelector('i');
+                const srLabel = soundToggle.querySelector('.sr-only');
+                if (icon) icon.className = 'fas fa-volume-up';
+                if (srLabel) srLabel.textContent = '声音：开启';
             } else {
                 soundToggle.classList.remove('active');
-                soundToggle.querySelector('i').className = 'fas fa-volume-mute';
-                soundToggle.querySelector('.sr-only').textContent = '声音：关闭';
+                const icon = soundToggle.querySelector('i');
+                const srLabel = soundToggle.querySelector('.sr-only');
+                if (icon) icon.className = 'fas fa-volume-mute';
+                if (srLabel) srLabel.textContent = '声音：关闭';
             }
         }
 
@@ -507,10 +576,12 @@ class GameOptionsManager {
         if (vibrationToggle) {
             if (this.options.vibrationEnabled) {
                 vibrationToggle.classList.add('active');
-                vibrationToggle.querySelector('.sr-only').textContent = '振动：开启';
+                const srLabel = vibrationToggle.querySelector('.sr-only');
+                if (srLabel) srLabel.textContent = '振动：开启';
             } else {
                 vibrationToggle.classList.remove('active');
-                vibrationToggle.querySelector('.sr-only').textContent = '振动：关闭';
+                const srLabel = vibrationToggle.querySelector('.sr-only');
+                if (srLabel) srLabel.textContent = '振动：关闭';
             }
         }
 
@@ -541,14 +612,18 @@ class GameOptionsManager {
     // 公开的API
     setSound(enabled) {
         this.options.soundEnabled = enabled;
-        this.game.soundEnabled = enabled;
+        if (this.game) {
+            this.game.soundEnabled = enabled;
+        }
         this.applyPreferences();
         this.savePreferences();
     }
 
     setVibration(enabled) {
         this.options.vibrationEnabled = enabled;
-        this.game.vibrationEnabled = enabled;
+        if (this.game) {
+            this.game.vibrationEnabled = enabled;
+        }
         this.applyPreferences();
         this.savePreferences();
     }
@@ -557,6 +632,23 @@ class GameOptionsManager {
         this.options.highContrast = !this.options.highContrast;
         this.applyPreferences();
         this.savePreferences();
+    }
+
+    // 清理资源
+    destroy() {
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler);
+        }
+
+        const modal = document.getElementById('help-modal');
+        if (modal) {
+            modal.remove();
+        }
+
+        const helpBtn = document.getElementById('keyboard-help-btn');
+        if (helpBtn) {
+            helpBtn.remove();
+        }
     }
 }
 

@@ -6,7 +6,7 @@
     <title>物理弹球游戏 - Physics Pinball</title>
     <meta name="description" content="基于真实物理引擎的经典弹球游戏，支持键盘、鼠标和触摸控制">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
@@ -34,12 +34,12 @@
         <div class="game-main">
             <section class="game-info-panel" aria-label="游戏信息">
                 <div class="score-display" role="status" aria-live="polite">
-                    <div class="score-title">分数</div>
-                    <div class="score-value" id="score" aria-label="当前分数">0</div>
+                    <div class="info-title">分数</div>
+                    <div class="info-value" id="score" aria-label="当前分数">0</div>
                 </div>
 
                 <div class="lives-display" role="status">
-                    <div class="lives-title">生命</div>
+                    <div class="info-title">生命</div>
                     <div class="lives-value" id="lives" aria-label="剩余生命数">
                         <i class="fas fa-heart" aria-hidden="true"></i>
                         <i class="fas fa-heart" aria-hidden="true"></i>
@@ -48,18 +48,18 @@
                 </div>
 
                 <div class="high-score-display">
-                    <div class="high-score-title">最高分</div>
-                    <div class="high-score-value" id="high-score" aria-label="历史最高分">0</div>
+                    <div class="info-title">最高分</div>
+                    <div class="info-value" id="high-score" aria-label="历史最高分">0</div>
                 </div>
 
                 <div class="balls-display" role="status">
-                    <div class="balls-title">剩余球数</div>
-                    <div class="balls-value" id="balls-left" aria-label="剩余球数">3</div>
+                    <div class="info-title">剩余球数</div>
+                    <div class="info-value" id="balls-left" aria-label="剩余球数">3</div>
                 </div>
 
                 <div class="level-display">
-                    <div class="level-title">关卡</div>
-                    <div class="level-value" id="level" aria-label="当前关卡">1</div>
+                    <div class="info-title">关卡</div>
+                    <div class="info-value" id="level" aria-label="当前关卡">1</div>
                 </div>
             </section>
 
@@ -156,8 +156,8 @@
     <!-- 游戏控制选项 -->
     <div class="game-options" role="region" aria-label="游戏选项">
         <button class="btn-option" id="sound-toggle" aria-label="切换声音效果">
-            <i class="fas fa-volume-up" aria-hidden="true"></i>
-            <span class="sr-only">声音：开启</span>
+            <i class="fas fa-volume-mute" aria-hidden="true"></i>
+            <span class="sr-only">声音：关闭</span>
         </button>
         <button class="btn-option" id="vibration-toggle" aria-label="切换振动反馈">
             <i class="fas fa-mobile-alt" aria-hidden="true"></i>
@@ -169,63 +169,72 @@
         </button>
     </div>
 
+    <!-- 游戏脚本 -->
     <script src="game-enhanced.js"></script>
     <script src="game-options.js"></script>
     <script>
         // 初始化游戏和选项管理器
         document.addEventListener('DOMContentLoaded', function() {
-            if (window.enhancedGame) {
-                window.gameOptions = new GameOptionsManager(window.enhancedGame);
-
-                // 屏幕阅读器用户提示
-                const srHint = document.getElementById('sr-game-instructions');
-                if (srHint) {
-                    srHint.textContent += ' 按F1键查看键盘快捷键说明。';
+            // 等待游戏加载完成
+            setTimeout(function() {
+                if (window.enhancedGame && window.GameOptionsManager) {
+                    window.gameOptions = new GameOptionsManager(window.enhancedGame);
                 }
-            }
+            }, 100);
         });
 
         // 触摸设备检测和提示
         if ('ontouchstart' in window) {
             document.addEventListener('DOMContentLoaded', function() {
-                const touchHint = document.createElement('div');
-                touchHint.className = 'touch-hint';
-                touchHint.innerHTML = `
-                    <div class="touch-hint-content">
-                        <i class="fas fa-hand-point-up"></i>
-                        <p>触摸并拖动来控制挡板移动</p>
-                        <button class="dismiss-hint" aria-label="关闭提示">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
+                // 检查是否已经显示过提示
+                const hasShownHint = sessionStorage.getItem('touchHintShown');
 
-                setTimeout(() => {
-                    document.body.appendChild(touchHint);
+                if (!hasShownHint) {
+                    const touchHint = document.createElement('div');
+                    touchHint.className = 'touch-hint';
+                    touchHint.setAttribute('role', 'alert');
+                    touchHint.setAttribute('aria-live', 'polite');
+                    touchHint.innerHTML = `
+                        <div class="touch-hint-content">
+                            <i class="fas fa-hand-point-up"></i>
+                            <p>触摸并拖动来控制挡板移动</p>
+                            <button class="dismiss-hint" aria-label="关闭提示">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
 
-                    // 3秒后自动隐藏
                     setTimeout(() => {
-                        if (touchHint.parentNode) {
-                            touchHint.style.opacity = '0';
+                        if (document.body && !document.querySelector('.touch-hint')) {
+                            document.body.appendChild(touchHint);
+                            sessionStorage.setItem('touchHintShown', 'true');
+
+                            // 3秒后自动隐藏
                             setTimeout(() => {
                                 if (touchHint.parentNode) {
-                                    touchHint.parentNode.removeChild(touchHint);
+                                    touchHint.style.opacity = '0';
+                                    setTimeout(() => {
+                                        if (touchHint.parentNode) {
+                                            touchHint.parentNode.removeChild(touchHint);
+                                        }
+                                    }, 300);
                                 }
-                            }, 300);
+                            }, 3000);
                         }
-                    }, 3000);
-                }, 1000);
+                    }, 1000);
 
-                // 点击关闭
-                document.addEventListener('click', function handleClose(e) {
-                    if (e.target.closest('.dismiss-hint')) {
-                        const hint = e.target.closest('.touch-hint');
-                        if (hint && hint.parentNode) {
-                            hint.parentNode.removeChild(hint);
+                    // 点击关闭
+                    const closeHandler = function(e) {
+                        if (e.target.closest('.dismiss-hint')) {
+                            const hint = e.target.closest('.touch-hint');
+                            if (hint && hint.parentNode) {
+                                hint.parentNode.removeChild(hint);
+                            }
+                            document.removeEventListener('click', closeHandler);
                         }
-                        document.removeEventListener('click', handleClose);
-                    }
-                });
+                    };
+                    document.addEventListener('click', closeHandler);
+                }
             });
         }
     </script>

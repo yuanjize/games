@@ -304,6 +304,7 @@ body {
     display: block;
     background-color: #0a0a1a;
     cursor: crosshair;
+    touch-action: none; /* 防止触摸滚动 */
 }
 
 .game-overlay {
@@ -813,6 +814,8 @@ body {
     border-radius: var(--radius-lg);
     width: 48px;
     height: 48px;
+    min-width: 48px;
+    min-height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -884,101 +887,53 @@ body {
 }
 
 /* 性能优化样式 */
-.game-container {
-    will-change: transform;
-}
-
 #game-canvas {
-    will-change: transform;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
 }
 
-/* 视觉增强效果 */
-.info-display {
-    position: relative;
+/* 屏幕阅读器专用样式 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
     overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
-.info-display::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-        45deg,
-        transparent 30%,
-        rgba(255, 255, 255, 0.1) 50%,
-        transparent 70%
-    );
-    animation: shimmer 3s infinite linear;
-    z-index: 1;
+/* 打印优化 */
+@media print {
+    .game-container {
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .game-overlay,
+    .controls-info,
+    .instructions,
+    .game-options,
+    .touch-hint {
+        display: none !important;
+    }
+
+    .game-info-panel {
+        background: white !important;
+        color: black !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .game-header h1 {
+        background: none !important;
+        color: black !important;
+        -webkit-text-fill-color: black !important;
+    }
 }
 
-@keyframes shimmer {
-    0% { transform: translateX(-50%) translateY(-50%) rotate(0deg); }
-    100% { transform: translateX(-50%) translateY(-50%) rotate(360deg); }
-}
-
-.info-title,
-.info-value {
-    position: relative;
-    z-index: 2;
-}
-
-/* 游戏元素增强 */
-.bumper-hint,
-.target-hint,
-.ramp-hint,
-.life-hint {
-    position: relative;
-}
-
-.bumper-hint::after,
-.target-hint::after,
-.ramp-hint::after,
-.life-hint::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    opacity: 0.3;
-    pointer-events: none;
-}
-
-.bumper-hint::after {
-    background: radial-gradient(circle, var(--danger-color), transparent 70%);
-    animation: pulse-ring 2s infinite;
-}
-
-.target-hint::after {
-    background: radial-gradient(circle, var(--warning-color), transparent 70%);
-    animation: pulse-ring 2s infinite 0.5s;
-}
-
-.ramp-hint::after {
-    background: radial-gradient(circle, var(--info-color), transparent 70%);
-    animation: pulse-ring 2s infinite 1s;
-}
-
-.life-hint::after {
-    background: radial-gradient(circle, var(--success-color), transparent 70%);
-    animation: pulse-ring 2s infinite 1.5s;
-}
-
-@keyframes pulse-ring {
-    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.3; }
-    50% { opacity: 0.1; }
-    100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
-}
-
-/* 改进的响应式设计 */
+/* 改进的响应式设计 - 小屏幕 */
 @media (max-width: 375px) {
     .game-header {
         flex-direction: column;
@@ -1001,6 +956,20 @@ body {
 
     .features-grid {
         grid-template-columns: 1fr;
+    }
+
+    .game-options {
+        bottom: var(--space-4);
+        right: var(--space-4);
+        gap: var(--space-1);
+    }
+
+    .btn-option {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        font-size: var(--font-size-base);
     }
 }
 
@@ -1085,62 +1054,6 @@ body {
     100% { transform: translateY(-50px); opacity: 0; }
 }
 
-/* 屏幕阅读器专用样式 */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* 打印优化 */
-@media print {
-    .game-container {
-        box-shadow: none !important;
-        border: 1px solid #ccc !important;
-    }
-
-    .game-overlay,
-    .controls-info,
-    .instructions,
-    .game-options,
-    .touch-hint {
-        display: none !important;
-    }
-
-    .game-info-panel {
-        background: white !important;
-        color: black !important;
-        border: 1px solid #ccc !important;
-    }
-
-    .game-header h1 {
-        background: none !important;
-        color: black !important;
-        -webkit-text-fill-color: black !important;
-    }
-}
-
-/* 最后的细微调整 */
-@media (hover: hover) {
-    .btn-primary:hover::after,
-    .btn-secondary:hover::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.3), transparent 70%);
-        pointer-events: none;
-    }
-}
-
 /* 系统级优化 */
 @media (forced-colors: active) {
     .back-button,
@@ -1153,4 +1066,33 @@ body {
     .info-display {
         border: 1px solid CanvasText;
     }
+}
+
+/* 安全区域适配 (刘海屏等) */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .game-options {
+        bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+        right: calc(var(--space-6) + env(safe-area-inset-right));
+    }
+
+    body {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+}
+
+/* 改善触摸按钮的可访问性 */
+.btn-option:active,
+.btn-primary:active,
+.btn-secondary:active {
+    transform: scale(0.95);
+}
+
+/* 确保模态框在移动端上正确显示 */
+.modal {
+    padding: var(--space-4);
+}
+
+.modal-content {
+    max-height: calc(100vh - var(--space-8));
 }

@@ -13,6 +13,10 @@ class FruitGame {
         this.soundEnabled = true;
         this.nextFruit = this.getRandomBasicFruit();
 
+        // 音频上下文 - 单例模式，避免重复创建
+        this.audioContext = null;
+        this.previousScore = 0;
+
         // 水果等级定义
         this.fruits = [
             { level: 1, emoji: "🍎", name: "苹果", score: 2, color: "#ef4444" },
@@ -24,8 +28,7 @@ class FruitGame {
             { level: 7, emoji: "🥭", name: "芒果", score: 128, color: "#f97316" },
             { level: 8, emoji: "🥝", name: "猕猴桃", score: 256, color: "#84cc16" },
             { level: 9, emoji: "🍒", name: "樱桃", score: 512, color: "#dc2626" },
-            { level: 10, emoji: "🏆", name: "奖杯", score: 1024, color: "#eab308" },
-            { level: 11, emoji: "👑", name: "皇冠", score: 2048, color: "#fbbf24" }
+            { level: 10, emoji: "🍑", name: "桃子", score: 1024, color: "#fbbf24" }
         ];
 
         // DOM元素引用
@@ -49,7 +52,8 @@ class FruitGame {
             playAgainBtn: document.getElementById('play-again-btn'),
             shareBtn: document.getElementById('share-btn'),
             mobileControls: document.getElementById('mobile-controls'),
-            mobileBtns: document.querySelectorAll('.mobile-btn')
+            mobileBtns: document.querySelectorAll('.mobile-btn'),
+            creditsLink: document.getElementById('credits-link')
         };
 
         // 初始化
@@ -69,6 +73,7 @@ class FruitGame {
         this.score = 0;
         this.gameOver = false;
         this.nextFruit = this.getRandomBasicFruit();
+        this.previousScore = 0;
 
         // 添加初始水果
         this.addRandomFruit();
@@ -92,15 +97,19 @@ class FruitGame {
 
             switch(e.key) {
                 case 'ArrowUp':
+                    e.preventDefault();
                     this.move('up');
                     break;
                 case 'ArrowDown':
+                    e.preventDefault();
                     this.move('down');
                     break;
                 case 'ArrowLeft':
+                    e.preventDefault();
                     this.move('left');
                     break;
                 case 'ArrowRight':
+                    e.preventDefault();
                     this.move('right');
                     break;
                 case 'r':
@@ -113,7 +122,7 @@ class FruitGame {
                     }
                     break;
                 case 'Escape':
-                    if (this.elements.instructionsModal.classList.contains('active')) {
+                    if (this.elements.instructionsModal && this.elements.instructionsModal.classList.contains('active')) {
                         this.elements.instructionsModal.classList.remove('active');
                     }
                     break;
@@ -127,13 +136,17 @@ class FruitGame {
 
         if (this.elements.instructionsBtn) {
             this.elements.instructionsBtn.addEventListener('click', () => {
-                this.elements.instructionsModal.classList.add('active');
+                if (this.elements.instructionsModal) {
+                    this.elements.instructionsModal.classList.add('active');
+                }
             });
         }
 
         if (this.elements.instructionsClose) {
             this.elements.instructionsClose.addEventListener('click', () => {
-                this.elements.instructionsModal.classList.remove('active');
+                if (this.elements.instructionsModal) {
+                    this.elements.instructionsModal.classList.remove('active');
+                }
             });
         }
 
@@ -147,6 +160,25 @@ class FruitGame {
 
         if (this.elements.shareBtn) {
             this.elements.shareBtn.addEventListener('click', () => this.shareScore());
+        }
+
+        // Footer 游戏说明链接
+        if (this.elements.creditsLink) {
+            this.elements.creditsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (this.elements.instructionsModal) {
+                    this.elements.instructionsModal.classList.add('active');
+                }
+            });
+        }
+
+        // 难度选择器（预留功能）
+        if (this.elements.difficulty) {
+            this.elements.difficulty.addEventListener('change', (e) => {
+                console.log('难度选择:', e.target.value);
+                // 可以在这里添加难度相关的逻辑
+                // 比如：改变新水果的概率分布
+            });
         }
 
         // 触摸支持 - 滑动操作
@@ -173,8 +205,8 @@ class FruitGame {
                 const absDx = Math.abs(dx);
                 const absDy = Math.abs(dy);
 
-                // 最小滑动距离阈值
-                if (Math.max(absDx, absDy) > 30) {
+                // 最小滑动距离阈值（稍微降低以提高灵敏度）
+                if (Math.max(absDx, absDy) > 20) {
                     if (absDx > absDy) {
                         this.move(dx > 0 ? 'right' : 'left');
                     } else {
@@ -211,6 +243,15 @@ class FruitGame {
                 }
             });
         }
+
+        // 防止移动端双击缩放
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - this.lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            this.lastTouchEnd = now;
+        }, false);
     }
 
     getRandomBasicFruit() {
@@ -392,12 +433,15 @@ class FruitGame {
         // 设置结果消息
         if (this.elements.resultMessage) {
             let message = '';
-            if (this.score >= 2048) {
-                message = '🎉 恭喜！你获得了西瓜奖杯！';
+            // 检查是否达到桃子
+            const hasPeach = this.grid.flat().some(cell => cell && cell.emoji === '🍑');
+
+            if (hasPeach) {
+                message = '🎉 恭喜！你获得了桃子，完成游戏目标！';
             } else if (this.score >= 1024) {
-                message = '👍 太棒了！你已经获得了奖杯！';
+                message = '👏 太棒了！你已经接近桃子了！';
             } else if (this.score >= 512) {
-                message = '👏 干得好！接近奖杯了！';
+                message = '👍 干得好！继续努力！';
             } else {
                 message = '💪 差一点就成功了！再试一次吧！';
             }
@@ -415,8 +459,24 @@ class FruitGame {
     updateUI() {
         // 更新分数显示
         if(this.elements.score) {
+            const scoreIncreased = this.score > this.previousScore && this.previousScore > 0;
+
             this.elements.score.textContent = this.score;
             this.elements.score.setAttribute('aria-label', `当前分数：${this.score}`);
+
+            // 添加分数增加动画
+            if (scoreIncreased) {
+                this.elements.score.classList.remove('score-increase');
+                void this.elements.score.offsetWidth; // 触发重排
+                this.elements.score.classList.add('score-increase');
+
+                // 移除动画类
+                setTimeout(() => {
+                    this.elements.score.classList.remove('score-increase');
+                }, 300);
+            }
+
+            this.previousScore = this.score;
         }
 
         if(this.elements.best) {
@@ -499,45 +559,54 @@ class FruitGame {
     }
 
     playSound(type) {
-        // 简单音效实现
+        // 简单音效实现 - 使用单例 AudioContext
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            // 创建或复用音频上下文
+            if (!this.audioContext) {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // 如果音频上下文被暂停，尝试恢复
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
+
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
 
             oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            gainNode.connect(this.audioContext.destination);
 
             // 根据类型设置音效
             switch(type) {
                 case 'move':
-                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime);
                     break;
                 case 'merge':
-                    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(880, this.audioContext.currentTime);
                     break;
                 case 'place':
-                    oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(660, this.audioContext.currentTime);
                     break;
                 case 'newBest':
-                    oscillator.frequency.setValueAtTime(1100, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(1100, this.audioContext.currentTime);
                     break;
                 case 'reset':
-                    oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(220, this.audioContext.currentTime);
                     break;
                 case 'toggle':
-                    oscillator.frequency.setAttribute('frequency', 330);
+                    oscillator.frequency.setValueAtTime(330, this.audioContext.currentTime);
                     break;
                 case 'invalid':
-                    oscillator.frequency.setAttribute('frequency', 275);
+                    oscillator.frequency.setValueAtTime(275, this.audioContext.currentTime);
                     break;
             }
 
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
 
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
+            oscillator.start(this.audioContext.currentTime);
+            oscillator.stop(this.audioContext.currentTime + 0.15);
 
         } catch (error) {
             console.warn('音效播放失败:', error);
@@ -556,11 +625,53 @@ class FruitGame {
         } else {
             // 复制到剪贴板
             navigator.clipboard.writeText(shareText).then(() => {
-                alert('成绩已复制到剪贴板，可以粘贴分享了！');
+                // 使用自定义提示而不是alert
+                this.showToast('成绩已复制到剪贴板！');
             }).catch(() => {
-                alert('成绩分享：' + shareText);
+                // 降级处理
+                prompt('复制游戏成绩:', shareText);
             });
         }
+    }
+
+    showToast(message) {
+        // 创建临时提示框
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 9999px;
+            font-size: 14px;
+            z-index: 10000;
+            animation: fadeInOut 2s ease forwards;
+        `;
+
+        // 添加动画样式
+        if (!document.getElementById('toast-style')) {
+            const style = document.createElement('style');
+            style.id = 'toast-style';
+            style.textContent = `
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+                    15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                    85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                    100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 2000);
     }
 }
 

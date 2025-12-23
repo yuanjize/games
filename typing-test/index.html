@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="打字速度测试游戏 - 提升您的打字速度和准确性，支持多种难度和游戏模式">
+    <meta name="keywords" content="打字测试,打字速度,打字游戏,typing test,WPM">
     <title>打字速度测试游戏</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pIVpG8hZ5ZcVZL2Q6nF8dXEc7NhG6kGp8o2I6LJfBfRZnq7r3mYHN0hQ5c5k5k5k5k5k5k5k5k5k5k5k5k5k5k" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -19,7 +21,7 @@
                 <span>打字速度测试</span>
             </h1>
             <div class="theme-toggle">
-                <button id="themeToggle" class="theme-btn" title="切换主题" aria-label="切换明暗主题模式">
+                <button id="themeToggle" class="theme-btn" title="切换主题" aria-label="切换明暗主题模式" type="button">
                     <i class="fas fa-moon" aria-hidden="true"></i>
                 </button>
             </div>
@@ -29,10 +31,10 @@
             <!-- 游戏控制区域 -->
             <div class="game-controls" role="toolbar" aria-label="游戏控制工具栏">
                 <div class="controls-left">
-                    <button id="newGameBtn" class="btn btn-primary" aria-label="开始新游戏">
+                    <button id="newGameBtn" class="btn btn-primary" aria-label="开始新游戏" type="button">
                         <i class="fas fa-play" aria-hidden="true"></i> 开始新游戏
                     </button>
-                    <button id="restartBtn" class="btn btn-secondary" disabled aria-label="重新开始游戏">
+                    <button id="restartBtn" class="btn btn-secondary" disabled aria-label="重新开始游戏" type="button">
                         <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
                     </button>
                 </div>
@@ -59,10 +61,10 @@
                 </div>
 
                 <div class="controls-right">
-                    <button id="soundToggle" class="btn btn-icon" title="音效开关" aria-label="音效开关">
+                    <button id="soundToggle" class="btn btn-icon" title="音效开关" aria-label="音效开关" type="button">
                         <i class="fas fa-volume-up" aria-hidden="true"></i>
                     </button>
-                    <button id="settingsBtn" class="btn btn-icon" title="设置" aria-label="游戏设置">
+                    <button id="settingsBtn" class="btn btn-icon" title="设置" aria-label="游戏设置" type="button">
                         <i class="fas fa-cog" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -133,8 +135,8 @@
 
             <!-- 打字区域 -->
             <div class="typing-area">
-                <div class="typing-text-container">
-                    <div id="typingText" class="typing-text" aria-live="polite" role="textbox" aria-multiline="true">
+                <div class="typing-text-container" role="region" aria-label="打字文本显示区域">
+                    <div id="typingText" class="typing-text" aria-live="polite">
                         请点击"开始新游戏"按钮开始打字测试...
                     </div>
                     <div class="cursor-container">
@@ -158,13 +160,13 @@
 
                 <div class="instructions" id="typingInstructions" aria-label="打字说明">
                     <div class="instruction-item">
-                        <span class="char-correct" aria-label="正确字符显示为绿色">正确字符</span>
+                        <span class="char-correct-hint" aria-label="正确字符显示为绿色">正确字符</span>
                     </div>
                     <div class="instruction-item">
-                        <span class="char-incorrect" aria-label="错误字符显示为红色">错误字符</span>
+                        <span class="char-incorrect-hint" aria-label="错误字符显示为红色">错误字符</span>
                     </div>
                     <div class="instruction-item">
-                        <span class="char-current" aria-label="当前字符有蓝色背景">当前字符</span>
+                        <span class="char-current-hint" aria-label="当前字符有蓝色背景">当前字符</span>
                     </div>
                     <div class="instruction-item">
                         <i class="fas fa-backspace" aria-hidden="true"></i> 退格键删除
@@ -176,23 +178,25 @@
             </div>
 
             <!-- 自定义设置面板 -->
-            <div id="settingsPanel" class="settings-panel" style="display: none;">
+            <div id="settingsPanel" class="settings-panel" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
                 <div class="settings-header">
-                    <h3><i class="fas fa-cog"></i> 游戏设置</h3>
-                    <button id="closeSettings" class="btn btn-icon">
-                        <i class="fas fa-times"></i>
+                    <h3 id="settingsTitle"><i class="fas fa-cog" aria-hidden="true"></i> 游戏设置</h3>
+                    <button id="closeSettings" class="btn btn-icon" type="button" aria-label="关闭设置面板">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                 </div>
 
                 <div class="settings-content">
                     <div class="setting-group">
                         <label for="customWords">自定义单词数:</label>
-                        <input type="number" id="customWords" class="setting-input" min="10" max="200" value="50">
+                        <input type="number" id="customWords" class="setting-input" min="10" max="200" value="50" aria-describedby="customWordsDesc">
+                        <span id="customWordsDesc" class="setting-description">设置自定义模式的单词数量</span>
                     </div>
 
                     <div class="setting-group">
                         <label for="customTime">自定义时间(秒):</label>
-                        <input type="number" id="customTime" class="setting-input" min="30" max="600" value="60">
+                        <input type="number" id="customTime" class="setting-input" min="30" max="600" value="60" aria-describedby="customTimeDesc">
+                        <span id="customTimeDesc" class="setting-description">设置自定义模式的时间限制</span>
                     </div>
 
                     <div class="setting-group">
@@ -222,44 +226,46 @@
                     </div>
 
                     <div class="setting-group">
-                        <label for="showHints">显示提示:</label>
-                        <input type="checkbox" id="showHints" class="setting-checkbox" checked>
+                        <div class="setting-checkbox-wrapper">
+                            <input type="checkbox" id="showHints" class="setting-checkbox" checked>
+                            <label for="showHints">显示提示</label>
+                        </div>
                     </div>
                 </div>
 
                 <div class="settings-footer">
-                    <button id="saveSettings" class="btn btn-primary">
-                        <i class="fas fa-save"></i> 保存设置
+                    <button id="saveSettings" class="btn btn-primary" type="button">
+                        <i class="fas fa-save" aria-hidden="true"></i> 保存设置
                     </button>
-                    <button id="resetSettings" class="btn btn-secondary">
-                        <i class="fas fa-undo"></i> 重置为默认
+                    <button id="resetSettings" class="btn btn-secondary" type="button">
+                        <i class="fas fa-undo" aria-hidden="true"></i> 重置为默认
                     </button>
                 </div>
             </div>
 
             <!-- 历史记录区域 -->
-            <div class="history-section">
+            <section class="history-section" aria-labelledby="historyTitle">
                 <div class="section-header">
-                    <h3><i class="fas fa-history"></i> 历史记录</h3>
-                    <button id="clearHistory" class="btn btn-text">
-                        <i class="fas fa-trash"></i> 清空记录
+                    <h3 id="historyTitle"><i class="fas fa-history" aria-hidden="true"></i> 历史记录</h3>
+                    <button id="clearHistory" class="btn btn-text" type="button" aria-label="清空历史记录">
+                        <i class="fas fa-trash" aria-hidden="true"></i> 清空记录
                     </button>
                 </div>
 
-                <div id="historyList" class="history-list">
+                <div id="historyList" class="history-list" role="list" aria-label="历史记录列表">
                     <div class="history-empty">
-                        <i class="fas fa-clipboard-list"></i>
+                        <i class="fas fa-clipboard-list" aria-hidden="true"></i>
                         <p>暂无历史记录</p>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- 结果模态框 -->
             <div id="resultModal" class="modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="resultMessage">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2 id="modalTitle"><i class="fas fa-trophy" aria-hidden="true"></i> 测试完成!</h2>
-                        <button id="closeModal" class="btn btn-icon" aria-label="关闭结果窗口">
+                        <button id="closeModal" class="btn btn-icon" type="button" aria-label="关闭结果窗口">
                             <i class="fas fa-times" aria-hidden="true"></i>
                         </button>
                     </div>
@@ -289,10 +295,10 @@
                         </div>
 
                         <div class="result-actions">
-                            <button id="shareResult" class="btn btn-primary" aria-label="分享测试结果">
+                            <button id="shareResult" class="btn btn-primary" type="button" aria-label="分享测试结果">
                                 <i class="fas fa-share" aria-hidden="true"></i> 分享结果
                             </button>
-                            <button id="playAgain" class="btn btn-secondary" aria-label="开始新一局游戏">
+                            <button id="playAgain" class="btn btn-secondary" type="button" aria-label="开始新一局游戏">
                                 <i class="fas fa-play" aria-hidden="true"></i> 再来一局
                             </button>
                         </div>
@@ -321,8 +327,9 @@
                     <h4><i class="fas fa-keyboard" aria-hidden="true"></i> 键盘快捷键</h4>
                     <ul>
                         <li><kbd>Esc</kbd> - 重置游戏</li>
-                        <li><kbd>空格</kbd> - 开始/暂停</li>
-                        <li><kbd>F1</kbd> - 显示帮助</li>
+                        <li><kbd>空格</kbd>/<kbd>Enter</kbd> - 开始新游戏</li>
+                        <li><kbd>Ctrl</kbd> + <kbd>R</kbd> - 重新开始</li>
+                        <li><kbd>Ctrl</kbd> + <kbd>S</kbd> - 打开设置</li>
                     </ul>
                 </div>
             </div>
@@ -334,7 +341,7 @@
     </div>
 
     <!-- 键盘可视化 -->
-    <div id="keyboardOverlay" class="keyboard-overlay">
+    <div id="keyboardOverlay" class="keyboard-overlay" aria-hidden="true">
         <div class="keyboard-highlight"></div>
     </div>
 

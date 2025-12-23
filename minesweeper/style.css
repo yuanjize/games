@@ -1,3 +1,8 @@
+/**
+ * Minesweeper - 现代响应式样式
+ * 完全优化的CSS，包含移动端适配、性能优化和可访问性支持
+ */
+
 :root {
     /* 颜色系统 */
     --bg-color: #0f172a;
@@ -33,8 +38,8 @@
     --info-color: #3b82f6;
 
     /* 字体系统 */
-    --font-family: 'Inter', system-ui, sans-serif;
-    --font-mono: 'Courier New', 'Consolas', monospace;
+    --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'SF Mono', 'Consolas', 'Courier New', monospace;
 
     /* 间距系统 */
     --space-xs: 4px;
@@ -66,10 +71,20 @@
     --breakpoint-desktop: 1024px;
 }
 
-* {
+/* ========== 基础重置 ========== */
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 body {
@@ -77,7 +92,6 @@ body {
     background-color: var(--bg-color);
     color: var(--text-primary);
     line-height: 1.6;
-    font-size: 16px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -86,9 +100,11 @@ body {
     background-image:
         radial-gradient(circle at 20% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+    overflow-x: hidden;
 }
 
-/* 可访问性：键盘导航焦点样式 */
+/* ========== 可访问性支持 ========== */
+/* 键盘导航焦点样式 */
 :focus-visible {
     outline: 3px solid var(--accent-color);
     outline-offset: 2px;
@@ -108,6 +124,18 @@ body {
     border: 0;
 }
 
+/* 减少动画（用户偏好设置） */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ========== 主容器 ========== */
 .game-container {
     width: 100%;
     max-width: 1000px;
@@ -123,6 +151,7 @@ body {
     width: 100%;
     background: var(--panel-bg);
     backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     padding: var(--space-lg) var(--space-xl);
     border-radius: var(--radius-xl);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -163,6 +192,11 @@ body {
     border-color: var(--accent-color);
     color: var(--accent-light);
     transform: translateY(-2px);
+    outline: none;
+}
+
+.back-button:active {
+    transform: translateY(0);
 }
 
 .back-button i {
@@ -188,7 +222,6 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.5px;
-    position: relative;
 }
 
 .game-header h1 i {
@@ -212,6 +245,7 @@ body {
     gap: var(--space-lg);
     background: var(--panel-bg);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -297,6 +331,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .stat-content {
@@ -306,7 +341,7 @@ body {
 }
 
 .stat-label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -319,6 +354,7 @@ body {
     font-weight: 700;
     color: var(--accent-light);
     letter-spacing: 1px;
+    line-height: 1;
 }
 
 /* 重新开始按钮 */
@@ -333,7 +369,7 @@ body {
     border-radius: 50%;
     cursor: pointer;
     transition: all var(--transition-normal);
-    position: relative;
+    flex-shrink: 0;
 }
 
 #restart-btn:hover {
@@ -358,11 +394,11 @@ body {
     width: 100%;
     background: var(--panel-bg);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: var(--shadow-md);
-    overflow: auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -375,16 +411,24 @@ body {
     padding: 4px;
     border-radius: var(--radius-sm);
     user-select: none;
-    min-width: 0;
+    -webkit-user-select: none;
     max-width: 100%;
 }
 
 /* 网格大小设置 */
-.game-board.beginner { grid-template-columns: repeat(9, 1fr); }
-.game-board.intermediate { grid-template-columns: repeat(16, 1fr); }
-.game-board.expert { grid-template-columns: repeat(30, 1fr); }
+.game-board.beginner {
+    grid-template-columns: repeat(9, 1fr);
+}
 
-/* 格子样式 */
+.game-board.intermediate {
+    grid-template-columns: repeat(16, 1fr);
+}
+
+.game-board.expert {
+    grid-template-columns: repeat(30, minmax(20px, 1fr));
+}
+
+/* ========== 格子样式 ========== */
 .cell {
     width: 32px;
     height: 32px;
@@ -396,27 +440,22 @@ body {
     font-size: 0.95rem;
     cursor: pointer;
     border-radius: var(--radius-sm);
-    transition: all var(--transition-fast);
+    transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-    will-change: transform, background-color; /* 渲染性能优化 */
+    /* 移除button默认样式 */
+    padding: 0;
+    font-family: inherit;
+    color: inherit;
 }
 
-/* 可访问性：ARIA支持 */
-.cell[aria-label*="旗帜"],
-.cell.flagged {
-    color: var(--error-color);
-}
-
-.cell[aria-label*="地雷"],
-.cell.mine {
-    background: var(--error-color);
-    color: #fff;
+.cell:not(:disabled) {
+    cursor: pointer;
 }
 
 /* 交互状态 */
-.cell:hover:not(.revealed):not(.flagged) {
+.cell:hover:not(.revealed):not(.flagged):not(:disabled) {
     background: var(--cell-hover);
     transform: translateY(-1px);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -429,6 +468,10 @@ body {
     z-index: 1;
 }
 
+.cell:active:not(.revealed):not(.flagged):not(:disabled) {
+    transform: translateY(0);
+}
+
 /* 翻开状态 */
 .cell.revealed {
     background: var(--cell-revealed);
@@ -436,6 +479,10 @@ body {
     box-shadow: var(--shadow-inner);
     cursor: default;
     border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cell.revealed:disabled {
+    cursor: default;
 }
 
 /* 数字颜色 */
@@ -456,6 +503,7 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    pointer-events: none;
 }
 
 .cell.flagged.revealed::before {
@@ -470,6 +518,22 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+/* 错误标记 */
+.cell.wrong-flag {
+    background: rgba(239, 68, 68, 0.3) !important;
+}
+
+.cell.wrong-flag::after {
+    content: "❌";
+    font-size: 1rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
 }
 
 /* ========== 游戏说明 ========== */
@@ -480,6 +544,7 @@ body {
     gap: var(--space-lg);
     background: var(--panel-bg);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -531,6 +596,7 @@ body {
     width: 100%;
     background: var(--panel-bg);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     padding: var(--space-lg) var(--space-xl);
     border-radius: var(--radius-xl);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -570,6 +636,7 @@ body {
     padding: var(--space-lg);
     background: var(--panel-bg);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border-radius: var(--radius-xl);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: var(--shadow-md);
@@ -598,8 +665,9 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.95);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     padding: var(--space-sm) var(--space-lg);
     border-radius: var(--radius-lg);
     border: 1px solid rgba(245, 158, 11, 0.3);
@@ -612,7 +680,8 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     opacity: 0.95;
-    transition: opacity 0.3s;
+    transition: opacity var(--transition-slow);
+    pointer-events: none;
 }
 
 .mobile-touch-hint i {
@@ -699,48 +768,59 @@ body {
     }
 
     .difficulty-selector {
-        flex-direction: column;
-        align-items: center;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .difficulty-btn {
-        width: 100%;
-        max-width: 250px;
+        width: auto;
+        min-width: 100px;
         padding: var(--space-sm) var(--space-md);
+        font-size: 0.85rem;
     }
 
     .game-stats {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: var(--space-md);
     }
 
     .stat-box {
-        width: 100%;
-        justify-content: center;
+        width: auto;
+        min-width: 100px;
+        padding: var(--space-xs) var(--space-sm);
     }
 
     #restart-btn {
-        order: -1;
-        margin-bottom: var(--space-md);
+        width: 50px;
+        height: 50px;
+        order: 0;
+    }
+
+    #smile-icon {
+        font-size: 1.6rem;
     }
 
     .game-board-container {
-        padding: var(--space-md);
+        padding: var(--space-sm);
         border-radius: var(--radius-lg);
+        overflow-x: auto;
+        justify-content: flex-start;
     }
 
     .cell {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         font-size: 0.85rem;
-        min-width: 24px;
-        min-height: 24px;
+        min-width: 26px;
+        min-height: 26px;
     }
 
-    /* 专家级网格自适应 - 增加横向滚动 */
+    /* 专家级网格 - 使用水平滚动 */
     .game-board.expert {
-        grid-template-columns: repeat(30, 1fr);
-        overflow-x: auto;
+        min-width: max-content;
     }
 
     .instruction-card {
@@ -753,6 +833,12 @@ body {
 
     .instruction-card p {
         font-size: 0.85rem;
+    }
+
+    .mobile-touch-hint {
+        font-size: 0.8rem;
+        padding: 8px 14px;
+        bottom: 10px;
     }
 }
 
@@ -771,47 +857,49 @@ body {
     }
 
     .stat-box {
-        min-width: 100px;
+        min-width: 90px;
         padding: var(--space-xs) var(--space-sm);
     }
 
     .stat-label {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
     }
 
     .stat-value {
         font-size: 1.25rem;
     }
 
-    .cell {
-        width: 22px;
-        height: 22px;
-        font-size: 0.8rem;
-        min-width: 22px;
-        min-height: 22px;
+    .stat-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 1rem;
     }
 
-    /* 确保触摸目标最小为44px */
-    .cell::before {
-        position: absolute;
-        content: "";
-        top: -10px;
-        left: -10px;
-        right: -10px;
-        bottom: -10px;
-        pointer-events: none;
+    .cell {
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        min-width: 24px;
+        min-height: 24px;
     }
 
     .back-button,
     .difficulty-btn {
-        font-size: 0.9rem;
-        padding: 8px 12px;
+        font-size: 0.85rem;
+        padding: 6px 10px;
+        min-width: 90px;
     }
 
     .mobile-touch-hint {
-        font-size: 0.8rem;
-        padding: 8px 16px;
-        bottom: 10px;
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        bottom: 8px;
+        max-width: calc(100vw - 32px);
+    }
+
+    .game-instructions {
+        padding: var(--space-md);
+        gap: var(--space-sm);
     }
 }
 
@@ -825,6 +913,15 @@ body {
         padding: var(--space-sm) var(--space-md);
     }
 
+    .title-area {
+        flex-direction: row;
+        gap: var(--space-md);
+    }
+
+    .game-header h1 {
+        font-size: 1.5rem;
+    }
+
     .game-controls {
         padding: var(--space-sm);
     }
@@ -836,10 +933,17 @@ body {
     .cell {
         width: 22px;
         height: 22px;
+        font-size: 0.75rem;
+    }
+
+    .game-instructions {
+        display: none;
     }
 }
 
-/* 暗色模式增强（考虑色盲友好） */
+/* ========== 特殊模式支持 ========== */
+
+/* 暗色模式增强 */
 @media (prefers-color-scheme: dark) {
     :root {
         --bg-color: #0a0e17;
@@ -860,5 +964,30 @@ body {
 
     .cell {
         border-width: 2px;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    .game-controls,
+    .game-instructions,
+    .game-footer,
+    .mobile-touch-hint,
+    .back-button {
+        display: none;
+    }
+
+    .game-board {
+        border: 2px solid black;
+    }
+
+    .cell {
+        border: 1px solid #ccc;
+        color: black;
     }
 }

@@ -2,19 +2,20 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
     <title>贪吃蛇游戏</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pIVpG8hZ5ZkGviBb9NKYr4Mk2JKPgjMZtB9hCqDd0MNVKxnS+5rJ0C3vJNW8i4NxFpB5lJh3RQQl7pLNEQ4A==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="game-container">
         <header class="game-header">
-            <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅" rel="noopener">
                 <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回游戏大厅
             </a>
-            <h1><i class="fas fa-snake" aria-hidden="true"></i> 贪吃蛇游戏</h1>
+            <h1><i class="fas fa-staff-snake" aria-hidden="true"></i> 贪吃蛇游戏</h1>
             <div class="game-info" role="status" aria-live="polite">
                 <div class="info-box">
                     <div class="info-label">分数</div>
@@ -71,7 +72,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="game-overlay" id="pause-screen" style="display: none;">
+                <div class="game-overlay" id="pause-screen" style="display: none;" aria-hidden="true">
                     <div class="overlay-content">
                         <h2><i class="fas fa-pause" aria-hidden="true"></i> 游戏暂停</h2>
                         <button id="resume-btn" class="btn btn-primary" aria-label="继续游戏">
@@ -82,7 +83,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="game-overlay" id="game-over-screen" style="display: none;">
+                <div class="game-overlay" id="game-over-screen" style="display: none;" aria-hidden="true">
                     <div class="overlay-content">
                         <h2><i class="fas fa-skull-crossbones" aria-hidden="true"></i> 游戏结束</h2>
                         <div class="final-score">
@@ -104,24 +105,24 @@
                     <button id="restart-game-btn" class="btn btn-control" aria-label="重新开始游戏">
                         <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
                     </button>
-                    <button id="sound-toggle" class="btn btn-control" aria-label="切换声音">
+                    <button id="sound-toggle" class="btn btn-control" aria-label="切换声音" aria-pressed="true">
                         <i class="fas fa-volume-up" aria-hidden="true"></i> 声音
                     </button>
                 </div>
 
-                <div class="mobile-controls">
+                <div class="mobile-controls" aria-label="移动端方向控制">
                     <div class="d-pad">
-                        <button id="up-btn" class="direction-btn" aria-label="向上移动">
+                        <button id="up-btn" class="direction-btn" aria-label="向上移动" tabindex="-1">
                             <i class="fas fa-arrow-up" aria-hidden="true"></i>
                         </button>
                         <div class="d-pad-row">
-                            <button id="left-btn" class="direction-btn" aria-label="向左移动">
+                            <button id="left-btn" class="direction-btn" aria-label="向左移动" tabindex="-1">
                                 <i class="fas fa-arrow-left" aria-hidden="true"></i>
                             </button>
-                            <button id="down-btn" class="direction-btn" aria-label="向下移动">
+                            <button id="down-btn" class="direction-btn" aria-label="向下移动" tabindex="-1">
                                 <i class="fas fa-arrow-down" aria-hidden="true"></i>
                             </button>
-                            <button id="right-btn" class="direction-btn" aria-label="向右移动">
+                            <button id="right-btn" class="direction-btn" aria-label="向右移动" tabindex="-1">
                                 <i class="fas fa-arrow-right" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -138,11 +139,11 @@
                     </div>
                     <div class="food-item">
                         <div class="food-sample gold-food" aria-hidden="true"></div>
-                        <span>黄金食物 +30分</span>
+                        <span>黄金食物 +50分</span>
                     </div>
                     <div class="food-item">
                         <div class="food-sample green-food" aria-hidden="true"></div>
-                        <span>快速食物 +20分，速度+1</span>
+                        <span>快速食物 +20分，速度提升</span>
                     </div>
                     <div class="food-item">
                         <div class="food-sample blue-food" aria-hidden="true"></div>

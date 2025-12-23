@@ -33,6 +33,10 @@
     /* 字体 */
     --font-family: 'Poppins', 'Inter', system-ui, sans-serif;
 
+    /* 行高 */
+    --line-height-normal: 1.5;
+    --line-height-tight: 1.25;
+
     /* 字体大小 - 桌面 */
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
@@ -124,6 +128,7 @@ header {
     align-items: center;
     margin-bottom: var(--space-8);
     position: relative;
+    padding: 0 var(--space-12);
 }
 
 .back-button {
@@ -142,6 +147,7 @@ header {
     border: 1px solid rgba(255, 255, 255, 0.1);
     font-size: var(--font-size-sm);
     transition: all var(--transition-base);
+    white-space: nowrap;
 }
 
 .back-button:hover,
@@ -226,6 +232,24 @@ h1 {
     font-weight: 700;
     color: var(--text-primary);
     transition: all var(--transition-base);
+}
+
+/* 分数更新动画 */
+.score-value.score-increase {
+    animation: scoreIncrease 0.3s ease-out;
+}
+
+@keyframes scoreIncrease {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+        color: var(--accent-success);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
 /* 游戏控制按钮 */
@@ -461,6 +485,7 @@ h1 {
     max-width: 500px;
     margin-bottom: var(--space-4);
     position: relative;
+    touch-action: none;
 }
 
 .grid-cell {
@@ -567,7 +592,7 @@ h1 {
     display: none;
     flex-direction: column;
     align-items: center;
-    gap: var(--space-2);
+    gap: var(--space-3);
     background: rgba(15, 23, 42, 0.3);
     padding: var(--space-4);
     border-radius: var(--radius-xl);
@@ -579,7 +604,6 @@ h1 {
     font-size: var(--font-size-sm);
     font-weight: 600;
     color: var(--text-secondary);
-    margin-bottom: var(--space-2);
     display: flex;
     align-items: center;
     gap: var(--space-2);
@@ -595,8 +619,8 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: var(--text-primary);
     border: none;
@@ -605,6 +629,7 @@ h1 {
     cursor: pointer;
     transition: all var(--transition-base);
     box-shadow: var(--shadow-md);
+    touch-action: manipulation;
 }
 
 .mobile-btn:hover,
@@ -621,7 +646,6 @@ h1 {
     font-size: var(--font-size-xs);
     color: var(--text-muted);
     text-align: center;
-    margin-top: var(--space-2);
     font-style: italic;
 }
 
@@ -757,7 +781,7 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-4);
+    gap: var(--space-2);
     flex-wrap: wrap;
     margin-top: var(--space-4);
 }
@@ -834,6 +858,7 @@ h1 {
     gap: var(--space-4);
     justify-content: center;
     margin-top: var(--space-6);
+    flex-wrap: wrap;
 }
 
 /* 页脚样式 */
@@ -854,6 +879,7 @@ footer a {
     color: var(--accent-primary);
     text-decoration: none;
     transition: color var(--transition-base);
+    cursor: pointer;
 }
 
 footer a:hover {
@@ -866,6 +892,10 @@ footer a:hover {
     .container {
         padding: var(--space-4);
         border-radius: var(--radius-lg);
+    }
+
+    header {
+        padding: 0 var(--space-10);
     }
 
     h1 {
@@ -921,7 +951,6 @@ footer a:hover {
     }
 
     .modal-content {
-        padding: var(--space-4);
         max-width: 95vw;
     }
 
@@ -935,6 +964,16 @@ footer a:hover {
 
     .game-info {
         grid-template-columns: 1fr;
+    }
+
+    .fruit-merging-chain {
+        gap: var(--space-1);
+    }
+
+    .fruit-emoji {
+        width: 45px;
+        height: 45px;
+        font-size: var(--font-size-xl);
     }
 }
 

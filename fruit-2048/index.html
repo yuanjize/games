@@ -40,7 +40,7 @@
                         <i class="fas fa-question-circle" aria-hidden="true"></i> 游戏说明
                     </button>
                     <button class="btn" id="sound-toggle" aria-label="切换音效，当前状态为开启">
-                        <i class="fas fa-volume-up" aria-hidden="true"></i> 音效: 开
+                        <i class="fas fa-volume-up" aria-hidden="true"></i> <span>音效: 开</span>
                     </button>
                     <div class="difficulty-selector">
                         <label for="difficulty">难度:</label>
@@ -56,12 +56,10 @@
             <div class="game-info">
                 <div class="goal-container">
                     <h3><i class="fas fa-bullseye" aria-hidden="true"></i> 游戏目标</h3>
-                    <p>合并水果直到获得 <span class="goal-fruit">🍉 西瓜</span>！</p>
+                    <p>合并水果直到获得 <span class="goal-fruit">🍑 桃子</span>！</p>
                     <div class="fruit-progress">
-                        <div class="fruit-chain" aria-label="水果合并顺序：苹果、香蕉、橙子、葡萄、草莓、西瓜">
+                        <div class="fruit-chain" aria-label="水果合并顺序：苹果、橙子、葡萄、草莓、西瓜、菠萝、芒果、猕猴桃、樱桃、桃子">
                             <div class="fruit-item" data-fruit="🍎" aria-label="苹果">🍎</div>
-                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                            <div class="fruit-item" data-fruit="🍌" aria-label="香蕉">🍌</div>
                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                             <div class="fruit-item" data-fruit="🍊" aria-label="橙子">🍊</div>
                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
@@ -69,7 +67,15 @@
                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
                             <div class="fruit-item" data-fruit="🍓" aria-label="草莓">🍓</div>
                             <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                            <div class="fruit-item" data-fruit="🍉" aria-label="西瓜（最终目标）">🍉</div>
+                            <div class="fruit-item" data-fruit="🍉" aria-label="西瓜">🍉</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🍍" aria-label="菠萝">🍍</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🥭" aria-label="芒果">🥭</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🥝" aria-label="猕猴桃">🥝</div>
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            <div class="fruit-item" data-fruit="🍒" aria-label="樱桃">🍒</div>
                         </div>
                     </div>
                 </div>
@@ -158,7 +164,7 @@
                 <div class="instructions-section">
                     <h3 id="rules-title">游戏规则</h3>
                     <ul aria-labelledby="rules-title">
-                        <li><strong>目标：</strong>通过移动和合并水果，最终获得西瓜（🍉）</li>
+                        <li><strong>目标：</strong>通过移动和合并水果，最终获得桃子（🍑）</li>
                         <li><strong>操作：</strong>使用键盘方向键或手机滑动来控制水果移动</li>
                         <li><strong>合并：</strong>当两个相同的水果在移动方向上相邻时，它们会合并成下一个等级的水果</li>
                         <li><strong>得分：</strong>每次合并都会获得分数，合并的水果等级越高，分数越多</li>
@@ -172,12 +178,6 @@
                         <div class="fruit-stage">
                             <div class="fruit-emoji" aria-label="苹果">🍎</div>
                             <div class="stage-label">苹果</div>
-                        </div>
-                        <i class="fas fa-plus" aria-hidden="true"></i>
-                        <i class="fas fa-equals" aria-hidden="true"></i>
-                        <div class="fruit-stage">
-                            <div class="fruit-emoji" aria-label="香蕉">🍌</div>
-                            <div class="stage-label">香蕉</div>
                         </div>
                         <i class="fas fa-plus" aria-hidden="true"></i>
                         <i class="fas fa-equals" aria-hidden="true"></i>
@@ -200,8 +200,38 @@
                         <i class="fas fa-plus" aria-hidden="true"></i>
                         <i class="fas fa-equals" aria-hidden="true"></i>
                         <div class="fruit-stage">
-                            <div class="fruit-emoji" aria-label="西瓜，最终目标">🍉</div>
-                            <div class="stage-label">西瓜 (最终目标)</div>
+                            <div class="fruit-emoji" aria-label="西瓜">🍉</div>
+                            <div class="stage-label">西瓜</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="instructions-section">
+                    <h3 id="advanced-title">高级水果</h3>
+                    <div class="fruit-merging-chain" role="region" aria-labelledby="advanced-title">
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="菠萝">🍍</div>
+                            <div class="stage-label">菠萝</div>
+                        </div>
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="芒果">🥭</div>
+                            <div class="stage-label">芒果</div>
+                        </div>
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="猕猴桃">🥝</div>
+                            <div class="stage-label">猕猴桃</div>
+                        </div>
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="樱桃">🍒</div>
+                            <div class="stage-label">樱桃</div>
+                        </div>
+                        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        <div class="fruit-stage">
+                            <div class="fruit-emoji" aria-label="桃子，最终目标">🍑</div>
+                            <div class="stage-label">桃子 (目标)</div>
                         </div>
                     </div>
                 </div>
