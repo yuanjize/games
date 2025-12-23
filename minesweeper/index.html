@@ -11,7 +11,187 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body data-theme="light">
+    <!-- 加载动画覆盖层 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在加载游戏...</div>
+        <div class="loading-progress">
+            <div class="loading-progress-bar" id="loading-progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- 设置按钮 -->
+    <button class="settings-toggle-btn" id="settings-toggle-btn" aria-label="打开设置">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <!-- 设置面板 -->
+    <div class="settings-overlay" id="settings-overlay"></div>
+    <div class="settings-panel" id="settings-panel" role="dialog" aria-label="游戏设置">
+        <div class="settings-panel-header">
+            <h2 class="settings-panel-title">游戏设置</h2>
+            <button class="settings-panel-close" id="settings-panel-close" aria-label="关闭设置">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="settings-panel-content">
+            <!-- 主题设置 -->
+            <div class="settings-section">
+                <div class="settings-section-title">外观设置</div>
+
+                <div class="settings-option">
+                    <div>
+                        <div class="settings-option-label">主题模式</div>
+                        <div class="settings-option-description">选择游戏的外观主题</div>
+                    </div>
+                    <div class="theme-controls">
+                        <button class="theme-toggle-btn" data-theme="light" aria-label="亮色模式" title="亮色模式">
+                            <i class="fas fa-sun"></i>
+                        </button>
+                        <button class="theme-toggle-btn" data-theme="dark" aria-label="暗色模式" title="暗色模式">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                        <button class="theme-toggle-btn" data-theme="high-contrast" aria-label="高对比度模式" title="高对比度模式">
+                            <i class="fas fa-adjust"></i>
+                        </button>
+                        <button class="theme-toggle-btn" data-theme="dark-high-contrast" aria-label="暗色高对比度模式" title="暗色高对比度模式">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-option">
+                    <div>
+                        <div class="settings-option-label">微交互动画</div>
+                        <div class="settings-option-description">启用格子翻开、旗帜标记等动画效果</div>
+                    </div>
+                    <div class="toggle-switch" id="animations-toggle" role="switch" aria-checked="true" tabindex="0">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 音效设置 -->
+            <div class="settings-section">
+                <div class="settings-section-title">音效设置</div>
+
+                <div class="settings-option">
+                    <div>
+                        <div class="settings-option-label">游戏音效</div>
+                        <div class="settings-option-description">启用游戏中的各种音效</div>
+                    </div>
+                    <div class="toggle-switch" id="sound-toggle" role="switch" aria-checked="true" tabindex="0">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+
+                <div class="settings-option">
+                    <div>
+                        <div class="settings-option-label">音量大小</div>
+                        <div class="settings-option-description">调整游戏音效的音量</div>
+                    </div>
+                    <div class="volume-slider-container">
+                        <i class="fas fa-volume-down volume-icon"></i>
+                        <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="50" aria-label="音量">
+                        <i class="fas fa-volume-up volume-icon"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 游戏设置 -->
+            <div class="settings-section">
+                <div class="settings-section-title">游戏设置</div>
+
+                <div class="settings-option">
+                    <div>
+                        <div class="settings-option-label">震动反馈</div>
+                        <div class="settings-option-description">移动设备上标记旗帜时震动</div>
+                    </div>
+                    <div class="toggle-switch" id="vibration-toggle" role="switch" aria-checked="true" tabindex="0">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+
+                <div class="settings-option">
+                    <div>
+                        <div class="settings-option-label">双指暂停</div>
+                        <div class="settings-option-description">在游戏板上双指触摸可暂停游戏</div>
+                    </div>
+                    <div class="toggle-switch" id="pause-gesture-toggle" role="switch" aria-checked="true" tabindex="0">
+                        <div class="toggle-switch-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 帮助信息 -->
+            <div class="settings-section">
+                <div class="settings-section-title">帮助</div>
+                <button class="difficulty-btn" id="help-toggle-btn" style="width: 100%;">
+                    <i class="fas fa-question-circle"></i>
+                    <span>查看游戏帮助</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 帮助模态框 -->
+    <div class="help-modal" id="help-modal" role="dialog" aria-label="游戏帮助">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2 class="help-modal-title">游戏帮助</h2>
+                <button class="help-modal-close" id="help-modal-close" aria-label="关闭帮助">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="help-modal-section">
+                <h3>游戏目标</h3>
+                <ul>
+                    <li>找出所有没有地雷的格子</li>
+                    <li>避免点击地雷，否则游戏结束</li>
+                    <li>使用数字提示推断地雷位置</li>
+                </ul>
+            </div>
+
+            <div class="help-modal-section">
+                <h3>基本操作</h3>
+                <ul>
+                    <li><strong>左键点击/轻触</strong> - 翻开格子</li>
+                    <li><strong>右键点击/长按</strong> - 标记旗帜（表示可能有地雷）</li>
+                    <li><strong>双击数字</strong> - 快速翻开周围格子（当周围旗帜数量正确时）</li>
+                </ul>
+            </div>
+
+            <div class="help-modal-section">
+                <h3>键盘快捷键</h3>
+                <ul>
+                    <li><span class="help-modal-key">↑↓←→</span> - 在格子之间移动焦点</li>
+                    <li><span class="help-modal-key">F</span> - 标记/取消标记旗帜</li>
+                    <li><span class="help-modal-key">Space</span> - 翻开当前格子</li>
+                    <li><span class="help-modal-key">R</span> - 重新开始游戏</li>
+                </ul>
+            </div>
+
+            <div class="help-modal-section">
+                <h3>数字含义</h3>
+                <ul>
+                    <li>数字表示该格子周围8个格子中地雷的数量</li>
+                    <li>例如"3"表示周围有3个地雷</li>
+                    <li>空格子表示周围没有地雷</li>
+                </ul>
+            </div>
+
+            <div class="help-modal-section">
+                <h3>手势操作</h3>
+                <ul>
+                    <li><strong>双指触摸</strong> - 暂停/继续游戏</li>
+                    <li><strong>长按格子</strong> - 标记旗帜</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <main class="game-container" role="main">
         <header class="game-header">
             <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
@@ -21,6 +201,9 @@
                 <h1><i class="fas fa-bomb" aria-hidden="true"></i> 经典扫雷</h1>
                 <p class="subtitle">测试你的逻辑和记忆力！</p>
             </div>
+            <button class="theme-toggle-btn mobile-theme-toggle" id="mobile-theme-toggle" aria-label="切换主题">
+                <i class="fas fa-moon"></i>
+            </button>
         </header>
 
         <nav class="game-controls" aria-label="游戏控制">

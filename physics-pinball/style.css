@@ -1,9 +1,13 @@
 /* 物理弹球游戏 - 优化版CSS设计规范 */
 :root {
-    /* 颜色方案 */
+    /* 主题变量 - 默认暗色模式 */
+    --color-scheme: dark;
+
+    /* 颜色方案 - 暗色主题 */
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;
     --bg-panel: rgba(30, 41, 59, 0.8);
+    --bg-elevated: rgba(51, 65, 85, 0.9);
     --text-primary: #f8fafc;
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
@@ -14,6 +18,18 @@
     --warning-color: #f59e0b;
     --danger-color: #ef4444;
     --info-color: #3b82f6;
+
+    /* 高对比度颜色 */
+    --high-contrast-bg: #000000;
+    --high-contrast-text: #ffffff;
+    --high-contrast-accent: #ffff00;
+
+    /* 边框和分隔线 */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-hover: rgba(255, 255, 255, 0.2);
+
+    /* 阴影增强 */
+    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 
     /* 排版系统 */
     --font-heading: 'Orbitron', monospace, sans-serif;
@@ -745,13 +761,71 @@ body {
     }
 }
 
-/* 高对比度模式 */
+/* ========== 亮色主题 ========== */
+[data-theme="light"] {
+    --color-scheme: light;
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-panel: rgba(255, 255, 255, 0.95);
+    --bg-elevated: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --border-hover: rgba(0, 0, 0, 0.2);
+    --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .game-container {
+    border: 2px solid var(--border-color);
+}
+
+[data-theme="light"] .game-header {
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(255, 255, 255, 0.95));
+}
+
+[data-theme="light"] .back-button {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: var(--border-color);
+}
+
+[data-theme="light"] .game-header h1 {
+    background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .info-value {
+    color: var(--accent-primary);
+}
+
+/* 系统偏好亮色主题 */
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        --color-scheme: light;
+        --bg-primary: #f8fafc;
+        --bg-secondary: #ffffff;
+        --bg-panel: rgba(255, 255, 255, 0.95);
+        --bg-elevated: #ffffff;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border-color: rgba(0, 0, 0, 0.1);
+        --border-hover: rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* ========== 高对比度模式 ========== */
+[data-contrast="high"],
 @media (prefers-contrast: high) {
     :root {
         --text-primary: #ffffff;
         --text-secondary: #e0e0e0;
         --bg-primary: #000000;
-        --accent-primary: #ff6b6b;
+        --accent-primary: #ffff00;
+        --accent-glow: rgba(255, 255, 0, 0.5);
+        --border-color: #ffffff;
+        --border-hover: #ffffff;
     }
 
     .back-button,
@@ -764,37 +838,70 @@ body {
     .feature-item {
         border: 2px solid currentColor;
     }
+
+    .btn-primary,
+    .btn-secondary {
+        border: 3px solid currentColor;
+    }
 }
 
-/* 深色模式 (默认已经是深色) */
-@media (prefers-color-scheme: light) {
-    :root {
-        --bg-primary: #f8fafc;
-        --bg-secondary: #ffffff;
-        --bg-panel: rgba(255, 255, 255, 0.9);
-        --text-primary: #1e293b;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
-    }
+/* ========== 主题切换按钮 ========== */
+.theme-toggle {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    padding: var(--space-1);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
 
-    .game-container {
-        border: 2px solid rgba(0, 0, 0, 0.1);
-    }
+.theme-toggle:hover {
+    background-color: var(--bg-elevated);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
 
-    .game-header {
-        background: linear-gradient(135deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 0.9));
-    }
+.theme-toggle-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-normal);
+}
 
-    .back-button {
-        background-color: rgba(0, 0, 0, 0.05);
-        border-color: rgba(0, 0, 0, 0.1);
-    }
+.theme-toggle-icon i {
+    font-size: var(--font-size-lg);
+    color: var(--text-primary);
+}
 
-    .game-header h1 {
-        background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+/* ========== 高对比度切换按钮 ========== */
+.contrast-toggle {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.contrast-toggle:hover,
+.contrast-toggle:focus {
+    background-color: var(--bg-elevated);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.contrast-toggle.active {
+    background-color: var(--accent-primary);
+    border-color: var(--accent-primary);
 }
 
 /* 游戏选项 */
@@ -1095,4 +1202,538 @@ body {
 
 .modal-content {
     max-height: calc(100vh - var(--space-8));
+}
+
+/* ========== 加载屏幕 ========== */
+.loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.loading-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loading-logo {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    margin-bottom: var(--space-8);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: logoFloat 2s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.loading-progress-container {
+    width: 280px;
+    max-width: 80%;
+    margin-bottom: var(--space-4);
+}
+
+.loading-progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: var(--bg-panel);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    box-shadow: var(--shadow-inset);
+}
+
+.loading-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: var(--radius-full);
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.loading-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: loadingShimmer 1.5s infinite;
+}
+
+@keyframes loadingShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.loading-text {
+    font-family: var(--font-body);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--bg-panel);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--space-6);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========== 微交互动画 ========== */
+
+/* 按钮点击波纹效果 */
+.btn-primary,
+.btn-secondary,
+.btn-option,
+.back-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before,
+.btn-secondary::before,
+.btn-option::before,
+.back-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn-primary:active::before,
+.btn-secondary:active::before,
+.btn-option:active::before,
+.back-button:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* 按钮悬停提升效果 */
+.btn-primary,
+.btn-secondary,
+.btn-option {
+    transition: all var(--transition-normal), transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-primary:hover:not(:active),
+.btn-secondary:hover:not(:active),
+.btn-option:hover:not(:active) {
+    transform: translateY(-3px) scale(1.02);
+}
+
+/* 分数数字滚动动画 */
+@keyframes scoreRoll {
+    0% { transform: translateY(-100%); opacity: 0; }
+    50% { transform: translateY(10%); opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+.score-roll {
+    display: inline-block;
+    animation: scoreRoll 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 碰撞闪光效果 */
+.collision-flash {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: flashExpand 0.5s ease-out forwards;
+}
+
+@keyframes flashExpand {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+/* 反弹器碰撞动画 */
+@keyframes bumperHit {
+    0% { transform: scale(1); filter: brightness(1); }
+    30% { transform: scale(1.2); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+.bumper-hit {
+    animation: bumperHit 0.3s ease-out;
+}
+
+/* 挡板击球动画 */
+@keyframes paddleHit {
+    0% { transform: scaleY(1); }
+    50% { transform: scaleY(0.8); }
+    100% { transform: scaleY(1); }
+}
+
+.paddle-hit {
+    animation: paddleHit 0.15s ease-out;
+}
+
+/* 成功提示动画 */
+@keyframes successPopup {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.success-popup {
+    animation: successPopup 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ========== 粒子效果 ========== */
+.particle {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+    animation: particleFade 1s ease-out forwards;
+}
+
+@keyframes particleFade {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* ========== 浮动得分动画增强 ========== */
+@keyframes floatScore {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+    }
+    20% {
+        transform: translateY(-10px) scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-60px) scale(1);
+        opacity: 0;
+    }
+}
+
+.floating-score {
+    animation: floatScore 1s ease-out forwards;
+}
+
+/* ========== 连击特效 ========== */
+@keyframes comboGlow {
+    0%, 100% {
+        box-shadow: 0 0 10px var(--accent-glow);
+    }
+    50% {
+        box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-glow);
+    }
+}
+
+.combo-glow {
+    animation: comboGlow 0.5s ease-in-out;
+}
+
+/* ========== 关卡完成动画 ========== */
+@keyframes levelComplete {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.level-complete-icon {
+    animation: levelComplete 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ========== 触摸反馈增强 ========== */
+@media (hover: none) and (pointer: coarse) {
+    .btn-primary:active,
+    .btn-secondary:active,
+    .btn-option:active {
+        transform: scale(0.95);
+        transition: transform 0.1s ease;
+    }
+
+    .control-item:active {
+        background-color: var(--accent-primary);
+        transform: scale(0.98);
+    }
+
+    .feature-item:active {
+        background-color: var(--accent-primary);
+        transform: scale(0.98);
+    }
+}
+
+/* ========== 长按帮助指示器 ========== */
+.long-press-indicator {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    border: 3px solid var(--accent-primary);
+    animation: longPressPulse 1.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes longPressPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+}
+
+/* ========== 双指暂停指示器 ========== */
+.multi-touch-hint {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--bg-panel);
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-lg);
+    color: var(--text-primary);
+    z-index: 1000;
+    animation: fadeInOut 2s ease-in-out forwards;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+
+/* ========== 选项菜单增强 ========== */
+.game-options {
+    position: fixed;
+    bottom: var(--space-6);
+    right: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    z-index: 100;
+}
+
+.game-options .btn-option {
+    position: relative;
+}
+
+/* 选项工具提示 */
+.btn-option[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + var(--space-2));
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* ========== 性能优化：硬件加速 ========== */
+.game-canvas-container,
+.game-overlay,
+.loading-screen,
+.btn-primary,
+.btn-secondary,
+.btn-option {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* ========== 焦点指示器增强 ========== */
+*:focus-visible {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+}
+
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* 焦点陷阱用于模态框 */
+.focus-trap {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+/* ========== 跳转到主内容链接 ========== */
+.skip-to-content {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    z-index: 9999;
+    transition: top var(--transition-normal);
+}
+
+.skip-to-content:focus {
+    top: var(--space-4);
+}
+
+/* ========== Canvas 渲染优化 ========== */
+#game-canvas {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+/* ========== 懒加载占位符 ========== */
+.lazy-load-placeholder {
+    background: linear-gradient(
+        90deg,
+        var(--bg-panel) 25%,
+        var(--bg-elevated) 50%,
+        var(--bg-panel) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite;
+}
+
+@keyframes skeletonLoading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ========== 新功能徽章 ========== */
+.feature-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: linear-gradient(135deg, var(--danger-color), #dc2626);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+    }
+}
+
+/* ========== 响应式选项位置 ========== */
+@media (max-width: 640px) {
+    .game-options {
+        bottom: var(--space-4);
+        right: var(--space-4);
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        max-width: calc(100% - var(--space-8));
+    }
+
+    .btn-option[data-tooltip]:hover::after {
+        display: none;
+    }
 }

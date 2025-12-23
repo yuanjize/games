@@ -9,8 +9,96 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+    <script>
+        // 主题初始化脚本 - 防止闪烁
+        (function() {
+            const savedTheme = localStorage.getItem('memoryCardsTheme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </head>
 <body>
+    <!-- 加载屏幕 -->
+    <div class="loading-screen" id="loadingScreen" aria-live="polite" aria-atomic="true">
+        <div class="loading-content">
+            <div class="loading-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h2 class="loading-title">记忆翻牌大挑战</h2>
+            <p class="loading-subtitle">正在准备游戏...</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="progress-text" id="progressText">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 暗色/亮色模式切换按钮 -->
+    <button class="theme-toggle" id="themeToggle" aria-label="切换主题模式" title="切换亮色/暗色模式">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </button>
+
+    <!-- 高对比度模式切换按钮 -->
+    <button class="contrast-toggle" id="contrastToggle" aria-label="切换高对比度模式" title="切换高对比度模式">
+        <i class="fas fa-adjust"></i>
+    </button>
+
+    <!-- 帮助按钮 -->
+    <button class="help-button" id="helpButton" aria-label="游戏帮助" title="游戏说明">
+        <i class="fas fa-question"></i>
+    </button>
+
+    <!-- 帮助弹窗 -->
+    <div class="help-modal" id="helpModal" role="dialog" aria-labelledby="help-modal-title">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2 id="help-modal-title"><i class="fas fa-question-circle"></i> 游戏说明</h2>
+                <button class="close-modal" id="closeHelp" aria-label="关闭帮助">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="help-modal-body">
+                <section>
+                    <h3><i class="fas fa-gamepad"></i> 游戏规则</h3>
+                    <ul>
+                        <li>点击卡片翻开查看图案</li>
+                        <li>连续翻开两张相同的卡片即为匹配成功</li>
+                        <li>找出所有匹配的卡片对即可获胜</li>
+                        <li>尝试用最少的步数和时间完成游戏</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3><i class="fas fa-keyboard"></i> 键盘快捷键</h3>
+                    <ul>
+                        <li><kbd>Tab</kbd> / <kbd>Shift+Tab</kbd> - 切换焦点</li>
+                        <li><kbd>Enter</kbd> / <kbd>Space</kbd> - 翻开卡片 / 确认</li>
+                        <li><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> - 难度选择</li>
+                        <li><kbd>Ctrl+R</kbd> - 重新开始</li>
+                        <li><kbd>Escape</kbd> - 关闭弹窗</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3><i class="fas fa-hand-pointer"></i> 触摸手势</h3>
+                    <ul>
+                        <li>单击 - 翻开卡片</li>
+                        <li>双指点击 - 暂停/继续游戏</li>
+                        <li>长按 - 查看卡片提示</li>
+                    </ul>
+                </section>
+                <section>
+                    <h3><i class="fas fa-trophy"></i> 难度级别</h3>
+                    <ul>
+                        <li><strong>简单 (4x4)</strong> - 8对卡片，适合新手</li>
+                        <li><strong>中等 (6x6)</strong> - 18对卡片，适合进阶</li>
+                        <li><strong>困难 (8x8)</strong> - 32对卡片，适合挑战</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
     <div class="container" role="main">
         <header class="game-header" role="banner">
             <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
@@ -88,6 +176,9 @@
                 </div>
 
                 <div class="action-buttons" aria-label="操作按钮">
+                    <button class="btn btn-pause" id="pauseBtn" aria-label="暂停游戏">
+                        <i class="fas fa-pause" aria-hidden="true"></i> 暂停
+                    </button>
                     <button class="btn btn-restart" id="restartBtn" aria-label="重新开始游戏">
                         <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
                     </button>
@@ -100,6 +191,17 @@
             <div class="game-board-container">
                 <div class="game-board" id="gameBoard" role="grid" aria-label="记忆卡片游戏板">
                     <!-- 卡片会通过JavaScript动态生成 -->
+                </div>
+                <!-- 暂停遮罩层 -->
+                <div class="pause-overlay" id="pauseOverlay" aria-hidden="true">
+                    <div class="pause-content">
+                        <i class="fas fa-pause-circle"></i>
+                        <h2>游戏已暂停</h2>
+                        <p>点击"继续"按钮恢复游戏</p>
+                        <button class="btn btn-resume" id="resumeBtn">
+                            <i class="fas fa-play"></i> 继续游戏
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -17,6 +17,51 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- 跳转到主内容链接（可访问性） -->
+    <a href="#gameCanvas" class="skip-to-content">跳转到游戏</a>
+
+    <!-- 帮助模态框 -->
+    <div id="helpModal" class="help-modal" role="dialog" aria-labelledby="helpModalTitle" aria-modal="true">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2 id="helpModalTitle" class="help-modal-title">
+                    <i class="fas fa-question-circle"></i> 游戏帮助
+                </h2>
+                <button id="closeHelpModal" class="help-modal-close" aria-label="关闭帮助">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="help-modal-body">
+                <div class="instruction-section">
+                    <h3><i class="fas fa-keyboard"></i> 键盘快捷键</h3>
+                    <ul>
+                        <li><kbd class="key">W</kbd><kbd class="key">A</kbd><kbd class="key">S</kbd><kbd class="key">D</kbd> 或方向键 - 移动飞船</li>
+                        <li><kbd class="key">空格</kbd> - 发射子弹</li>
+                        <li><kbd class="key">P</kbd> - 暂停/继续游戏</li>
+                        <li><kbd class="key">ESC</kbd> - 返回菜单</li>
+                    </ul>
+                </div>
+                <div class="instruction-section">
+                    <h3><i class="fas fa-hand-pointer"></i> 触摸手势</h3>
+                    <ul>
+                        <li>虚拟摇杆 - 移动飞船</li>
+                        <li>点击发射按钮 - 发射子弹</li>
+                        <li>双指轻点 - 暂停游戏</li>
+                        <li>长按任意位置 - 显示帮助</li>
+                    </ul>
+                </div>
+                <div class="instruction-section">
+                    <h3><i class="fas fa-trophy"></i> 游戏提示</h3>
+                    <ul>
+                        <li>难度越高，分数倍率越高</li>
+                        <li>保持移动，避免停留在同一位置</li>
+                        <li>集中火力击毁敌机获得更多分数</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="game-container">
         <!-- 游戏标题 -->
         <header class="game-header">
@@ -28,11 +73,30 @@
                 太空射击
                 <span class="game-subtitle">Space Shooter</span>
             </h1>
-            <div class="version-tag">v2.0</div>
+            <div class="header-actions">
+                <div class="version-tag">v2.0</div>
+                <button id="themeToggle" class="theme-toggle" aria-label="切换主题" title="切换亮色/暗色主题">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="highContrastToggle" class="high-contrast-toggle" aria-label="切换高对比度模式" aria-pressed="false" title="切换高对比度模式">
+                    <i class="fas fa-adjust"></i>
+                </button>
+            </div>
         </header>
 
         <!-- 游戏主画布 -->
         <div class="canvas-wrapper">
+            <!-- 加载动画 -->
+            <div id="loadingOverlay" class="loading-overlay">
+                <div class="loading-spinner"></div>
+                <div class="loading-progress">
+                    <div id="loadingProgressBar" class="loading-progress-bar"></div>
+                </div>
+                <div class="loading-text">
+                    加载中... <span id="loadingPercentage" class="loading-percentage">0%</span>
+                </div>
+            </div>
+
             <canvas id="gameCanvas"
                     role="application"
                     aria-label="太空射击游戏区域"

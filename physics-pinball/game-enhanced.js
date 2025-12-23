@@ -856,6 +856,21 @@ class EnhancedPinballGame {
                     this.addScoreAnimation(ball.position.x, ball.position.y, `+${score}`);
                     this.playBumperSound();
 
+                    // 微交互：碰撞闪光和粒子效果
+                    if (this.microInteractions) {
+                        const rect = this.canvas.getBoundingClientRect();
+                        const x = (bumper.position.x / this.width) * rect.width + rect.left;
+                        const y = (bumper.position.y / this.height) * rect.height + rect.top;
+                        this.microInteractions.createCollisionFlash(x, y, '#ef4444');
+                        this.microInteractions.createParticles(x, y, 8, '#ef4444');
+                        this.microInteractions.addScoreAnimation(x, y, `+${score}`, '#ffff00');
+                    }
+
+                    // 连击音效
+                    if (this.state.comboMultiplier > 1) {
+                        this.playScoreBonusSound(this.state.comboMultiplier);
+                    }
+
                     // 屏幕阅读器提示（节流，避免过于频繁）
                     if (this.state.score % 500 === 0) {
                         this.announceScreenReaderMessage(`当前分数${this.state.score}`);
@@ -906,6 +921,7 @@ class EnhancedPinballGame {
 
         if (this.state.lives <= 0) {
             this.state.gameOver = true;
+            this.playGameOverSound();
 
             const overlay = document.getElementById('game-overlay');
             if (overlay) {
@@ -930,6 +946,24 @@ class EnhancedPinballGame {
                     console.warn('无法保存最高分到localStorage:', e);
                 }
                 this.announceScreenReaderMessage(`恭喜！创造了新的最高分：${this.state.highScore}`);
+
+                // 新纪录特效
+                if (this.microInteractions) {
+                    const overlay = document.getElementById('game-overlay');
+                    if (overlay) {
+                        const rect = overlay.getBoundingClientRect();
+                        for (let i = 0; i < 20; i++) {
+                            setTimeout(() => {
+                                this.microInteractions.createParticles(
+                                    rect.left + rect.width / 2 + (Math.random() - 0.5) * 200,
+                                    rect.top + rect.height / 2 + (Math.random() - 0.5) * 100,
+                                    4,
+                                    ['#fbbf24', '#f59e0b', '#d97706'][Math.floor(Math.random() * 3)]
+                                );
+                            }, i * 50);
+                        }
+                    }
+                }
             } else {
                 this.announceScreenReaderMessage(`游戏结束。最终分数：${this.state.score}，最高分：${this.state.highScore}`);
             }
@@ -1068,23 +1102,49 @@ class EnhancedPinballGame {
     }
 
     playCollisionSound() {
-        if (this.soundEnabled) {
-            // 声音效果可以在未来实现
-            // playSound('collision');
+        if (this.soundEnabled && this.soundManager) {
+            this.soundManager.playWallHit();
         }
     }
 
     playPaddleSound() {
-        if (this.soundEnabled) {
-            // 声音效果可以在未来实现
-            // playSound('paddle');
+        if (this.soundEnabled && this.soundManager) {
+            this.soundManager.playPaddleHit();
+
+            // 添加微交互效果
+            if (this.microInteractions) {
+                const paddle = this.elements.paddles[0];
+                if (paddle) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = (paddle.position.x / this.width) * rect.width + rect.left;
+                    const y = (paddle.position.y / this.height) * rect.height + rect.top;
+                    this.microInteractions.createParticles(x, y, 6, '#4ade80');
+                }
+            }
         }
     }
 
     playBumperSound() {
-        if (this.soundEnabled) {
-            // 声音效果可以在未来实现
-            // playSound('bumper');
+        if (this.soundEnabled && this.soundManager) {
+            this.soundManager.playBumperHit();
+        }
+    }
+
+    playScoreBonusSound(multiplier) {
+        if (this.soundEnabled && this.soundManager) {
+            this.soundManager.playScoreBonus(multiplier);
+        }
+    }
+
+    playGameOverSound() {
+        if (this.soundEnabled && this.soundManager) {
+            this.soundManager.playGameOver();
+        }
+    }
+
+    playLevelCompleteSound() {
+        if (this.soundEnabled && this.soundManager) {
+            this.soundManager.playLevelComplete();
         }
     }
 

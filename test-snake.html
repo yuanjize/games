@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Snake Game Test</title>
+</head>
+<body>
+    <h1>Snake Game Automated Test</h1>
+    <div id="results"></div>
+    <iframe id="game-frame" src="/snake-game/" style="width: 800px; height: 600px; border: 1px solid #ccc;"></iframe>
+
+    <script>
+        const results = document.getElementById('results');
+        const frame = document.getElementById('game-frame');
+
+        function addResult(test, passed, message) {
+            const div = document.createElement('div');
+            div.style.color = passed ? 'green' : 'red';
+            div.textContent = `${test}: ${passed ? 'PASS' : 'FAIL'} - ${message}`;
+            results.appendChild(div);
+        }
+
+        frame.onload = function() {
+            setTimeout(() => {
+                try {
+                    const game = frame.contentWindow.game;
+                    if (!game) {
+                        addResult('Game Initialization', false, 'Game instance not found');
+                        return;
+                    }
+                    addResult('Game Initialization', true, 'Game instance created');
+
+                    // Test 1: Check initial snake length
+                    if (game.snake.length === 3) {
+                        addResult('Initial Snake Length', true, `Snake has ${game.snake.length} segments`);
+                    } else {
+                        addResult('Initial Snake Length', false, `Expected 3, got ${game.snake.length}`);
+                    }
+
+                    // Test 2: Check initial direction
+                    if (game.dx === 1 && game.dy === 0) {
+                        addResult('Initial Direction', true, 'Snake starts moving right');
+                    } else {
+                        addResult('Initial Direction', false, `dx=${game.dx}, dy=${game.dy}`);
+                    }
+
+                    // Test 3: Check food exists
+                    if (game.food && game.food.x >= 0 && game.food.y >= 0) {
+                        addResult('Food Generation', true, `Food at (${game.food.x}, ${game.food.y})`);
+                    } else {
+                        addResult('Food Generation', false, 'Food not properly generated');
+                    }
+
+                    // Test 4: Check UI elements
+                    const score = frame.contentDocument.getElementById('score');
+                    const length = frame.contentDocument.getElementById('length');
+                    const speed = frame.contentDocument.getElementById('speed');
+
+                    if (score && length && speed) {
+                        addResult('UI Elements', true, 'Score, Length, Speed elements exist');
+                        addResult('Initial Score', score.textContent === '0', `Score is ${score.textContent}`);
+                        addResult('Initial Length', length.textContent === '3', `Length is ${length.textContent}`);
+                    } else {
+                        addResult('UI Elements', false, 'Missing UI elements');
+                    }
+
+                    // Test 5: Test input queue
+                    game.queueInput(0, -1); // Up
+                    if (game.inputQueue.length === 1) {
+                        addResult('Input Queue', true, 'Input queue working');
+                    } else {
+                        addResult('Input Queue', false, `Queue length: ${game.inputQueue.length}`);
+                    }
+
+                    // Test 6: Check collision detection boundaries
+                    const tileCountX = game.tileCountX;
+                    const tileCountY = game.tileCountY;
+                    if (tileCountX >= 10 && tileCountY >= 10) {
+                        addResult('Grid Size', true, `Grid: ${tileCountX}x${tileCountY}`);
+                    } else {
+                        addResult('Grid Size', false, `Grid: ${tileCountX}x${tileCountY}`);
+                    }
+
+                    // Test 7: Test food types
+                    const foodTypes = game.foodTypes;
+                    if (foodTypes && foodTypes.normal && foodTypes.gold && foodTypes.fast && foodTypes.mystery) {
+                        addResult('Food Types', true, 'All 4 food types defined');
+                    } else {
+                        addResult('Food Types', false, 'Missing food types');
+                    }
+
+                    // Test 8: Check game state
+                    if (!game.state.running && !game.state.gameOver && !game.state.paused) {
+                        addResult('Initial State', true, 'Game not started, not paused, not over');
+                    } else {
+                        addResult('Initial State', false, `running=${game.state.running}, paused=${game.state.paused}, gameOver=${game.state.gameOver}`);
+                    }
+
+                } catch (e) {
+                    addResult('Test Execution', false, e.message);
+                }
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

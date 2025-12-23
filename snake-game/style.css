@@ -2,17 +2,53 @@
    Snake Game Styles
    ================================================ */
 
+/* CSS 变量支持亮/暗色主题 */
 :root {
     --bg-color: #0f172a;
+    --bg-color-alt: #020617;
     --panel-bg: rgba(30, 41, 59, 0.7);
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --accent-color: #10b981;
     --accent-glow: rgba(16, 185, 129, 0.5);
     --danger-color: #ef4444;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.3);
     --font-family: 'Orbitron', 'Inter', system-ui, sans-serif;
     --transition-fast: 0.15s ease;
     --transition-normal: 0.2s ease;
+    --transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* 亮色模式 */
+:root[data-theme="light"] {
+    --bg-color: #f8fafc;
+    --bg-color-alt: #e2e8f0;
+    --panel-bg: rgba(255, 255, 255, 0.8);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 高对比度模式 */
+:root[data-contrast="high"] {
+    --bg-color: #000000;
+    --bg-color-alt: #000000;
+    --panel-bg: #000000;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --border-color: #ffffff;
+    --shadow-color: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme="light"][data-contrast="high"] {
+    --bg-color: #ffffff;
+    --bg-color-alt: #ffffff;
+    --panel-bg: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --border-color: #000000;
 }
 
 /* ================================================
@@ -285,10 +321,10 @@ body {
 #game-canvas {
     width: 100%;
     height: 100%;
-    background: #020617;
+    background: var(--bg-color-alt);
     border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px var(--shadow-color);
+    border: 1px solid var(--border-color);
     display: block;
     touch-action: none;
 }

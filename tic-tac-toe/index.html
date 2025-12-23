@@ -17,6 +17,41 @@
 <body>
     <a href="#main-content" class="skip-link">跳转到主要内容</a>
 
+    <!-- 加载动画覆盖层 -->
+    <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite" aria-label="游戏正在加载">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-gamepad" style="color: var(--color-primary);"></i>
+            </div>
+            <p class="loading-text">智能井字棋加载中...</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-text" id="progressText">0%</p>
+        </div>
+    </div>
+
+    <!-- 手势帮助提示 -->
+    <div class="gesture-hint" id="gestureHint" role="status" aria-live="polite">
+        <i class="fas fa-hand-pointer"></i>
+        <span id="gestureHintText">长按棋盘查看帮助</span>
+    </div>
+
+    <!-- 长按帮助菜单 -->
+    <div class="long-press-menu" id="longPressMenu" role="dialog" aria-label="游戏帮助">
+        <h4><i class="fas fa-question-circle"></i> 游戏帮助</h4>
+        <ul role="list">
+            <li role="listitem"><i class="fas fa-hand-pointer"></i> 点击格子下棋</li>
+            <li role="listitem"><i class="fas fa-hand-paper"></i> 双指触摸暂停游戏</li>
+            <li role="listitem"><i class="fas fa-clock"></i> 长按查看此帮助</li>
+            <li role="listitem"><i class="fas fa-keyboard"></i> 使用方向键导航</li>
+            <li role="listitem"><i class="fas fa-lightbulb"></i> 按H键获取提示</li>
+        </ul>
+    </div>
+
+    <!-- 彩带容器 -->
+    <div class="confetti-container" id="confettiContainer" aria-hidden="true"></div>
+
     <div class="container" role="main" aria-label="井字棋游戏">
         <header class="header" role="banner">
             <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
@@ -24,6 +59,16 @@
             </a>
             <h1><i class="fas fa-gamepad" aria-hidden="true"></i> 智能井字棋</h1>
             <p class="subtitle">挑战不同难度的AI对手</p>
+
+            <!-- 主题和对比度切换按钮 -->
+            <div class="header-controls">
+                <button class="contrast-toggle-btn" id="contrastToggle" aria-label="切换高对比度模式" aria-pressed="false">
+                    <i class="fas fa-adjust" aria-hidden="true"></i>
+                </button>
+                <button class="theme-toggle-btn" id="themeToggle" aria-label="切换亮色/暗色主题">
+                    <i class="fas fa-moon" aria-hidden="true"></i>
+                </button>
+            </div>
         </header>
 
         <main class="game-container" id="main-content" aria-label="游戏区域">
@@ -41,7 +86,16 @@
 
                     <div class="game-status" role="region" aria-label="游戏状态">
                         <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 游戏状态</h3>
-                        <div id="statusText" class="status-text" role="alert" aria-live="assertive">游戏进行中</div>
+                        <div id="statusText" class="status-text" role="alert" aria-live="assertive">
+                            <span id="statusMainText">游戏进行中</span>
+                            <span id="aiThinking" class="ai-thinking" style="display: none;">
+                                <span class="ai-thinking-dots">
+                                    <span class="ai-thinking-dot"></span>
+                                    <span class="ai-thinking-dot"></span>
+                                    <span class="ai-thinking-dot"></span>
+                                </span>
+                            </span>
+                        </div>
                     </div>
 
                     <div class="stats" role="region" aria-label="游戏统计">
@@ -165,73 +219,291 @@
         </footer>
     </div>
 
-    <!-- 音频元素 - 使用Web Audio API生成简单音效 -->
+    <!-- 音频元素 - 使用Web Audio API生成高质量音效 -->
     <script>
-        // 创建简单的音频上下文用于生成音效
+        // 创建增强的音频上下文用于生成高质量音效
         (function() {
             window.gameAudio = {
                 ctx: null,
+                masterGain: null,
                 init: function() {
                     if (!this.ctx) {
-                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        this.ctx = new AudioContext();
+
+                        // 创建主音量控制
+                        this.masterGain = this.ctx.createGain();
+                        this.masterGain.gain.value = 0.3; // 默认音量
+                        this.masterGain.connect(this.ctx.destination);
+                    }
+                    // 恢复音频上下文（浏览器自动播放策略）
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
                     }
                 },
+
+                // 播放点击音效 - 高音短促
                 playClick: function() {
                     try {
                         this.init();
+                        const t = this.ctx.currentTime;
                         const osc = this.ctx.createOscillator();
                         const gain = this.ctx.createGain();
+
                         osc.connect(gain);
-                        gain.connect(this.ctx.destination);
-                        osc.frequency.value = 800;
-                        osc.type = 'sine';
-                        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-                        osc.start(this.ctx.currentTime);
-                        osc.stop(this.ctx.currentTime + 0.1);
+                        gain.connect(this.masterGain);
+
+                        // 使用三角波获得更清脆的声音
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(800, t);
+                        osc.frequency.exponentialRampToValueAtTime(400, t + 0.1);
+
+                        gain.gain.setValueAtTime(0.3, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+
+                        osc.start(t);
+                        osc.stop(t + 0.15);
                     } catch (e) {
                         console.debug('播放点击音效失败:', e);
                     }
                 },
+
+                // 播放 X 棋子音效
+                playX: function() {
+                    try {
+                        this.init();
+                        const t = this.ctx.currentTime;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+
+                        osc.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(600, t);
+                        osc.frequency.exponentialRampToValueAtTime(300, t + 0.15);
+
+                        gain.gain.setValueAtTime(0.2, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+
+                        osc.start(t);
+                        osc.stop(t + 0.2);
+                    } catch (e) {
+                        console.debug('播放X音效失败:', e);
+                    }
+                },
+
+                // 播放 O 棋子音效
+                playO: function() {
+                    try {
+                        this.init();
+                        const t = this.ctx.currentTime;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+
+                        osc.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(400, t);
+                        osc.frequency.exponentialRampToValueAtTime(600, t + 0.15);
+
+                        gain.gain.setValueAtTime(0.2, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+
+                        osc.start(t);
+                        osc.stop(t + 0.2);
+                    } catch (e) {
+                        console.debug('播放O音效失败:', e);
+                    }
+                },
+
+                // 播放胜利音效 - 欢快的旋律
                 playWin: function() {
                     try {
                         this.init();
+                        const t = this.ctx.currentTime;
+                        // C大调琶音：C5, E5, G5, C6
                         const notes = [523.25, 659.25, 783.99, 1046.50];
+                        const durations = [0.15, 0.15, 0.15, 0.3];
+
                         notes.forEach((freq, i) => {
+                            const startTime = t + i * 0.15;
                             const osc = this.ctx.createOscillator();
                             const gain = this.ctx.createGain();
+
                             osc.connect(gain);
-                            gain.connect(this.ctx.destination);
-                            osc.frequency.value = freq;
+                            gain.connect(this.masterGain);
+
                             osc.type = 'sine';
-                            gain.gain.setValueAtTime(0.1, this.ctx.currentTime + i * 0.15);
-                            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.15 + 0.3);
-                            osc.start(this.ctx.currentTime + i * 0.15);
-                            osc.stop(this.ctx.currentTime + i * 0.15 + 0.3);
+                            osc.frequency.setValueAtTime(freq, startTime);
+
+                            const duration = durations[i];
+                            gain.gain.setValueAtTime(0, startTime);
+                            gain.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
+                            gain.gain.setValueAtTime(0.2, startTime + duration * 0.7);
+                            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                            osc.start(startTime);
+                            osc.stop(startTime + duration);
                         });
                     } catch (e) {
                         console.debug('播放胜利音效失败:', e);
                     }
                 },
+
+                // 播放失败音效 - 低沉的旋律
                 playLose: function() {
                     try {
                         this.init();
-                        const notes = [392, 349.23, 329.63, 293.66];
+                        const t = this.ctx.currentTime;
+                        // 下降音阶
+                        const notes = [392, 349.23, 329.63, 293.66, 261.63];
+                        const durations = [0.2, 0.2, 0.2, 0.2, 0.4];
+
                         notes.forEach((freq, i) => {
+                            const startTime = t + i * 0.2;
                             const osc = this.ctx.createOscillator();
                             const gain = this.ctx.createGain();
+
                             osc.connect(gain);
-                            gain.connect(this.ctx.destination);
-                            osc.frequency.value = freq;
+                            gain.connect(this.masterGain);
+
                             osc.type = 'sine';
-                            gain.gain.setValueAtTime(0.1, this.ctx.currentTime + i * 0.2);
-                            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + i * 0.2 + 0.4);
-                            osc.start(this.ctx.currentTime + i * 0.2);
-                            osc.stop(this.ctx.currentTime + i * 0.2 + 0.4);
+                            osc.frequency.setValueAtTime(freq, startTime);
+
+                            const duration = durations[i];
+                            gain.gain.setValueAtTime(0, startTime);
+                            gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+                            gain.gain.setValueAtTime(0.15, startTime + duration * 0.6);
+                            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                            osc.start(startTime);
+                            osc.stop(startTime + duration);
                         });
                     } catch (e) {
                         console.debug('播放失败音效失败:', e);
                     }
+                },
+
+                // 播放平局音效
+                playDraw: function() {
+                    try {
+                        this.init();
+                        const t = this.ctx.currentTime;
+                        // 平和的音调
+                        const notes = [440, 440];
+                        const durations = [0.2, 0.3];
+
+                        notes.forEach((freq, i) => {
+                            const startTime = t + i * 0.25;
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+
+                            osc.connect(gain);
+                            gain.connect(this.masterGain);
+
+                            osc.type = 'triangle';
+                            osc.frequency.setValueAtTime(freq, startTime);
+
+                            const duration = durations[i];
+                            gain.gain.setValueAtTime(0.15, startTime);
+                            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                            osc.start(startTime);
+                            osc.stop(startTime + duration);
+                        });
+                    } catch (e) {
+                        console.debug('播放平局音效失败:', e);
+                    }
+                },
+
+                // 播放提示音效
+                playHint: function() {
+                    try {
+                        this.init();
+                        const t = this.ctx.currentTime;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+
+                        osc.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(880, t);
+                        osc.frequency.setValueAtTime(1100, t + 0.1);
+
+                        gain.gain.setValueAtTime(0, t);
+                        gain.gain.linearRampToValueAtTime(0.15, t + 0.02);
+                        gain.gain.setValueAtTime(0.1, t + 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+
+                        osc.start(t);
+                        osc.stop(t + 0.25);
+                    } catch (e) {
+                        console.debug('播放提示音效失败:', e);
+                    }
+                },
+
+                // 播放悔棋音效
+                playUndo: function() {
+                    try {
+                        this.init();
+                        const t = this.ctx.currentTime;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+
+                        osc.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(300, t);
+                        osc.frequency.exponentialRampToValueAtTime(150, t + 0.2);
+
+                        gain.gain.setValueAtTime(0.15, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+
+                        osc.start(t);
+                        osc.stop(t + 0.2);
+                    } catch (e) {
+                        console.debug('播放悔棋音效失败:', e);
+                    }
+                },
+
+                // 播放主题切换音效
+                playThemeChange: function() {
+                    try {
+                        this.init();
+                        const t = this.ctx.currentTime;
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+
+                        osc.connect(gain);
+                        gain.connect(this.masterGain);
+
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(600, t);
+                        osc.frequency.exponentialRampToValueAtTime(900, t + 0.15);
+
+                        gain.gain.setValueAtTime(0.1, t);
+                        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+
+                        osc.start(t);
+                        osc.stop(t + 0.15);
+                    } catch (e) {
+                        console.debug('播放主题切换音效失败:', e);
+                    }
+                },
+
+                // 设置音量
+                setVolume: function(value) {
+                    this.init();
+                    this.masterGain.gain.value = Math.max(0, Math.min(1, value));
+                },
+
+                // 获取音量
+                getVolume: function() {
+                    return this.masterGain ? this.masterGain.gain.value : 0.3;
                 }
             };
         })();

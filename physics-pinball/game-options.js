@@ -112,6 +112,11 @@ class GameOptionsManager {
             this.game.soundEnabled = this.options.soundEnabled;
         }
 
+        // 同步到音效管理器
+        if (window.soundManager) {
+            window.soundManager().setEnabled(this.options.soundEnabled);
+        }
+
         const soundToggle = document.getElementById('sound-toggle');
         if (soundToggle) {
             const icon = soundToggle.querySelector('i');
@@ -122,6 +127,11 @@ class GameOptionsManager {
                 if (srLabel) srLabel.textContent = '声音：开启';
                 soundToggle.classList.add('active');
                 if (this.game) this.game.announceScreenReaderMessage('声音效果已开启');
+
+                // 初始化音效系统
+                if (window.soundManager && !window.soundManager().initialized) {
+                    window.soundManager().init();
+                }
             } else {
                 if (icon) icon.className = 'fas fa-volume-mute';
                 if (srLabel) srLabel.textContent = '声音：关闭';

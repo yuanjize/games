@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>物理弹球游戏 - Physics Pinball</title>
     <meta name="description" content="基于真实物理引擎的经典弹球游戏，支持键盘、鼠标和触摸控制">
+    <meta name="theme-color" content="#0f172a">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <style>
@@ -13,7 +14,24 @@
     </style>
 </head>
 <body>
-    <div class="game-container" role="main" aria-label="物理弹球游戏">
+    <!-- 跳转到主内容链接 (可访问性) -->
+    <a href="#game-canvas" class="skip-to-content">跳转到游戏</a>
+
+    <!-- 加载屏幕 -->
+    <div class="loading-screen" id="loading-screen" aria-hidden="true">
+        <div class="loading-logo">
+            <i class="fas fa-gamepad"></i>
+        </div>
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <div class="loading-progress-container">
+            <div class="loading-progress-bar">
+                <div class="loading-progress-fill" id="loading-progress"></div>
+            </div>
+        </div>
+        <div class="loading-text" id="loading-text">正在加载游戏资源...</div>
+    </div>
+
+    <div class="game-container" role="main" aria-label="物理弹球游戏" id="main-content">
         <header class="game-header">
             <nav aria-label="游戏导航">
                 <a href="../index.html" class="back-button" aria-label="返回游戏大厅">
@@ -28,6 +46,17 @@
                     <i class="fas fa-star" aria-hidden="true"></i>
                 </h1>
                 <p class="subtitle">基于真实物理引擎的经典弹球游戏</p>
+            </div>
+            <!-- 主题切换按钮 -->
+            <div class="header-controls">
+                <button class="theme-toggle" id="theme-toggle" aria-label="切换主题模式" data-tooltip="切换主题">
+                    <span class="theme-toggle-icon" id="theme-icon">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
+                    </span>
+                </button>
+                <button class="contrast-toggle" id="contrast-toggle" aria-label="切换高对比度模式" data-tooltip="高对比度">
+                    <i class="fas fa-adjust" aria-hidden="true"></i>
+                </button>
             </div>
         </header>
 
@@ -154,18 +183,22 @@
     </div>
 
     <!-- 游戏控制选项 -->
-    <div class="game-options" role="region" aria-label="游戏选项">
-        <button class="btn-option" id="sound-toggle" aria-label="切换声音效果">
+    <div class="game-options" role="region" aria-label="游戏选项" style="flex-direction: column;">
+        <button class="btn-option" id="sound-toggle" aria-label="切换声音效果" data-tooltip="声音开关">
             <i class="fas fa-volume-mute" aria-hidden="true"></i>
             <span class="sr-only">声音：关闭</span>
         </button>
-        <button class="btn-option" id="vibration-toggle" aria-label="切换振动反馈">
+        <button class="btn-option" id="vibration-toggle" aria-label="切换振动反馈" data-tooltip="振动反馈">
             <i class="fas fa-mobile-alt" aria-hidden="true"></i>
             <span class="sr-only">振动：关闭</span>
         </button>
-        <button class="btn-option" id="pause-btn" aria-label="暂停游戏">
+        <button class="btn-option" id="pause-btn" aria-label="暂停游戏" data-tooltip="暂停游戏 (P)">
             <i class="fas fa-pause" aria-hidden="true"></i>
             <span class="sr-only">暂停</span>
+        </button>
+        <button class="btn-option" id="keyboard-help-btn" aria-label="键盘快捷键帮助" data-tooltip="帮助 (F1)">
+            <i class="fas fa-keyboard" aria-hidden="true"></i>
+            <span class="sr-only">帮助</span>
         </button>
     </div>
 
@@ -173,25 +206,610 @@
     <script src="game-enhanced.js"></script>
     <script src="game-options.js"></script>
     <script>
+        // ========== 加载屏幕管理器 ==========
+        class LoadingManager {
+            constructor() {
+                this.loadingScreen = document.getElementById('loading-screen');
+                this.progressFill = document.getElementById('loading-progress');
+                this.loadingText = document.getElementById('loading-text');
+                this.progress = 0;
+                this.loadingSteps = [
+                    { text: '正在初始化游戏引擎...', progress: 20 },
+                    { text: '正在加载物理组件...', progress: 40 },
+                    { text: '正在配置音频系统...', progress: 60 },
+                    { text: '正在准备游戏资源...', progress: 80 },
+                    { text: '游戏准备就绪！', progress: 100 }
+                ];
+                this.currentStep = 0;
+            }
+
+            async load() {
+                for (const step of this.loadingSteps) {
+                    await this.simulateLoading(step);
+                }
+                await this.delay(300);
+                this.hide();
+            }
+
+            async simulateLoading(step) {
+                this.updateText(step.text);
+                await this.animateProgress(this.progress, step.progress);
+                this.progress = step.progress;
+            }
+
+            updateText(text) {
+                if (this.loadingText) {
+                    this.loadingText.textContent = text;
+                }
+            }
+
+            animateProgress(from, to) {
+                return new Promise(resolve => {
+                    const duration = 400;
+                    const startTime = performance.now();
+
+                    const animate = (currentTime) => {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const currentProgress = from + (to - from) * this.easeOutCubic(progress);
+
+                        if (this.progressFill) {
+                            this.progressFill.style.width = currentProgress + '%';
+                        }
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            resolve();
+                        }
+                    };
+
+                    requestAnimationFrame(animate);
+                });
+            }
+
+            easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            hide() {
+                if (this.loadingScreen) {
+                    this.loadingScreen.classList.add('hidden');
+                    // 动画结束后隐藏元素
+                    setTimeout(() => {
+                        this.loadingScreen.style.display = 'none';
+                    }, 500);
+                }
+            }
+        }
+
+        // ========== 主题管理器 ==========
+        class ThemeManager {
+            constructor() {
+                this.htmlElement = document.documentElement;
+                this.themeToggleBtn = document.getElementById('theme-toggle');
+                this.themeIcon = document.getElementById('theme-icon');
+                this.contrastToggleBtn = document.getElementById('contrast-toggle');
+                this.currentTheme = localStorage.getItem('theme') || 'dark';
+                this.highContrast = localStorage.getItem('highContrast') === 'true';
+
+                this.init();
+            }
+
+            init() {
+                // 应用保存的主题
+                this.setTheme(this.currentTheme, false);
+
+                // 应用高对比度设置
+                if (this.highContrast) {
+                    this.htmlElement.setAttribute('data-contrast', 'high');
+                    this.contrastToggleBtn?.classList.add('active');
+                }
+
+                // 绑定事件
+                this.themeToggleBtn?.addEventListener('click', () => this.toggleTheme());
+                this.contrastToggleBtn?.addEventListener('click', () => this.toggleContrast());
+
+                // 监听系统主题变化
+                window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+                    if (!localStorage.getItem('theme')) {
+                        this.setTheme(e.matches ? 'light' : 'dark', false);
+                    }
+                });
+            }
+
+            toggleTheme() {
+                const newTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+                this.setTheme(newTheme, true);
+            }
+
+            setTheme(theme, save = true) {
+                this.currentTheme = theme;
+                this.htmlElement.setAttribute('data-theme', theme);
+
+                // 更新图标
+                if (this.themeIcon) {
+                    const icon = this.themeIcon.querySelector('i');
+                    if (icon) {
+                        icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+                    }
+                }
+
+                // 更新主题色
+                const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+                if (metaThemeColor) {
+                    metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f172a' : '#f8fafc');
+                }
+
+                if (save) {
+                    localStorage.setItem('theme', theme);
+                }
+
+                // 屏幕阅读器提示
+                this.announceThemeChange(theme);
+            }
+
+            toggleContrast() {
+                this.highContrast = !this.highContrast;
+
+                if (this.highContrast) {
+                    this.htmlElement.setAttribute('data-contrast', 'high');
+                    this.contrastToggleBtn?.classList.add('active');
+                    localStorage.setItem('highContrast', 'true');
+                    this.announceMessage('已启用高对比度模式');
+                } else {
+                    this.htmlElement.removeAttribute('data-contrast');
+                    this.contrastToggleBtn?.classList.remove('active');
+                    localStorage.setItem('highContrast', 'false');
+                    this.announceMessage('已关闭高对比度模式');
+                }
+            }
+
+            announceThemeChange(theme) {
+                const themeName = theme === 'dark' ? '深色' : '浅色';
+                this.announceMessage(`已切换到${themeName}主题`);
+            }
+
+            announceMessage(message) {
+                const srRegion = document.getElementById('sr-live-region');
+                if (srRegion) {
+                    srRegion.textContent = message;
+                }
+            }
+        }
+
+        // ========== 音效管理器 ==========
+        class SoundManager {
+            constructor() {
+                this.audioContext = null;
+                this.enabled = false;
+                this.masterGain = null;
+                this.sounds = {};
+                this.initialized = false;
+            }
+
+            async init() {
+                if (this.initialized) return;
+
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                        latencyHint: 'interactive',
+                        sampleRate: 44100
+                    });
+
+                    this.masterGain = this.audioContext.createGain();
+                    this.masterGain.gain.value = 0.3;
+                    this.masterGain.connect(this.audioContext.destination);
+
+                    // 创建压缩器以防止音频削波
+                    const compressor = this.audioContext.createDynamicsCompressor();
+                    compressor.threshold.value = -24;
+                    compressor.knee.value = 30;
+                    compressor.ratio.value = 12;
+                    compressor.attack.value = 0.003;
+                    compressor.release.value = 0.25;
+
+                    this.masterGain.disconnect();
+                    this.masterGain.connect(compressor);
+                    compressor.connect(this.audioContext.destination);
+
+                    this.initialized = true;
+                } catch (error) {
+                    console.warn('Web Audio API 初始化失败:', error);
+                }
+            }
+
+            setEnabled(enabled) {
+                this.enabled = enabled;
+                if (enabled && !this.initialized) {
+                    this.init();
+                }
+
+                if (this.masterGain) {
+                    this.masterGain.gain.setTargetAtTime(
+                        enabled ? 0.3 : 0,
+                        this.audioContext.currentTime,
+                        0.1
+                    );
+                }
+            }
+
+            playBumperHit() {
+                if (!this.enabled || !this.initialized) return;
+
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.1);
+
+                gain.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 0.15);
+            }
+
+            playPaddleHit() {
+                if (!this.enabled || !this.initialized) return;
+
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, this.audioContext.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 0.1);
+            }
+
+            playWallHit() {
+                if (!this.enabled || !this.initialized) return;
+
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, this.audioContext.currentTime);
+
+                gain.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 0.05);
+            }
+
+            playScoreBonus(multiplier) {
+                if (!this.enabled || !this.initialized) return;
+
+                const baseFreq = 400 * multiplier;
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(baseFreq, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, this.audioContext.currentTime + 0.1);
+
+                gain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 0.2);
+            }
+
+            playGameOver() {
+                if (!this.enabled || !this.initialized) return;
+
+                const notes = [300, 250, 200, 150];
+                notes.forEach((freq, i) => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.value = freq;
+
+                    const startTime = this.audioContext.currentTime + i * 0.2;
+                    gain.gain.setValueAtTime(0.3, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.3);
+                });
+            }
+
+            playLevelComplete() {
+                if (!this.enabled || !this.initialized) return;
+
+                const notes = [523, 659, 784, 1047];
+                notes.forEach((freq, i) => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+
+                    osc.type = 'square';
+                    osc.frequency.value = freq;
+
+                    const startTime = this.audioContext.currentTime + i * 0.1;
+                    gain.gain.setValueAtTime(0.2, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.15);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.15);
+                });
+            }
+        }
+
+        // ========== 手势管理器 ==========
+        class GestureManager {
+            constructor(game) {
+                this.game = game;
+                this.canvas = game.canvas;
+                this.longPressTimer = null;
+                this.longPressDuration = 800;
+                this.lastTouchCount = 0;
+                this.init();
+            }
+
+            init() {
+                // 长按帮助
+                this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+                this.canvas.addEventListener('touchend', () => this.handleTouchEnd(), { passive: false });
+                this.canvas.addEventListener('touchmove', () => this.handleTouchMove(), { passive: false });
+
+                // 双指暂停
+                this.canvas.addEventListener('touchstart', (e) => this.handleMultiTouch(e), { passive: false });
+            }
+
+            handleTouchStart(e) {
+                if (e.touches.length === 1) {
+                    this.longPressTimer = setTimeout(() => {
+                        this.showHelp();
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50);
+                        }
+                    }, this.longPressDuration);
+                }
+            }
+
+            handleTouchEnd() {
+                clearTimeout(this.longPressTimer);
+            }
+
+            handleTouchMove() {
+                clearTimeout(this.longPressTimer);
+            }
+
+            handleMultiTouch(e) {
+                const touchCount = e.touches.length;
+
+                // 检测双指触摸
+                if (touchCount === 2 && this.lastTouchCount !== 2) {
+                    if (this.game.state.running && !this.game.state.paused) {
+                        this.game.togglePause();
+                        this.showMultiTouchHint('游戏已暂停');
+                        if (navigator.vibrate) {
+                            navigator.vibrate(30);
+                        }
+                    }
+                }
+
+                this.lastTouchCount = touchCount;
+            }
+
+            showHelp() {
+                const helpBtn = document.getElementById('keyboard-help-btn');
+                if (helpBtn) {
+                    helpBtn.click();
+                }
+            }
+
+            showMultiTouchHint(message) {
+                const hint = document.createElement('div');
+                hint.className = 'multi-touch-hint';
+                hint.textContent = message;
+                document.body.appendChild(hint);
+
+                setTimeout(() => {
+                    hint.remove();
+                }, 2000);
+            }
+        }
+
+        // ========== 微交互管理器 ==========
+        class MicroInteractionManager {
+            constructor(game) {
+                this.game = game;
+                this.particleContainer = this.createParticleContainer();
+            }
+
+            createParticleContainer() {
+                const container = document.createElement('div');
+                container.id = 'particle-container';
+                container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:100;overflow:hidden;';
+                document.body.appendChild(container);
+                return container;
+            }
+
+            createCollisionFlash(x, y, color = '#ffffff') {
+                const flash = document.createElement('div');
+                flash.className = 'collision-flash';
+                flash.style.cssText = `
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: 40px;
+                    height: 40px;
+                    margin-left: -20px;
+                    margin-top: -20px;
+                    background: radial-gradient(circle, ${color} 0%, transparent 70%);
+                `;
+                this.particleContainer.appendChild(flash);
+
+                setTimeout(() => flash.remove(), 500);
+            }
+
+            createParticles(x, y, count = 8, color = '#6366f1') {
+                for (let i = 0; i < count; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+
+                    const angle = (Math.PI * 2 * i) / count;
+                    const distance = 50 + Math.random() * 50;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    const size = 4 + Math.random() * 6;
+
+                    particle.style.cssText = `
+                        left: ${x}px;
+                        top: ${y}px;
+                        width: ${size}px;
+                        height: ${size}px;
+                        background: ${color};
+                        --tx: ${tx}px;
+                        --ty: ${ty}px;
+                    `;
+
+                    this.particleContainer.appendChild(particle);
+
+                    setTimeout(() => particle.remove(), 1000);
+                }
+            }
+
+            addScoreAnimation(x, y, text, color = '#ffff00') {
+                const scoreEl = document.createElement('div');
+                scoreEl.className = 'floating-score';
+                scoreEl.textContent = text;
+                scoreEl.style.cssText = `
+                    position: fixed;
+                    left: ${x}px;
+                    top: ${y}px;
+                    color: ${color};
+                    font-family: 'Orbitron', monospace;
+                    font-weight: bold;
+                    font-size: 20px;
+                    text-shadow: 0 0 10px ${color};
+                    pointer-events: none;
+                    z-index: 200;
+                `;
+                this.particleContainer.appendChild(scoreEl);
+
+                setTimeout(() => scoreEl.remove(), 1000);
+            }
+
+            addBumperHitAnimation(bumperIndex) {
+                // 触发 CSS 动画
+                requestAnimationFrame(() => {
+                    const bumperElements = document.querySelectorAll('.bumper-hit');
+                    bumperElements.forEach(el => {
+                        el.classList.remove('bumper-hit');
+                        void el.offsetWidth;
+                        el.classList.add('bumper-hit');
+                    });
+                });
+            }
+        }
+
+        // ========== 全局管理器 ==========
+        let loadingManager;
+        let themeManager;
+        let soundManager;
+        let gestureManager;
+        let microInteractionManager;
+
         // 初始化选项管理器
-        // 等待游戏实例创建完成后再初始化选项管理器
         function initOptionsManager() {
             if (window.GameOptionsManager && window.enhancedGame) {
                 window.gameOptions = new GameOptionsManager(window.enhancedGame);
                 console.log('游戏选项管理器已初始化');
+
+                // 初始化其他管理器
+                soundManager = new SoundManager();
+                gestureManager = new GestureManager(window.enhancedGame);
+                microInteractionManager = new MicroInteractionManager(window.enhancedGame);
+
+                // 将音效管理器注入到游戏实例中
+                window.enhancedGame.soundManager = soundManager;
+                window.enhancedGame.microInteractions = microInteractionManager;
             } else {
-                // 如果游戏还没准备好，稍后重试
                 setTimeout(initOptionsManager, 50);
             }
         }
 
         // 页面加载完成后初始化
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initOptionsManager);
-        } else {
+        async function initializeAll() {
+            // 初始化加载管理器
+            loadingManager = new LoadingManager();
+
+            // 等待加载动画
+            await loadingManager.load();
+
+            // 初始化主题管理器
+            themeManager = new ThemeManager();
+
+            // 初始化游戏选项管理器
             initOptionsManager();
         }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAll);
+        } else {
+            initializeAll();
+        }
+
+        // 全局访问
+        window.soundManager = () => soundManager;
+        window.themeManager = () => themeManager;
     </script>
+
+    <!-- 添加头部控制样式 -->
+    <style>
+        .header-controls {
+            display: flex;
+            gap: var(--space-2);
+            align-items: center;
+        }
+
+        .game-header {
+            justify-content: space-between;
+        }
+
+        @media (max-width: 640px) {
+            .game-header {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
+
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
 
     <!-- 触摸设备提示 -->
     <script>

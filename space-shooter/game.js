@@ -1,6 +1,7 @@
 /**
  * Space Shooter - Modern Implementation
  * 完整功能的太空射击游戏
+ * 包含暗色/亮色模式、微交互、加载动画、音效优化、可访问性增强、手势优化
  */
 
 class SpaceShooterGame {
@@ -25,7 +26,11 @@ class SpaceShooterGame {
             enemiesDestroyed: 0,
             difficulty: 'easy',
             soundEnabled: true,
-            musicEnabled: false
+            musicEnabled: false,
+            theme: 'dark', // 新增：主题状态
+            highContrast: false, // 新增：高对比度模式
+            previousScore: 0, // 新增：用于分数变化动画
+            isLoading: true // 新增：加载状态
         };
 
         // 难度配置
@@ -54,7 +59,10 @@ class SpaceShooterGame {
             startY: 0,
             moveX: 0,
             moveY: 0,
-            shooting: false
+            shooting: false,
+            longPressTimer: null, // 新增：长按定时器
+            touchCount: 0, // 新增：触摸点计数（用于双指检测）
+            lastTouchTime: 0 // 新增：上次触摸时间
         };
 
         // 本地存储的统计数据
@@ -63,10 +71,315 @@ class SpaceShooterGame {
         // 动画帧ID
         this.animationFrameId = null;
 
+        // 新增：Web Audio API 上下文
+        this.audioContext = null;
+        this.audioBuffers = {};
+
+        // 新增：主题管理
+        this.currentTheme = localStorage.getItem('theme') || 'dark';
+        this.highContrastMode = localStorage.getItem('highContrast') === 'true';
+
         this.init();
     }
 
+    // ========== 主题切换 ==========
+    initTheme() {
+        const html = document.documentElement;
+        html.setAttribute('data-theme', this.currentTheme);
+
+        if (this.highContrastMode) {
+            document.body.classList.add('high-contrast-mode');
+        }
+
+        // 更新主题切换按钮图标
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const icon = themeToggle.querySelector('i');
+            if (this.currentTheme === 'light') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+
+        // 更新高对比度按钮状态
+        const highContrastToggle = document.getElementById('highContrastToggle');
+        if (highContrastToggle) {
+            highContrastToggle.setAttribute('aria-pressed', this.highContrastMode);
+        }
+    }
+
+    toggleTheme() {
+        this.currentTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', this.currentTheme);
+
+        const html = document.documentElement;
+        html.setAttribute('data-theme', this.currentTheme);
+
+        // 更新按钮图标
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            const icon = themeToggle.querySelector('i');
+            if (this.currentTheme === 'light') {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
+        }
+
+        // 添加按钮点击动画
+        this.addButtonAnimation(themeToggle);
+
+        // 重绘画布以使用新颜色
+        if (!this.state.running) {
+            this.drawInitialBackground();
+        }
+    }
+
+    toggleHighContrast() {
+        this.highContrastMode = !this.highContrastMode;
+        localStorage.setItem('highContrast', this.highContrastMode);
+
+        const highContrastToggle = document.getElementById('highContrastToggle');
+        if (highContrastToggle) {
+            highContrastToggle.setAttribute('aria-pressed', this.highContrastMode);
+        }
+
+        if (this.highContrastMode) {
+            document.body.classList.add('high-contrast-mode');
+        } else {
+            document.body.classList.remove('high-contrast-mode');
+        }
+
+        // 添加按钮点击动画
+        this.addButtonAnimation(highContrastToggle);
+
+        // 重绘画布
+        if (!this.state.running) {
+            this.drawInitialBackground();
+        }
+    }
+
+    // ========== 加载动画 ==========
+    async loadGameAssets() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingProgressBar = document.getElementById('loadingProgressBar');
+        const loadingPercentage = document.getElementById('loadingPercentage');
+
+        // 初始化音频上下文
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Web Audio API 不支持');
+        }
+
+        // 模拟加载进度
+        let progress = 0;
+        const loadingInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(loadingInterval);
+
+                setTimeout(() => {
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('hidden');
+                        this.state.isLoading = false;
+                    }
+                }, 300);
+            }
+
+            if (loadingProgressBar) {
+                loadingProgressBar.style.width = progress + '%';
+            }
+            if (loadingPercentage) {
+                loadingPercentage.textContent = Math.floor(progress) + '%';
+            }
+        }, 100);
+    }
+
+    // ========== Web Audio API 音效系统 ==========
+    async initAudio() {
+        if (!this.audioContext) {
+            try {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Web Audio API 不支持');
+                return;
+            }
+        }
+
+        // 恢复音频上下文（某些浏览器需要用户交互后才能恢复）
+        if (this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+        }
+
+        // 预加载音效
+        this.loadSoundEffects();
+    }
+
+    loadSoundEffects() {
+        // 使用 Web Audio API 生成音效（无需外部文件）
+        this.audioBuffers = {
+            shoot: this.createLaserSound(),
+            explosion: this.createExplosionSound(),
+            hit: this.createHitSound(),
+            gameOver: this.createGameOverSound()
+        };
+    }
+
+    createLaserSound() {
+        const duration = 0.1;
+        const sampleRate = this.audioContext.sampleRate;
+        const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < buffer.length; i++) {
+            const t = i / sampleRate;
+            // 激光音效：快速下降的频率
+            data[i] = Math.sin(2 * Math.PI * (800 - 400 * t) * t) * Math.exp(-t * 20);
+        }
+
+        return buffer;
+    }
+
+    createExplosionSound() {
+        const duration = 0.3;
+        const sampleRate = this.audioContext.sampleRate;
+        const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < buffer.length; i++) {
+            const t = i / sampleRate;
+            // 爆炸音效：白噪声 + 快速衰减
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 10);
+        }
+
+        return buffer;
+    }
+
+    createHitSound() {
+        const duration = 0.15;
+        const sampleRate = this.audioContext.sampleRate;
+        const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < buffer.length; i++) {
+            const t = i / sampleRate;
+            // 击中音效：短促的高频音
+            data[i] = Math.sin(2 * Math.PI * 1200 * t) * Math.exp(-t * 30);
+        }
+
+        return buffer;
+    }
+
+    createGameOverSound() {
+        const duration = 0.8;
+        const sampleRate = this.audioContext.sampleRate;
+        const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < buffer.length; i++) {
+            const t = i / sampleRate;
+            // 游戏结束音效：下降的旋律
+            const frequencies = [523, 494, 440, 392];
+            const freqIndex = Math.floor(t * 8);
+            const freq = frequencies[Math.min(freqIndex, frequencies.length - 1)];
+            data[i] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 3) * 0.5;
+        }
+
+        return buffer;
+    }
+
+    playWebAudioSound(buffer, volume = 0.3) {
+        if (!this.audioContext || !this.state.soundEnabled || !buffer) return;
+
+        try {
+            const source = this.audioContext.createBufferSource();
+            const gainNode = this.audioContext.createGain();
+
+            source.buffer = buffer;
+            gainNode.gain.value = volume;
+
+            source.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            source.start(0);
+        } catch (e) {
+            console.log('音频播放失败:', e);
+        }
+    }
+
+    // ========== 微交互动画 ==========
+    addButtonAnimation(button) {
+        button.classList.add('button-press');
+        setTimeout(() => {
+            button.classList.remove('button-press');
+        }, 150);
+    }
+
+    addRippleEffect(event, button) {
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple-effect');
+
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = event.clientX - rect.left - size / 2;
+        const y = event.clientY - rect.top - size / 2;
+
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+
+        button.appendChild(ripple);
+
+        setTimeout(() => ripple.remove(), 600);
+    }
+
+    animateScoreChange(element, oldValue, newValue) {
+        if (newValue <= oldValue) return;
+
+        element.classList.add('score-update');
+        setTimeout(() => {
+            element.classList.remove('score-update');
+        }, 300);
+    }
+
+    showAchievement(message, icon = 'fas fa-trophy') {
+        const achievement = document.createElement('div');
+        achievement.className = 'achievement-notification';
+        achievement.innerHTML = `<i class="${icon}"></i> <span>${message}</span>`;
+        document.body.appendChild(achievement);
+
+        setTimeout(() => {
+            achievement.style.animation = 'slideDown 0.3s ease forwards';
+            setTimeout(() => achievement.remove(), 300);
+        }, 3000);
+    }
+
+    // ========== 帮助模态框 ==========
+    showHelpModal() {
+        const modal = document.getElementById('helpModal');
+        if (modal) {
+            modal.classList.add('active');
+            modal.querySelector('.help-modal-close').focus();
+        }
+    }
+
+    hideHelpModal() {
+        const modal = document.getElementById('helpModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
     init() {
+        // 初始化主题
+        this.initTheme();
+
+        // 初始化加载动画
+        this.loadGameAssets();
+
         this.resize();
         window.addEventListener('resize', () => this.resize());
         this.bindEvents();
@@ -80,7 +393,9 @@ class SpaceShooterGame {
 
     // ========== 绘制初始背景 ==========
     drawInitialBackground() {
-        this.ctx.fillStyle = '#020617';
+        // 使用 CSS 变量获取当前背景色
+        const canvasBg = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#020617';
+        this.ctx.fillStyle = canvasBg;
         this.ctx.fillRect(0, 0, this.width, this.height);
         this.drawStars();
     }
@@ -228,11 +543,20 @@ class SpaceShooterGame {
                 this.togglePause();
             }
 
-            // ESC返回菜单
+            // ESC返回菜单/关闭模态框
             if (e.code === 'Escape') {
-                if (this.state.running) {
+                const helpModal = document.getElementById('helpModal');
+                if (helpModal && helpModal.classList.contains('active')) {
+                    this.hideHelpModal();
+                } else if (this.state.running) {
                     this.showPauseMenu();
                 }
+            }
+
+            // F1 键显示帮助
+            if (e.code === 'F1') {
+                e.preventDefault();
+                this.showHelpModal();
             }
 
             // 空格键防止页面滚动
@@ -245,6 +569,40 @@ class SpaceShooterGame {
             this.keys[e.code] = false;
         });
 
+        // 新增：主题切换
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', (e) => {
+                this.toggleTheme();
+                this.addRippleEffect(e, themeToggle);
+            });
+        }
+
+        // 新增：高对比度模式切换
+        const highContrastToggle = document.getElementById('highContrastToggle');
+        if (highContrastToggle) {
+            highContrastToggle.addEventListener('click', (e) => {
+                this.toggleHighContrast();
+                this.addRippleEffect(e, highContrastToggle);
+            });
+        }
+
+        // 新增：帮助模态框
+        const closeHelpModal = document.getElementById('closeHelpModal');
+        if (closeHelpModal) {
+            closeHelpModal.addEventListener('click', () => this.hideHelpModal());
+        }
+
+        // 点击模态框背景关闭
+        const helpModal = document.getElementById('helpModal');
+        if (helpModal) {
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    this.hideHelpModal();
+                }
+            });
+        }
+
         // 游戏按钮
         const startGameBtn = document.getElementById('startGameBtn');
         const playAgainBtn = document.getElementById('playAgainBtn');
@@ -253,27 +611,27 @@ class SpaceShooterGame {
         const resumeGameBtn = document.getElementById('resumeGameBtn');
         const pauseBtn = document.getElementById('pauseBtn');
 
-        if (startGameBtn) {
-            startGameBtn.addEventListener('click', () => this.start());
-        }
-        if (playAgainBtn) {
-            playAgainBtn.addEventListener('click', () => {
-                this.reset();
-                this.start();
+        const addButtonEffects = (btn, handler) => {
+            if (!btn) return;
+            btn.addEventListener('click', (e) => {
+                this.addButtonAnimation(btn);
+                this.addRippleEffect(e, btn);
+                handler();
             });
-        }
-        if (backToMenuBtn) {
-            backToMenuBtn.addEventListener('click', () => this.backToMenu());
-        }
-        if (restartGameBtn) {
-            restartGameBtn.addEventListener('click', () => {
-                this.reset();
-                this.start();
-            });
-        }
-        if (resumeGameBtn) {
-            resumeGameBtn.addEventListener('click', () => this.resume());
-        }
+        };
+
+        addButtonEffects(startGameBtn, () => this.start());
+        addButtonEffects(playAgainBtn, () => {
+            this.reset();
+            this.start();
+        });
+        addButtonEffects(backToMenuBtn, () => this.backToMenu());
+        addButtonEffects(restartGameBtn, () => {
+            this.reset();
+            this.start();
+        });
+        addButtonEffects(resumeGameBtn, () => this.resume());
+
         if (pauseBtn) {
             pauseBtn.addEventListener('click', () => {
                 if (this.state.running && !this.state.gameOver) {
@@ -284,10 +642,11 @@ class SpaceShooterGame {
 
         // 难度选择
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.state.difficulty = btn.dataset.difficulty;
+                this.addRippleEffect(e, btn);
             });
         });
 
@@ -296,10 +655,16 @@ class SpaceShooterGame {
         const toggleMusicBtn = document.getElementById('toggleMusicBtn');
 
         if (toggleSoundBtn) {
-            toggleSoundBtn.addEventListener('click', () => this.toggleSound());
+            toggleSoundBtn.addEventListener('click', (e) => {
+                this.toggleSound();
+                this.addRippleEffect(e, toggleSoundBtn);
+            });
         }
         if (toggleMusicBtn) {
-            toggleMusicBtn.addEventListener('click', () => this.toggleMusic());
+            toggleMusicBtn.addEventListener('click', (e) => {
+                this.toggleMusic();
+                this.addRippleEffect(e, toggleMusicBtn);
+            });
         }
 
         // 游戏说明折叠
@@ -312,7 +677,10 @@ class SpaceShooterGame {
 
         // 分享按钮
         document.querySelectorAll('.share-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.shareScore(btn.dataset.platform));
+            btn.addEventListener('click', (e) => {
+                this.addRippleEffect(e, btn);
+                this.shareScore(btn.dataset.platform);
+            });
         });
 
         // 触摸控制
@@ -323,8 +691,47 @@ class SpaceShooterGame {
     bindTouchEvents() {
         const joystickArea = document.getElementById('joystickArea');
         const shootButton = document.getElementById('shootButton');
+        const canvas = this.canvas;
 
         if (!joystickArea || !shootButton) return;
+
+        // 新增：画布长按显示帮助
+        let longPressTimer = null;
+        const longPressDuration = 800; // 长按800毫秒触发帮助
+
+        canvas.addEventListener('touchstart', (e) => {
+            longPressTimer = setTimeout(() => {
+                this.showHelpModal();
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }, longPressDuration);
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+
+        canvas.addEventListener('touchmove', () => {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+        });
+
+        // 新增：双指暂停功能
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2 && this.state.running && !this.state.gameOver) {
+                // 双指轻点暂停
+                this.togglePause();
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
+            }
+        }, { passive: false });
 
         // 虚拟摇杆
         joystickArea.addEventListener('touchstart', (e) => {
@@ -427,7 +834,10 @@ class SpaceShooterGame {
     }
 
     // ========== 游戏控制 ==========
-    start() {
+    async start() {
+        // 初始化音频上下文
+        await this.initAudio();
+
         this.reset();
         this.state.running = true;
         this.hideOverlays();
@@ -710,8 +1120,9 @@ class SpaceShooterGame {
 
     // ========== 渲染 ==========
     draw() {
-        // 清空画布
-        this.ctx.fillStyle = '#020617';
+        // 使用 CSS 变量获取当前背景色
+        const canvasBg = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#020617';
+        this.ctx.fillStyle = canvasBg;
         this.ctx.fillRect(0, 0, this.width, this.height);
 
         // 绘制星空
@@ -817,7 +1228,17 @@ class SpaceShooterGame {
         const enemiesDisplay = document.getElementById('enemiesDisplay');
         const fireRateDisplay = document.getElementById('fireRateDisplay');
 
-        if (scoreDisplay) scoreDisplay.textContent = this.state.score;
+        // 分数变化动画
+        if (scoreDisplay && this.state.score > this.state.previousScore) {
+            const oldScore = this.state.previousScore;
+            const newScore = this.state.score;
+            scoreDisplay.textContent = newScore;
+            this.animateScoreChange(scoreDisplay, oldScore, newScore);
+            this.state.previousScore = newScore;
+        } else if (scoreDisplay) {
+            scoreDisplay.textContent = this.state.score;
+        }
+
         if (livesDisplay) livesDisplay.textContent = this.state.lives;
         if (timeDisplay) timeDisplay.textContent = Math.floor(this.state.gameTime);
         if (enemiesDisplay) enemiesDisplay.textContent = this.state.enemiesDestroyed;
@@ -825,7 +1246,17 @@ class SpaceShooterGame {
         // 更新心形生命显示
         const hearts = document.querySelectorAll('.heart');
         hearts.forEach((heart, index) => {
-            heart.classList.toggle('active', index < this.state.lives);
+            const wasActive = heart.classList.contains('active');
+            const isActive = index < this.state.lives;
+            heart.classList.toggle('active', isActive);
+
+            // 生命减少动画
+            if (wasActive && !isActive) {
+                heart.classList.add('life-lost');
+                setTimeout(() => {
+                    heart.classList.remove('life-lost');
+                }, 300);
+            }
         });
 
         // 更新火力显示（基于难度）
@@ -891,6 +1322,20 @@ class SpaceShooterGame {
     playSound(soundId, loop = false) {
         if (!this.state.soundEnabled) return;
 
+        // 优先使用 Web Audio API
+        const soundMap = {
+            'shootSound': 'shoot',
+            'explosionSound': 'explosion',
+            'hitSound': 'hit',
+            'gameOverSound': 'gameOver'
+        };
+
+        if (soundMap[soundId] && this.audioBuffers[soundMap[soundId]]) {
+            this.playWebAudioSound(this.audioBuffers[soundMap[soundId]]);
+            return;
+        }
+
+        // 背景音乐继续使用 audio 元素
         const sound = document.getElementById(soundId);
         if (sound) {
             sound.currentTime = 0;
