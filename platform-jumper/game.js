@@ -28,11 +28,12 @@ class PlatformJumperGame {
       score: 0,
       level: 1,
       lives: 3,
-      collectedCoins: 0
+      collectedCoins: 0,
+      invulnerabilityTimer: null
     };
 
     this.entities = {
-      player: { x: 0, y: 0, w: 30, h: 40, vx: 0, vy: 0, grounded: false },
+      player: { x: 0, y: 0, w: 30, h: 40, vx: 0, vy: 0, grounded: false, invulnerable: false },
       platforms: [],
       coins: [],
       enemies: [],
@@ -135,6 +136,13 @@ class PlatformJumperGame {
       this.height = rect.height || 500;
     }
 
+    // 重置玩家状态
+    this.entities.player.invulnerable = false;
+    if (this.state.invulnerabilityTimer) {
+      clearTimeout(this.state.invulnerabilityTimer);
+      this.state.invulnerabilityTimer = null;
+    }
+
     // 基础平台
     this.entities.platforms = [{
       x: 0, y: this.height - 40, w: this.width, h: 40, moving: false
@@ -142,7 +150,7 @@ class PlatformJumperGame {
 
     // 生成平台
     let y = this.height - 150;
-    while (y > 100) {
+    while (y > 80) {
       const w = 100 + Math.random() * 100;
       const x = Math.random() * (this.width - w);
       this.entities.platforms.push({
@@ -168,12 +176,24 @@ class PlatformJumperGame {
       y -= 100;
     }
 
+    // 添加顶部平台作为关卡目标
+    const topPlatformWidth = Math.min(200, this.width - 100);
+    this.entities.platforms.push({
+      x: (this.width - topPlatformWidth) / 2,
+      y: 20,
+      w: topPlatformWidth,
+      h: 20,
+      moving: false,
+      isGoal: true
+    });
+
     // 重置玩家位置
     this.entities.player = {
       x: 50, y: this.height - 100,
       w: 30, h: 40,
       vx: 0, vy: 0,
-      grounded: false
+      grounded: false,
+      invulnerable: false
     };
   }
 
@@ -292,6 +312,7 @@ class PlatformJumperGame {
 
   nextLevel() {
     this.state.level++;
+    this.state.collectedCoins = 0; // 重置当前关卡金币计数
     this.state.running = true;
     this.hideOverlays();
     this.entities.coins = [];
@@ -334,16 +355,21 @@ class PlatformJumperGame {
         if (Math.abs(plat.x - plat.originX) > plat.limit) plat.dir *= -1;
       }
 
-      // 碰撞检测
-      if (p.x < plat.x + plat.w && p.x + p.w > plat.x &&
-        p.y + p.h > plat.y && p.y + p.h < plat.y + plat.h + 20 &&
-        p.vy >= 0) {
-          p.y = plat.y - p.h;
-          p.vy = 0;
-          p.grounded = true;
+      // 碰撞检测 - 改进的碰撞逻辑
+      const playerBottom = p.y + p.h;
+      const playerRight = p.x + p.w;
+      const platformBottom = plat.y + plat.h;
 
-          // 平台摩擦
-          if (plat.moving) p.x += plat.speed * plat.dir;
+      // 检测玩家是否落在平台上
+      if (p.x < plat.x + plat.w && playerRight > plat.x &&
+          playerBottom > plat.y && playerBottom < platformBottom + 15 &&
+          p.vy >= 0) {
+        p.y = plat.y - p.h;
+        p.vy = 0;
+        p.grounded = true;
+
+        // 平台摩擦
+        if (plat.moving) p.x += plat.speed * plat.dir;
       }
     });
 
@@ -363,30 +389,40 @@ class PlatformJumperGame {
       }
     });
 
-    // 尖刺碰撞检测
-    this.entities.spikes.forEach(spike => {
-      if (p.x < spike.x + spike.w && p.x + p.w > spike.x &&
-        p.y < spike.y + spike.h && p.y + p.h > spike.y) {
+    // 尖刺碰撞检测 - 无敌状态时跳过
+    if (!p.invulnerable) {
+      this.entities.spikes.forEach(spike => {
+        // 更精确的三角形碰撞检测
+        const playerCenterX = p.x + p.w / 2;
+        const playerCenterY = p.y + p.h / 2;
+        const spikeCenterX = spike.x + spike.w / 2;
+        const spikeCenterY = spike.y + spike.h / 2;
+
+        const dx = Math.abs(playerCenterX - spikeCenterX);
+        const dy = Math.abs(playerCenterY - spikeCenterY);
+
+        // 简化的碰撞检测
+        if (dx < (p.w + spike.w) / 2.5 && dy < (p.h + spike.h) / 2.5) {
           this.handleDeath();
-      }
-    });
+        }
+      });
+    }
 
     // 边界检测
     if (p.x < 0) p.x = 0;
     if (p.x > this.width - p.w) p.x = this.width - p.w;
-    if (p.y > this.height) this.handleDeath();
 
-    // 关卡完成（到达顶部 - 使用更宽松的条件）
-    const levelCompleteThreshold = Math.max(30, Math.min(50, this.height * 0.1));
-    if (p.y < levelCompleteThreshold) {
-      this.state.running = false;
-      this.showOverlay('levelCompleteScreen');
-      document.getElementById('completedLevel').textContent = this.state.level;
-      document.getElementById('levelCoins').textContent = this.state.collectedCoins;
-      this.beep(523, 'sine', 0.1);
-      setTimeout(() => this.beep(659, 'sine', 0.1), 100);
-      setTimeout(() => this.beep(784, 'sine', 0.2), 200);
-      this.announceScreenReader(`关卡完成！获得${this.state.collectedCoins}个金币，总得分：${this.state.score}`);
+    // 掉落检测
+    if (p.y > this.height) {
+      this.handleDeath();
+    }
+
+    // 关卡完成检测（到达顶部平台区域）
+    const goalAreaTop = 60;
+    const playerCenterY = p.y + p.h / 2;
+
+    if (playerCenterY < goalAreaTop && p.grounded) {
+      this.levelComplete();
     }
   }
 
@@ -411,12 +447,32 @@ class PlatformJumperGame {
       this.entities.player.x = 50;
       this.entities.player.y = this.height - 100;
       this.entities.player.vy = 0;
+      this.entities.player.vx = 0;
       this.entities.player.invulnerable = true;
-      setTimeout(() => {
+
+      // 清除之前的计时器
+      if (this.state.invulnerabilityTimer) {
+        clearTimeout(this.state.invulnerabilityTimer);
+      }
+
+      this.state.invulnerabilityTimer = setTimeout(() => {
         this.entities.player.invulnerable = false;
-      }, 1000);
+        this.state.invulnerabilityTimer = null;
+      }, 1500);
+
       this.announceScreenReader(`损失1点生命值，剩余生命：${this.state.lives}，重生！`);
     }
+  }
+
+  levelComplete() {
+    this.state.running = false;
+    this.showOverlay('levelCompleteScreen');
+    document.getElementById('completedLevel').textContent = this.state.level;
+    document.getElementById('levelCoins').textContent = this.state.collectedCoins;
+    this.beep(523, 'sine', 0.1);
+    setTimeout(() => this.beep(659, 'sine', 0.1), 100);
+    setTimeout(() => this.beep(784, 'sine', 0.2), 200);
+    this.announceScreenReader(`关卡完成！获得${this.state.collectedCoins}个金币，总得分：${this.state.score}`);
   }
 
   draw() {
@@ -424,13 +480,24 @@ class PlatformJumperGame {
     this.ctx.clearRect(0, 0, this.width, this.height);
 
     // 绘制平台
-    this.ctx.fillStyle = CONFIG.colors.platform;
     this.entities.platforms.forEach(p => {
-      this.ctx.fillRect(p.x, p.y, p.w, p.h);
-      // 阴影
-      this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
-      this.ctx.fillRect(p.x + 5, p.y + p.h, p.w - 10, 5);
-      this.ctx.fillStyle = CONFIG.colors.platform;
+      if (p.isGoal) {
+        // 关卡目标平台 - 特殊样式
+        this.ctx.fillStyle = '#10b981';
+        this.ctx.fillRect(p.x, p.y, p.w, p.h);
+        // 添加星星标记
+        this.ctx.fillStyle = '#fbbf24';
+        this.ctx.font = '14px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('', p.x + p.w/2, p.y - 5);
+      } else {
+        // 普通平台
+        this.ctx.fillStyle = CONFIG.colors.platform;
+        this.ctx.fillRect(p.x, p.y, p.w, p.h);
+        // 阴影
+        this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        this.ctx.fillRect(p.x + 5, p.y + p.h, p.w - 10, 5);
+      }
     });
 
     // 绘制金币

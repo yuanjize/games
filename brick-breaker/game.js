@@ -12,6 +12,8 @@ const CONFIG = {
     paddleSpeed: 8,
     ballRadius: 8,
     ballSpeed: 5,
+    ballSpeedMin: 3,    // 球速下限
+    ballSpeedMax: 15,   // 球速上限
     brickRows: 6,
     brickColumns: 10,
     brickWidth: 70,
@@ -20,7 +22,9 @@ const CONFIG = {
     brickOffsetTop: 50,
     brickOffsetLeft: 30,
     maxLives: 3,
-    levelBonus: 1000
+    levelBonus: 1000,
+    powerupDuration: 10000,  // 道具持续时间 (毫秒)
+    levelSpeedIncrease: 0.1  // 每关球速增加 10%
 };
 
 // 游戏状态
@@ -62,6 +66,7 @@ class Game {
         this.powerups = [];
         this.balls = [];
         this.animationId = null;
+        this.activePowerups = [];  // 活跃的道具效果计时器
 
         this.init();
         this.bindEvents();
@@ -74,6 +79,7 @@ class Game {
             x: (CONFIG.canvasWidth - CONFIG.paddleWidth) / 2,
             y: CONFIG.canvasHeight - CONFIG.paddleHeight - 10,
             width: CONFIG.paddleWidth,
+            baseWidth: CONFIG.paddleWidth,  // 记录基础宽度
             height: CONFIG.paddleHeight,
             speed: CONFIG.paddleSpeed,
             color: '#3498db'
@@ -104,9 +110,14 @@ class Game {
             dx: 0, // 初始状态球不动
             dy: 0,
             color: '#e74c3c',
-            speed: CONFIG.ballSpeed,
+            speed: this.getBallSpeedForLevel(),
             launched: false // 球是否已发射
         }];
+    }
+
+    // 获取当前关卡球速
+    getBallSpeedForLevel() {
+        return Math.min(CONFIG.ballSpeed * (1 + (this.level - 1) * CONFIG.levelSpeedIncrease), CONFIG.ballSpeedMax);
     }
 
     launchBall() {
@@ -365,6 +376,10 @@ class Game {
         this.particles = [];
         this.powerups = [];
         this.paddle.width = CONFIG.paddleWidth;
+        this.paddle.baseWidth = CONFIG.paddleWidth;
+
+        // 清除所有活跃的道具效果
+        this.clearActivePowerups();
 
         this.resetBall();
         this.initBricks();
@@ -378,12 +393,66 @@ class Game {
         this.lives = Math.min(this.lives + 1, CONFIG.maxLives); // 奖励一条生命
         this.score += CONFIG.levelBonus;
 
+        // 清除道具和道具效果
+        this.powerups = [];
+        this.clearActivePowerups();
+
         this.resetBall();
         this.initBricks();
-        this.powerups = [];
         this.state = GameState.MENU;
         this.hideAllScreens();
         this.updateUI();
+    }
+
+    // 清除所有活跃的道具效果
+    clearActivePowerups() {
+        this.activePowerups.forEach(timer => clearTimeout(timer));
+        this.activePowerups = [];
+        // 重置挡板宽度
+        this.paddle.width = this.paddle.baseWidth;
+    }
+
+    // 添加带时效的道具效果
+    addPowerupEffect(type, callback) {
+        // 立即应用效果
+        callback();
+
+        // 设置定时器在指定时间后恢复
+        const timer = setTimeout(() => {
+            this.removePowerupEffect(type);
+        }, CONFIG.powerupDuration);
+
+        this.activePowerups.push({ type, timer });
+    }
+
+    // 移除道具效果
+    removePowerupEffect(type) {
+        switch (type) {
+            case PowerupType.PADDLE_LONG:
+            case PowerupType.PADDLE_SHORT:
+                // 恢复基础挡板宽度
+                this.paddle.width = this.paddle.baseWidth;
+                break;
+            case PowerupType.BALL_FAST:
+            case PowerupType.BALL_SLOW:
+                // 恢复默认球速
+                const defaultSpeed = this.getBallSpeedForLevel();
+                this.balls.forEach(ball => {
+                    if (ball.launched) {
+                        const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                        if (currentSpeed > 0) {
+                            const ratio = defaultSpeed / currentSpeed;
+                            ball.dx *= ratio;
+                            ball.dy *= ratio;
+                            ball.speed = defaultSpeed;
+                        }
+                    }
+                });
+                break;
+        }
+
+        // 从活跃道具列表中移除
+        this.activePowerups = this.activePowerups.filter(p => p.type !== type);
     }
 
     gameOver() {
@@ -532,7 +601,7 @@ class Game {
             }
         }
 
-        // 更新道具
+        // 更新道具 (只在PLAYING状态下)
         for (let i = this.powerups.length - 1; i >= 0; i--) {
             const powerup = this.powerups[i];
             powerup.y += 2;
@@ -704,11 +773,15 @@ class Game {
     applyPowerup(type) {
         switch (type) {
             case PowerupType.PADDLE_LONG:
-                this.paddle.width = Math.min(this.paddle.width * 1.5, 200);
+                this.addPowerupEffect(type, () => {
+                    this.paddle.width = Math.min(this.paddle.baseWidth * 1.5, 200);
+                });
                 break;
 
             case PowerupType.PADDLE_SHORT:
-                this.paddle.width = Math.max(this.paddle.width * 0.7, 50);
+                this.addPowerupEffect(type, () => {
+                    this.paddle.width = Math.max(this.paddle.baseWidth * 0.7, 50);
+                });
                 break;
 
             case PowerupType.BALL_FAST:
@@ -716,7 +789,7 @@ class Game {
                     if (ball.launched) {
                         const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
                         if (currentSpeed > 0) {
-                            const newSpeed = Math.min(currentSpeed * 1.5, 15);
+                            const newSpeed = Math.min(currentSpeed * 1.5, CONFIG.ballSpeedMax);
                             const ratio = newSpeed / currentSpeed;
                             ball.dx *= ratio;
                             ball.dy *= ratio;
@@ -724,6 +797,11 @@ class Game {
                         }
                     }
                 });
+                // 设置10秒后恢复球速
+                const fastTimer = setTimeout(() => {
+                    this.removePowerupEffect(type);
+                }, CONFIG.powerupDuration);
+                this.activePowerups.push({ type, timer: fastTimer });
                 break;
 
             case PowerupType.BALL_SLOW:
@@ -731,7 +809,7 @@ class Game {
                     if (ball.launched) {
                         const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
                         if (currentSpeed > 0) {
-                            const newSpeed = Math.max(currentSpeed * 0.7, 3);
+                            const newSpeed = Math.max(currentSpeed * 0.7, CONFIG.ballSpeedMin);
                             const ratio = newSpeed / currentSpeed;
                             ball.dx *= ratio;
                             ball.dy *= ratio;
@@ -739,6 +817,11 @@ class Game {
                         }
                     }
                 });
+                // 设置10秒后恢复球速
+                const slowTimer = setTimeout(() => {
+                    this.removePowerupEffect(type);
+                }, CONFIG.powerupDuration);
+                this.activePowerups.push({ type, timer: slowTimer });
                 break;
 
             case PowerupType.MULTI_BALL:

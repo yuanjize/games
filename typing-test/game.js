@@ -64,6 +64,14 @@ class TypingTest {
             ]
         };
 
+        // 游戏模式配置
+        this.gameModeConfig = {
+            'words': { type: 'words', target: 30 },
+            'time-1': { type: 'time', target: 60 },
+            'time-3': { type: 'time', target: 180 },
+            'custom': { type: 'custom', target: 50 }
+        };
+
         // 游戏状态
         this.state = {
             targetText: '',
@@ -81,12 +89,16 @@ class TypingTest {
             showHints: true,
             punctuation: 'some',
             language: 'zh',
+            // 游戏模式
+            gameMode: 'words',
+            timeLimit: null,
+            timeRemaining: null,
             // 历史记录
             history: []
         };
 
-        // 性能优化 - 防抖
-        this.debounceTimers = {};
+        // 性能优化 - 防抖定时器
+        this.debounceTimer = null;
 
         // 初始化
         this.init();
@@ -110,8 +122,8 @@ class TypingTest {
      * 绑定事件监听器
      */
     bindEvents() {
-        // 输入事件 - 使用防抖优化
-        this.elements.input.addEventListener('input', this.debounce((e) => this.handleInput(e), 10));
+        // 输入事件 - 使用箭头函数保持 this 绑定
+        this.elements.input.addEventListener('input', (e) => this.handleInput(e));
         this.elements.input.addEventListener('keydown', (e) => this.handleKeydown(e));
 
         // 按钮事件
@@ -175,13 +187,12 @@ class TypingTest {
     }
 
     /**
-     * 防抖函数
+     * 防抖函数 - 使用实例方法
      */
     debounce(func, delay) {
-        let timeoutId;
         return (...args) => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(this, args), delay);
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = setTimeout(() => func.apply(this, args), delay);
         };
     }
 
@@ -304,6 +315,7 @@ class TypingTest {
         this.state.totalCorrect = 0;
         this.state.totalErrors = 0;
         this.state.currentPosition = 0;
+        this.state.timeRemaining = this.state.timeLimit;
 
         // 生成新文本
         this.generateText();
@@ -385,12 +397,8 @@ class TypingTest {
             this.updateButtonStates();
         }
 
-        // 分析变化
-        if (newText.length > oldText.length) {
-            this.handleNewCharacter(newText, oldText);
-        } else if (newText.length < oldText.length) {
-            this.handleDeleteCharacter(newText, oldText);
-        }
+        // 重新计算统计（处理删除的情况）
+        this.recalculateStats(newText);
 
         // 更新状态
         this.state.typedText = newText;
@@ -408,32 +416,37 @@ class TypingTest {
     }
 
     /**
-     * 处理新字符
+     * 重新计算统计信息（处理删除字符的情况）
      */
-    handleNewCharacter(newText, oldText) {
-        const newChar = newText[newText.length - 1];
-        const targetChar = this.state.targetText[oldText.length];
+    recalculateStats(newText) {
+        let correct = 0;
+        let errors = 0;
 
-        if (newChar === targetChar) {
-            this.state.totalCorrect++;
-            if (this.state.soundEnabled) {
-                this.playSound('correct');
+        for (let i = 0; i < newText.length; i++) {
+            if (newText[i] === this.state.targetText[i]) {
+                correct++;
+            } else {
+                errors++;
             }
-        } else {
-            this.state.totalErrors++;
-            if (this.state.soundEnabled) {
-                this.playSound('error');
-            }
-            this.showErrorFeedback(oldText.length);
         }
-    }
 
-    /**
-     * 处理删除字符
-     */
-    handleDeleteCharacter(newText, oldText) {
-        // 删除字符时不需要特殊处理
-        // 统计会在下次输入时重新计算
+        // 如果有新字符添加，播放音效
+        if (newText.length > this.state.typedText.length) {
+            const newCharIndex = newText.length - 1;
+            if (newText[newCharIndex] === this.state.targetText[newCharIndex]) {
+                if (this.state.soundEnabled) {
+                    this.playSound('correct');
+                }
+            } else {
+                if (this.state.soundEnabled) {
+                    this.playSound('error');
+                }
+                this.showErrorFeedback(newCharIndex);
+            }
+        }
+
+        this.state.totalCorrect = correct;
+        this.state.totalErrors = errors;
     }
 
     /**
@@ -738,7 +751,7 @@ class TypingTest {
             // 获取第一个字符的估算高度
             const fontSize = parseFloat(window.getComputedStyle(this.elements.text).fontSize) || 18;
 
-            cursor.style.transform = `translate(${paddingLeft}px, ${paddingTop}px)`;
+            cursor.style.transform = `translate(${paddingLeft}px, ${paddingTop + 4}px)`;
             return;
         }
 
@@ -746,7 +759,7 @@ class TypingTest {
         const maxIndex = Math.max(0, spans.length - 1);
         const currentIndex = Math.min(this.state.currentPosition, maxIndex);
 
-        if (currentIndex >= 0 && spans[currentIndex]) {
+        if (currentIndex >= 0 && currentIndex < spans.length && spans[currentIndex]) {
             const rect = spans[currentIndex].getBoundingClientRect();
             const containerRect = textContainer.getBoundingClientRect();
 
@@ -754,7 +767,17 @@ class TypingTest {
             const x = rect.left - containerRect.left;
             const y = rect.top - containerRect.top;
 
-            cursor.style.transform = `translate(${x}px, ${y}px)`;
+            cursor.style.transform = `translate(${x}px, ${y + 4}px)`;
+        } else if (spans.length > 0) {
+            // 如果当前索引超出范围，将光标放在最后一个字符后面
+            const lastSpan = spans[spans.length - 1];
+            const rect = lastSpan.getBoundingClientRect();
+            const containerRect = textContainer.getBoundingClientRect();
+
+            const x = rect.right - containerRect.left;
+            const y = rect.top - containerRect.top;
+
+            cursor.style.transform = `translate(${x}px, ${y + 4}px)`;
         }
     }
 
@@ -907,7 +930,13 @@ class TypingTest {
      */
     updateGameMode() {
         const mode = this.elements.gameMode.value;
+        this.state.gameMode = mode;
         console.log(`Game mode changed to: ${mode}`);
+
+        // 如果游戏正在进行，重置游戏
+        if (this.state.isActive) {
+            this.reset();
+        }
     }
 
     /**

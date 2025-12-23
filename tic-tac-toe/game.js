@@ -307,6 +307,11 @@ class TicTacToeGame {
         let bestScore = -Infinity;
         let move;
 
+        // 空棋盘时优先选择中心
+        if (this.isBoardEmpty()) {
+            return { r: 1, c: 1 };
+        }
+
         for(let r = 0; r < 3; r++) {
             for(let c = 0; c < 3; c++) {
                 if(this.board[r][c] === '') {
@@ -322,6 +327,10 @@ class TicTacToeGame {
             }
         }
         return move;
+    }
+
+    isBoardEmpty() {
+        return this.board.every(row => row.every(cell => cell === ''));
     }
 
     minimax(board, depth, isMaximizing) {
@@ -361,10 +370,13 @@ class TicTacToeGame {
     }
 
     undo() {
-        if (this.history.length === 0 || this.gameState !== 'playing' || this.isAiThinking) {
+        if (this.history.length === 0 || this.isAiThinking) {
             this.announce('无法悔棋。');
             return;
         }
+
+        // 如果游戏已结束，需要先检查是否可以悔棋
+        const wasGameOver = this.gameState !== 'playing';
 
         // 撤销AI的走棋
         const aiMove = this.history.pop();
@@ -381,6 +393,11 @@ class TicTacToeGame {
         this.currentPlayer = 'X';
         this.gameState = 'playing';
         this.isAiThinking = false;
+
+        // 清除获胜状态（如果之前游戏已结束）
+        if (wasGameOver) {
+            this.clearWinningCells();
+        }
 
         this.refreshHistoryList();
         this.updateUI();
@@ -444,12 +461,8 @@ class TicTacToeGame {
             return;
         }
 
-        let bestMove;
-        if (this.difficulty === 'hard') {
-            bestMove = this.getBestMove();
-        } else {
-            bestMove = this.getStrategicMove();
-        }
+        // 为玩家 X 找最佳位置
+        let bestMove = this.getPlayerBestMove();
 
         if (bestMove) {
             // 先清除所有现有的提示
@@ -464,6 +477,50 @@ class TicTacToeGame {
 
             this.announce(`提示：建议下在第${bestMove.r + 1}行第${bestMove.c + 1}列。`);
         }
+    }
+
+    getPlayerBestMove() {
+        // 尝试获胜
+        for(let r = 0; r < 3; r++) {
+            for(let c = 0; c < 3; c++) {
+                if(this.board[r][c] === '') {
+                    this.board[r][c] = 'X';
+                    if(this.checkWinner(this.board) === 'X') {
+                        this.board[r][c] = '';
+                        return {r, c};
+                    }
+                    this.board[r][c] = '';
+                }
+            }
+        }
+
+        // 尝试阻挡 AI
+        for(let r = 0; r < 3; r++) {
+            for(let c = 0; c < 3; c++) {
+                if(this.board[r][c] === '') {
+                    this.board[r][c] = 'O';
+                    if(this.checkWinner(this.board) === 'O') {
+                        this.board[r][c] = '';
+                        return {r, c};
+                    }
+                    this.board[r][c] = '';
+                }
+            }
+        }
+
+        // 优先选择中心
+        if(this.board[1][1] === '') return {r: 1, c: 1};
+
+        // 然后选择角落
+        const corners = [{r:0,c:0}, {r:0,c:2}, {r:2,c:0}, {r:2,c:2}];
+        for(const corner of corners) {
+            if(this.board[corner.r][corner.c] === '') {
+                return corner;
+            }
+        }
+
+        // 否则随机选择
+        return this.getRandomMove();
     }
 
     clearHints() {

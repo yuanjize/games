@@ -237,7 +237,7 @@ class MemoryGame {
 
     restart() {
         this.initAudio();
-        this.stopTimer();
+        this.stopTimer(false); // 传入 false 表示不重置显示
         this.state.moves = 0;
         this.state.flipped = [];
         this.state.matched = [];
@@ -366,10 +366,13 @@ class MemoryGame {
     }
 
     win() {
-        this.stopTimer();
+        // 计算最终时间
         const finalTime = Math.floor((Date.now() - this.state.startTime) / 1000);
         const finalMoves = this.state.moves;
         const totalPairs = Math.floor(this.state.cards.length / 2);
+
+        // 停止计时器，但保留显示（不重置为00:00）
+        this.stopTimer(false);
 
         setTimeout(() => {
             const winModal = document.getElementById('winModal');
@@ -400,9 +403,11 @@ class MemoryGame {
         }, 1000);
     }
 
-    stopTimer() {
+    stopTimer(resetDisplay = true) {
         if (this.state.timerInterval) clearInterval(this.state.timerInterval);
-        this.stats.timer.textContent = '00:00';
+        if (resetDisplay) {
+            this.stats.timer.textContent = '00:00';
+        }
     }
 
     formatTime(sec) {

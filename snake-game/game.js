@@ -218,9 +218,29 @@ class SnakeGame {
             attempts++;
         }
 
-        // 如果找不到有效位置且蛇几乎填满整个屏幕，游戏获胜
-        if (!valid && this.snake.length > this.tileCountX * this.tileCountY * 0.9) {
-            this.gameWin();
+        // 如果找不到有效位置，重新生成食物类型并重试
+        if (!valid) {
+            // 蛇几乎填满整个屏幕，尝试生成在蛇身外的任意位置
+            const emptySpots = [];
+            for (let x = 0; x < this.tileCountX; x++) {
+                for (let y = 0; y < this.tileCountY; y++) {
+                    if (!this.snake.some(s => s.x === x && s.y === y)) {
+                        emptySpots.push({x, y});
+                    }
+                }
+            }
+
+            if (emptySpots.length > 0) {
+                const spot = emptySpots[Math.floor(Math.random() * emptySpots.length)];
+                this.food = {
+                    x: spot.x,
+                    y: spot.y,
+                    type: type
+                };
+            } else {
+                // 蛇完全填满屏幕，游戏获胜
+                this.gameWin();
+            }
         }
     }
 
@@ -471,6 +491,14 @@ class SnakeGame {
         }
 
         this.playHapticFeedback();
+
+        // 检查游戏是否获胜（在生成新食物前）
+        const totalCells = this.tileCountX * this.tileCountY;
+        if (this.snake.length >= totalCells * 0.95) {
+            this.gameWin();
+            return;
+        }
+
         this.spawnFood();
     }
 
@@ -478,6 +506,9 @@ class SnakeGame {
      * 游戏获胜（蛇几乎填满整个屏幕）
      */
     gameWin() {
+        // 防止重复调用
+        if (this.state.gameOver) return;
+
         this.state.running = false;
         this.state.gameOver = true;
 
@@ -513,6 +544,9 @@ class SnakeGame {
     }
 
     gameOver() {
+        // 防止重复调用
+        if (this.state.gameOver) return;
+
         this.state.running = false;
         this.state.gameOver = true;
 
