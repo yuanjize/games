@@ -2,3 +2,25 @@
 dist/
 .wrangler/
 node_modules/
+
+# 测试文件
+*-test.js
+*-test.mjs
+*-test.html
+*-test.py
+test*.js
+test*.html
+test*.py
+TEST-*.md
+TEST-REPORT.md
+
+# 截图和临时文件
+*.png
+*.jpg
+*.jpeg
+http-server.js
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc

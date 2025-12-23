@@ -477,3 +477,15 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ==================== 触觉反馈 ==================== */
+/* 触觉反馈工具类 */
+.haptic-feedback {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* 按钮按下时的视觉反馈配合触觉 */
+.haptic-feedback:active {
+    transform: scale(0.95);
+}
