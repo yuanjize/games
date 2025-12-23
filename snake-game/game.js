@@ -47,6 +47,9 @@ class SnakeGame {
         this.minStepInterval = 40; // 最小间隔，防止速度过快
         this.maxStepInterval = 150; // 最大间隔
 
+        // 动画帧ID，用于取消请求
+        this.animationFrameId = null;
+
         // 预渲染网格以提升性能
         this.gridCanvas = null;
         this.needsGridRender = true;
@@ -54,32 +57,25 @@ class SnakeGame {
         // 当前焦点元素用于恢复
         this.previousFocus = null;
 
+        // 窗口resize防抖定时器
+        this.resizeTimer = null;
+
         this.init();
     }
 
     init() {
         this.resize();
-        window.addEventListener('resize', this.debounce(() => this.resize(), 150));
+        window.addEventListener('resize', () => {
+            if (this.resizeTimer) {
+                clearTimeout(this.resizeTimer);
+            }
+            this.resizeTimer = setTimeout(() => this.handleResize(), 150);
+        });
         this.bindEvents();
         this.bindAccessibility();
         this.reset();
         this.showOverlay('start-screen');
         this.preventScrollOnKeys();
-    }
-
-    /**
-     * 防抖函数 - 优化resize事件
-     */
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
     }
 
     /**
@@ -112,6 +108,34 @@ class SnakeGame {
         });
     }
 
+    /**
+     * 处理窗口大小变化
+     */
+    handleResize() {
+        const oldTileCountX = this.tileCountX;
+        const oldTileCountY = this.tileCountY;
+
+        this.resize();
+
+        // 如果游戏正在运行，需要确保蛇在新的边界内
+        if (this.state.running || this.snake.length > 0) {
+            // 调整蛇的位置，确保在边界内
+            this.snake = this.snake.map(segment => ({
+                x: Math.min(segment.x, this.tileCountX - 1),
+                y: Math.min(segment.y, this.tileCountY - 1)
+            }));
+
+            // 确保食物也在边界内
+            if (this.food) {
+                this.food.x = Math.min(this.food.x, this.tileCountX - 1);
+                this.food.y = Math.min(this.food.y, this.tileCountY - 1);
+            }
+
+            // 如果蛇头可能在边界外，重新绘制
+            this.draw();
+        }
+    }
+
     resize() {
         const rect = this.canvas.parentElement.getBoundingClientRect();
         // Snap to grid size
@@ -130,6 +154,12 @@ class SnakeGame {
     }
 
     reset() {
+        // 取消之前的动画帧请求
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+
         this.state.score = 0;
         this.state.running = false;
         this.state.gameOver = false;
@@ -137,14 +167,14 @@ class SnakeGame {
         this.state.lastScoreUpdate = 0;
         this.stepInterval = 100;
 
-        // Center snake
-        const cx = Math.floor(this.tileCountX / 2);
-        const cy = Math.floor(this.tileCountY / 2);
+        // Center snake - 确保蛇在边界内
+        const cx = Math.min(Math.floor(this.tileCountX / 2), this.tileCountX - 4);
+        const cy = Math.min(Math.floor(this.tileCountY / 2), this.tileCountY - 1);
 
         this.snake = [
             {x: cx, y: cy},
-            {x: cx - 1, y: cy},
-            {x: cx - 2, y: cy}
+            {x: Math.max(cx - 1, 0), y: cy},
+            {x: Math.max(cx - 2, 0), y: cy}
         ];
 
         this.dx = 1;
@@ -153,6 +183,7 @@ class SnakeGame {
 
         this.spawnFood();
         this.updateUI();
+        this.draw(); // 初始绘制
     }
 
     spawnFood() {
@@ -173,7 +204,7 @@ class SnakeGame {
 
         let valid = false;
         let attempts = 0;
-        const maxAttempts = 100;
+        const maxAttempts = 500; // 增加尝试次数
 
         while (!valid && attempts < maxAttempts) {
             this.food = {
@@ -187,9 +218,9 @@ class SnakeGame {
             attempts++;
         }
 
-        // 如果找不到有效位置，重置蛇的位置
-        if (!valid) {
-            this.reset();
+        // 如果找不到有效位置且蛇几乎填满整个屏幕，游戏获胜
+        if (!valid && this.snake.length > this.tileCountX * this.tileCountY * 0.9) {
+            this.gameWin();
         }
     }
 
@@ -334,15 +365,26 @@ class SnakeGame {
     }
 
     start() {
+        // 确保没有重复的动画循环
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+
         this.state.running = true;
         this.state.paused = false;
         this.hideOverlays();
         this.lastTime = performance.now();
-        requestAnimationFrame((t) => this.loop(t));
+        this.animationFrameId = requestAnimationFrame((t) => this.loop(t));
     }
 
     loop(now) {
-        if (!this.state.running) return;
+        if (!this.state.running) {
+            this.animationFrameId = null;
+            return;
+        }
+
+        // 保存动画帧ID
+        this.animationFrameId = requestAnimationFrame((t) => this.loop(t));
 
         const dt = now - this.lastTime;
         this.lastTime = now;
@@ -356,7 +398,6 @@ class SnakeGame {
         }
 
         this.draw();
-        requestAnimationFrame((t) => this.loop(t));
     }
 
     update() {
@@ -388,7 +429,7 @@ class SnakeGame {
         this.snake.unshift(head);
 
         // Food Collision
-        if (head.x === this.food.x && head.y === this.food.y) {
+        if (this.food && head.x === this.food.x && head.y === this.food.y) {
             this.eatFood();
         } else {
             this.snake.pop();
@@ -406,6 +447,8 @@ class SnakeGame {
      * 处理吃食物逻辑
      */
     eatFood() {
+        if (!this.food) return;
+
         const foodConfig = this.foodTypes[this.food.type];
         let points = foodConfig.points;
 
@@ -431,9 +474,18 @@ class SnakeGame {
         this.spawnFood();
     }
 
-    gameOver() {
+    /**
+     * 游戏获胜（蛇几乎填满整个屏幕）
+     */
+    gameWin() {
         this.state.running = false;
         this.state.gameOver = true;
+
+        // 取消动画帧
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
 
         // 更新最高分
         if (this.state.score > this.state.highScore) {
@@ -444,6 +496,49 @@ class SnakeGame {
         // 更新游戏结束界面
         document.getElementById('final-score').textContent = this.state.score;
         document.getElementById('final-length').textContent = this.snake.length;
+
+        // 修改标题为获胜
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const title = gameOverScreen.querySelector('h2');
+        if (title) {
+            title.innerHTML = '<i class="fas fa-trophy"></i> 恭喜获胜！';
+        }
+
+        this.showOverlay('game-over-screen');
+
+        // 震动反馈
+        if ('vibrate' in navigator) {
+            navigator.vibrate([100, 50, 100, 50, 100]);
+        }
+    }
+
+    gameOver() {
+        this.state.running = false;
+        this.state.gameOver = true;
+
+        // 取消动画帧
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+
+        // 更新最高分
+        if (this.state.score > this.state.highScore) {
+            this.state.highScore = this.state.score;
+            localStorage.setItem('snake_high', this.state.highScore.toString());
+        }
+
+        // 更新游戏结束界面
+        document.getElementById('final-score').textContent = this.state.score;
+        document.getElementById('final-length').textContent = this.snake.length;
+
+        // 重置标题
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const title = gameOverScreen.querySelector('h2');
+        if (title) {
+            title.innerHTML = '<i class="fas fa-skull-crossbones"></i> 游戏结束';
+        }
+
         this.showOverlay('game-over-screen');
 
         // 震动反馈
@@ -456,8 +551,8 @@ class SnakeGame {
         document.getElementById('score').textContent = this.state.score;
         document.getElementById('high-score').textContent = this.state.highScore;
         document.getElementById('length').textContent = this.snake.length;
-        // 计算速度等级
-        const speedLevel = Math.max(1, Math.floor((150 - this.stepInterval) / 10) + 1);
+        // 修正速度等级计算 - 速度越高，stepInterval越小
+        const speedLevel = Math.max(1, Math.min(10, Math.floor((150 - this.stepInterval) / 11) + 1));
         document.getElementById('speed').textContent = speedLevel;
     }
 
@@ -534,6 +629,12 @@ class SnakeGame {
      */
     drawSnake() {
         this.snake.forEach((segment, index) => {
+            // 确保段在画布范围内
+            if (segment.x < 0 || segment.x >= this.tileCountX ||
+                segment.y < 0 || segment.y >= this.tileCountY) {
+                return;
+            }
+
             const x = segment.x * this.gridSize;
             const y = segment.y * this.gridSize;
 
@@ -653,15 +754,30 @@ class SnakeGame {
 }
 
 // 初始化游戏
+let gameInstance = null;
+
 window.addEventListener('DOMContentLoaded', () => {
-    window.game = new SnakeGame();
+    gameInstance = new SnakeGame();
+    window.game = gameInstance;
 });
 
 // 页面可见性API - 页面不可见时暂停游戏
 document.addEventListener('visibilitychange', () => {
-    if (window.game && document.hidden) {
-        if (window.game.state.running && !window.game.state.paused) {
-            window.game.togglePause();
+    if (gameInstance && document.hidden) {
+        if (gameInstance.state.running && !gameInstance.state.paused) {
+            gameInstance.togglePause();
+        }
+    }
+});
+
+// 页面卸载时清理资源
+window.addEventListener('beforeunload', () => {
+    if (gameInstance) {
+        if (gameInstance.animationFrameId) {
+            cancelAnimationFrame(gameInstance.animationFrameId);
+        }
+        if (gameInstance.resizeTimer) {
+            clearTimeout(gameInstance.resizeTimer);
         }
     }
 });

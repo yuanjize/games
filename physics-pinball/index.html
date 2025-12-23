@@ -169,20 +169,32 @@
         </button>
     </div>
 
-    <!-- 游戏脚本 -->
+    <!-- 游戏脚本 - 按正确顺序加载 -->
     <script src="game-enhanced.js"></script>
     <script src="game-options.js"></script>
     <script>
-        // 初始化游戏和选项管理器
-        document.addEventListener('DOMContentLoaded', function() {
-            // 等待游戏加载完成
-            setTimeout(function() {
-                if (window.enhancedGame && window.GameOptionsManager) {
-                    window.gameOptions = new GameOptionsManager(window.enhancedGame);
-                }
-            }, 100);
-        });
+        // 初始化选项管理器
+        // 等待游戏实例创建完成后再初始化选项管理器
+        function initOptionsManager() {
+            if (window.GameOptionsManager && window.enhancedGame) {
+                window.gameOptions = new GameOptionsManager(window.enhancedGame);
+                console.log('游戏选项管理器已初始化');
+            } else {
+                // 如果游戏还没准备好，稍后重试
+                setTimeout(initOptionsManager, 50);
+            }
+        }
 
+        // 页面加载完成后初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initOptionsManager);
+        } else {
+            initOptionsManager();
+        }
+    </script>
+
+    <!-- 触摸设备提示 -->
+    <script>
         // 触摸设备检测和提示
         if ('ontouchstart' in window) {
             document.addEventListener('DOMContentLoaded', function() {

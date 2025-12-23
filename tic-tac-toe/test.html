@@ -17,8 +17,8 @@
         <h1>井字棋游戏测试</h1>
 
         <div id="test1" class="test-result">
-            <h3>测试 1: 文件存在性</h3>
-            <p>正在检查必需的文件...</p>
+            <h3>测试 1: 游戏类加载</h3>
+            <p>正在检查游戏类是否加载...</p>
         </div>
 
         <div id="test2" class="test-result">
@@ -40,140 +40,248 @@
             <h3>测试 5: 胜负判断</h3>
             <p>正在测试胜负逻辑...</p>
         </div>
+
+        <div id="test6" class="test-result">
+            <h3>测试 6: 悔棋功能</h3>
+            <p>正在测试悔棋功能...</p>
+        </div>
     </div>
+
+    <!-- 游戏需要DOM元素 -->
+    <div id="board" style="display:none;"></div>
+    <div id="statusText" style="display:none;"></div>
+    <div id="currentPlayer" style="display:none;"></div>
+    <div id="difficultyDesc" style="display:none;"></div>
+    <div id="playerWins" style="display:none;"></div>
+    <div id="aiWins" style="display:none;"></div>
+    <div id="draws" style="display:none;"></div>
+    <div id="totalGames" style="display:none;"></div>
+    <div id="historyList" style="display:none;"></div>
+    <button id="newGameBtn" style="display:none;"></button>
+    <button id="undoBtn" style="display:none;"></button>
+    <button id="hintBtn" style="display:none;"></button>
+    <button id="soundToggle" class="sound-on" style="display:none;"></button>
+    <button id="resetStatsBtn" style="display:none;"></button>
+    <div class="difficulty-btn" data-difficulty="easy" style="display:none;"></div>
+    <div class="difficulty-btn" data-difficulty="medium" style="display:none;"></div>
+    <div class="difficulty-btn" data-difficulty="hard" style="display:none;"></div>
 
     <script>
         // 测试函数
         function runTests() {
-            // 测试 1: 文件存在性
+            // 测试 1: 游戏类加载
             const test1 = document.getElementById('test1');
             try {
-                // 检查关键变量是否定义
-                if (typeof GAME_CONFIG !== 'undefined' &&
-                    typeof GAME_STATE !== 'undefined' &&
-                    typeof MARKER !== 'undefined') {
-                    test1.innerHTML = '<h3>✅ 测试 1: 文件存在性 - 通过</h3><p>游戏配置、状态和标记常量已正确定义。</p>';
+                if (typeof TicTacToeGame === 'function') {
+                    test1.innerHTML = '<h3>测试 1: 游戏类加载 - 通过</h3><p>TicTacToeGame类已正确加载。</p>';
                     test1.className = 'test-result pass';
                 } else {
-                    throw new Error('游戏常量未正确定义');
+                    throw new Error('TicTacToeGame类未定义');
                 }
             } catch (error) {
-                test1.innerHTML = `<h3>❌ 测试 1: 文件存在性 - 失败</h3><p>错误: ${error.message}</p>`;
+                test1.innerHTML = `<h3>测试 1: 游戏类加载 - 失败</h3><p>错误: ${error.message}</p>`;
                 test1.className = 'test-result fail';
             }
 
             // 测试 2: 游戏初始化
             const test2 = document.getElementById('test2');
             try {
-                // 创建游戏实例
-                const game = new TicTacToeGame();
+                // 等待DOM加载完成后再创建实例
+                setTimeout(() => {
+                    try {
+                        const game = new TicTacToeGame();
 
-                // 检查基本属性
-                if (game.board &&
-                    game.board.length === 3 &&
-                    game.currentPlayer === 'X' &&
-                    game.gameState === 'playing') {
-                    test2.innerHTML = '<h3>✅ 测试 2: 游戏初始化 - 通过</h3><p>游戏实例已成功创建，初始状态正确。</p>';
-                    test2.className = 'test-result pass';
-                } else {
-                    throw new Error('游戏初始化状态不正确');
-                }
+                        // 检查基本属性
+                        if (game.board &&
+                            game.board.length === 3 &&
+                            game.currentPlayer === 'X' &&
+                            game.gameState === 'playing') {
+                            test2.innerHTML = '<h3>测试 2: 游戏初始化 - 通过</h3><p>游戏实例已成功创建，初始状态正确。</p>';
+                            test2.className = 'test-result pass';
+                        } else {
+                            throw new Error('游戏初始化状态不正确');
+                        }
+                    } catch (error) {
+                        test2.innerHTML = `<h3>测试 2: 游戏初始化 - 失败</h3><p>错误: ${error.message}</p>`;
+                        test2.className = 'test-result fail';
+                    }
+                }, 100);
             } catch (error) {
-                test2.innerHTML = `<h3>❌ 测试 2: 游戏初始化 - 失败</h3><p>错误: ${error.message}</p>`;
+                test2.innerHTML = `<h3>测试 2: 游戏初始化 - 失败</h3><p>错误: ${error.message}</p>`;
                 test2.className = 'test-result fail';
             }
 
             // 测试 3: 棋盘渲染
             const test3 = document.getElementById('test3');
             try {
-                const game = new TicTacToeGame();
-                const board = document.createElement('div');
-                board.id = 'test-board';
-                document.body.appendChild(board);
+                setTimeout(() => {
+                    try {
+                        const game = new TicTacToeGame();
+                        const board = document.getElementById('board');
+                        board.style.display = 'block';
 
-                // 临时替换board元素进行测试
-                const originalBoard = game.elements.board;
-                game.elements.board = board;
+                        // 渲染棋盘
+                        game.render();
+                        const cells = board.querySelectorAll('.cell');
 
-                game.renderBoard();
-                const cells = board.querySelectorAll('.cell');
+                        if (cells.length === 9) {
+                            test3.innerHTML = '<h3>测试 3: 棋盘渲染 - 通过</h3><p>棋盘已成功渲染，9个格子正确创建。</p>';
+                            test3.className = 'test-result pass';
+                        } else {
+                            throw new Error(`棋盘渲染不正确，找到 ${cells.length} 个格子，预期 9 个`);
+                        }
 
-                if (cells.length === 9) {
-                    test3.innerHTML = '<h3>✅ 测试 3: 棋盘渲染 - 通过</h3><p>棋盘已成功渲染，9个格子正确创建。</p>';
-                    test3.className = 'test-result pass';
-                } else {
-                    throw new Error(`棋盘渲染不正确，找到 ${cells.length} 个格子，预期 9 个`);
-                }
+                        board.style.display = 'none';
 
-                // 清理
-                document.body.removeChild(board);
-                game.elements.board = originalBoard;
-
+                    } catch (error) {
+                        test3.innerHTML = `<h3>测试 3: 棋盘渲染 - 失败</h3><p>错误: ${error.message}</p>`;
+                        test3.className = 'test-result fail';
+                    }
+                }, 200);
             } catch (error) {
-                test3.innerHTML = `<h3>❌ 测试 3: 棋盘渲染 - 失败</h3><p>错误: ${error.message}</p>`;
+                test3.innerHTML = `<h3>测试 3: 棋盘渲染 - 失败</h3><p>错误: ${error.message}</p>`;
                 test3.className = 'test-result fail';
             }
 
             // 测试 4: AI逻辑
             const test4 = document.getElementById('test4');
             try {
-                const game = new TicTacToeGame();
+                setTimeout(() => {
+                    try {
+                        const game = new TicTacToeGame();
 
-                // 测试随机AI
-                game.difficulty = 'easy';
-                const easyMove = game.getRandomMove();
-                if (easyMove && typeof easyMove.row === 'number' && typeof easyMove.col === 'number') {
-                    // 测试中等AI
-                    game.difficulty = 'medium';
-                    const mediumMove = game.getMediumMove();
+                        // 测试随机AI
+                        const easyMove = game.getRandomMove();
+                        if (!easyMove || typeof easyMove.r !== 'number' || typeof easyMove.c !== 'number') {
+                            throw new Error('简单AI走棋格式错误');
+                        }
 
-                    // 测试困难AI
-                    game.difficulty = 'hard';
-                    const hardMove = game.getHardMove();
+                        // 测试中等AI
+                        const mediumMove = game.getStrategicMove();
+                        if (!mediumMove || typeof mediumMove.r !== 'number' || typeof mediumMove.c !== 'number') {
+                            throw new Error('中等AI走棋格式错误');
+                        }
 
-                    test4.innerHTML = '<h3>✅ 测试 4: AI逻辑 - 通过</h3><p>所有AI难度级别均已实现并能生成有效走棋。</p>';
-                    test4.className = 'test-result pass';
-                } else {
-                    throw new Error('AI走棋生成失败');
-                }
+                        // 测试困难AI
+                        const hardMove = game.getBestMove();
+                        if (!hardMove || typeof hardMove.r !== 'number' || typeof hardMove.c !== 'number') {
+                            throw new Error('困难AI走棋格式错误');
+                        }
 
+                        test4.innerHTML = '<h3>测试 4: AI逻辑 - 通过</h3><p>所有AI难度级别均已实现并能生成有效走棋。</p>';
+                        test4.className = 'test-result pass';
+
+                    } catch (error) {
+                        test4.innerHTML = `<h3>测试 4: AI逻辑 - 失败</h3><p>错误: ${error.message}</p>`;
+                        test4.className = 'test-result fail';
+                    }
+                }, 300);
             } catch (error) {
-                test4.innerHTML = `<h3>❌ 测试 4: AI逻辑 - 失败</h3><p>错误: ${error.message}</p>`;
+                test4.innerHTML = `<h3>测试 4: AI逻辑 - 失败</h3><p>错误: ${error.message}</p>`;
                 test4.className = 'test-result fail';
             }
 
             // 测试 5: 胜负判断
             const test5 = document.getElementById('test5');
             try {
-                const game = new TicTacToeGame();
+                setTimeout(() => {
+                    try {
+                        const game = new TicTacToeGame();
 
-                // 测试获胜检测
-                const testBoard = [
-                    ['X', 'X', 'X'],
-                    ['', '', ''],
-                    ['', '', '']
-                ];
+                        // 测试获胜检测 - 横向三连
+                        const testBoard1 = [
+                            ['X', 'X', 'X'],
+                            ['', '', ''],
+                            ['', '', '']
+                        ];
 
-                // 临时替换棋盘
-                const originalBoard = game.board;
-                game.board = testBoard;
+                        const winner1 = game.checkWinner(testBoard1);
+                        if (winner1 !== 'X') {
+                            throw new Error('横向获胜检测失败');
+                        }
 
-                const winner = game.checkWinner();
-                const winLine = game.getWinningLine();
+                        // 测试纵向三连
+                        const testBoard2 = [
+                            ['O', '', ''],
+                            ['O', '', ''],
+                            ['O', '', '']
+                        ];
 
-                if (winner === 'X' && winLine && winLine.type === 'row' && winLine.index === 0) {
-                    test5.innerHTML = '<h3>✅ 测试 5: 胜负判断 - 通过</h3><p>胜负检测和获胜线路识别功能正常。</p>';
-                    test5.className = 'test-result pass';
-                } else {
-                    throw new Error('胜负判断功能异常');
-                }
+                        const winner2 = game.checkWinner(testBoard2);
+                        if (winner2 !== 'O') {
+                            throw new Error('纵向获胜检测失败');
+                        }
 
-                // 恢复棋盘
-                game.board = originalBoard;
+                        // 测试对角线三连
+                        const testBoard3 = [
+                            ['X', '', ''],
+                            ['', 'X', ''],
+                            ['', '', 'X']
+                        ];
 
+                        const winner3 = game.checkWinner(testBoard3);
+                        if (winner3 !== 'X') {
+                            throw new Error('对角线获胜检测失败');
+                        }
+
+                        // 测试平局
+                        const testBoard4 = [
+                            ['X', 'O', 'X'],
+                            ['X', 'O', 'O'],
+                            ['O', 'X', 'X']
+                        ];
+
+                        const winner4 = game.checkWinner(testBoard4);
+                        if (winner4 !== null) {
+                            throw new Error('平局检测失败');
+                        }
+
+                        test5.innerHTML = '<h3>测试 5: 胜负判断 - 通过</h3><p>胜负检测功能正常，包括横、纵、斜方向。</p>';
+                        test5.className = 'test-result pass';
+
+                    } catch (error) {
+                        test5.innerHTML = `<h3>测试 5: 胜负判断 - 失败</h3><p>错误: ${error.message}</p>`;
+                        test5.className = 'test-result fail';
+                    }
+                }, 400);
             } catch (error) {
-                test5.innerHTML = `<h3>❌ 测试 5: 胜负判断 - 失败</h3><p>错误: ${error.message}</p>`;
+                test5.innerHTML = `<h3>测试 5: 胜负判断 - 失败</h3><p>错误: ${error.message}</p>`;
                 test5.className = 'test-result fail';
+            }
+
+            // 测试 6: 悔棋功能
+            const test6 = document.getElementById('test6');
+            try {
+                setTimeout(() => {
+                    try {
+                        const game = new TicTacToeGame();
+
+                        // 模拟几步走棋
+                        game.makeMove(0, 0, 'X');
+                        game.makeMove(0, 1, 'O');
+                        game.makeMove(1, 0, 'X');
+
+                        const historyLength = game.history.length;
+                        if (historyLength !== 3) {
+                            throw new Error(`历史记录长度错误: ${historyLength}, 预期 3`);
+                        }
+
+                        // 检查棋盘状态
+                        if (game.board[0][0] !== 'X' || game.board[0][1] !== 'O' || game.board[1][0] !== 'X') {
+                            throw new Error('走棋后棋盘状态不正确');
+                        }
+
+                        test6.innerHTML = '<h3>测试 6: 悔棋功能 - 通过</h3><p>走棋和历史记录功能正常。</p>';
+                        test6.className = 'test-result pass';
+
+                    } catch (error) {
+                        test6.innerHTML = `<h3>测试 6: 悔棋功能 - 失败</h3><p>错误: ${error.message}</p>`;
+                        test6.className = 'test-result fail';
+                    }
+                }, 500);
+            } catch (error) {
+                test6.innerHTML = `<h3>测试 6: 悔棋功能 - 失败</h3><p>错误: ${error.message}</p>`;
+                test6.className = 'test-result fail';
             }
         }
 

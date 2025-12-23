@@ -61,6 +61,7 @@ class Game {
         this.particles = [];
         this.powerups = [];
         this.balls = [];
+        this.animationId = null;
 
         this.init();
         this.bindEvents();
@@ -87,8 +88,12 @@ class Game {
         // 设置Canvas尺寸
         this.resizeCanvas();
 
+        // 设置Canvas为可聚焦
+        this.canvas.setAttribute('tabindex', '0');
+        this.canvas.focus();
+
         // 开始游戏循环
-        requestAnimationFrame(() => this.gameLoop());
+        this.gameLoop();
     }
 
     resetBall() {
@@ -96,11 +101,22 @@ class Game {
             x: CONFIG.canvasWidth / 2,
             y: CONFIG.canvasHeight - 50,
             radius: CONFIG.ballRadius,
-            dx: (Math.random() > 0.5 ? 1 : -1) * CONFIG.ballSpeed,
-            dy: -CONFIG.ballSpeed,
+            dx: 0, // 初始状态球不动
+            dy: 0,
             color: '#e74c3c',
-            speed: CONFIG.ballSpeed
+            speed: CONFIG.ballSpeed,
+            launched: false // 球是否已发射
         }];
+    }
+
+    launchBall() {
+        if (this.balls.length > 0 && !this.balls[0].launched) {
+            const ball = this.balls[0];
+            const angle = (Math.random() * 60 + 60) * Math.PI / 180; // 60-120度，向上
+            ball.dx = Math.cos(angle) * ball.speed;
+            ball.dy = -Math.sin(angle) * ball.speed;
+            ball.launched = true;
+        }
     }
 
     initBricks() {
@@ -162,39 +178,52 @@ class Game {
     bindEvents() {
         // 鼠标移动事件
         this.canvas.addEventListener('mousemove', (e) => {
-            if (this.state === GameState.PLAYING) {
-                const rect = this.canvas.getBoundingClientRect();
-                const scale = this.canvas.width / rect.width;
-                const mouseX = (e.clientX - rect.left) * scale;
+            const rect = this.canvas.getBoundingClientRect();
+            const scale = this.canvas.width / rect.width;
+            const mouseX = (e.clientX - rect.left) * scale;
 
-                this.paddle.x = mouseX - this.paddle.width / 2;
+            this.paddle.x = mouseX - this.paddle.width / 2;
 
-                // 限制挡板在画布内
-                if (this.paddle.x < 0) this.paddle.x = 0;
-                if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
-                    this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
-                }
+            // 限制挡板在画布内
+            if (this.paddle.x < 0) this.paddle.x = 0;
+            if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
+                this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
+            }
+
+            // 如果球还没发射，球跟着挡板移动
+            if (this.balls.length > 0 && !this.balls[0].launched) {
+                this.balls[0].x = this.paddle.x + this.paddle.width / 2;
             }
         });
 
         // 触摸事件
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            if (this.state === GameState.PLAYING) {
-                const rect = this.canvas.getBoundingClientRect();
-                const scale = this.canvas.width / rect.width;
-                const touch = e.touches[0];
-                const touchX = (touch.clientX - rect.left) * scale;
+            const rect = this.canvas.getBoundingClientRect();
+            const scale = this.canvas.width / rect.width;
+            const touch = e.touches[0];
+            const touchX = (touch.clientX - rect.left) * scale;
 
-                this.paddle.x = touchX - this.paddle.width / 2;
+            this.paddle.x = touchX - this.paddle.width / 2;
 
-                // 限制挡板在画布内
-                if (this.paddle.x < 0) this.paddle.x = 0;
-                if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
-                    this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
-                }
+            // 限制挡板在画布内
+            if (this.paddle.x < 0) this.paddle.x = 0;
+            if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
+                this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
+            }
+
+            // 如果球还没发射，球跟着挡板移动
+            if (this.balls.length > 0 && !this.balls[0].launched) {
+                this.balls[0].x = this.paddle.x + this.paddle.width / 2;
             }
         }, { passive: false });
+
+        // 点击Canvas发射球
+        this.canvas.addEventListener('click', () => {
+            if (this.state === GameState.PLAYING && this.balls.length > 0 && !this.balls[0].launched) {
+                this.launchBall();
+            }
+        });
 
         // 键盘事件
         document.addEventListener('keydown', (e) => {
@@ -202,30 +231,40 @@ class Game {
                 case 'Space':
                     e.preventDefault();
                     if (this.state === GameState.PLAYING) {
-                        this.pauseGame();
+                        if (this.balls.length > 0 && !this.balls[0].launched) {
+                            this.launchBall();
+                        } else {
+                            this.pauseGame();
+                        }
                     } else if (this.state === GameState.PAUSED) {
                         this.resumeGame();
+                    } else if (this.state === GameState.MENU) {
+                        this.startGame();
                     }
                     break;
                 case 'ArrowLeft':
-                    if (this.state === GameState.PLAYING) {
-                        this.paddle.x -= this.paddle.speed;
-                        if (this.paddle.x < 0) this.paddle.x = 0;
+                    e.preventDefault();
+                    this.paddle.x -= this.paddle.speed;
+                    if (this.paddle.x < 0) this.paddle.x = 0;
+                    // 如果球还没发射，球跟着挡板移动
+                    if (this.balls.length > 0 && !this.balls[0].launched) {
+                        this.balls[0].x = this.paddle.x + this.paddle.width / 2;
                     }
                     break;
                 case 'ArrowRight':
-                    if (this.state === GameState.PLAYING) {
-                        this.paddle.x += this.paddle.speed;
-                        if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
-                            this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
-                        }
+                    e.preventDefault();
+                    this.paddle.x += this.paddle.speed;
+                    if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
+                        this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
+                    }
+                    // 如果球还没发射，球跟着挡板移动
+                    if (this.balls.length > 0 && !this.balls[0].launched) {
+                        this.balls[0].x = this.paddle.x + this.paddle.width / 2;
                     }
                     break;
                 case 'KeyR':
                     e.preventDefault();
-                    if (this.state === GameState.PLAYING || this.state === GameState.PAUSED) {
-                        this.resetGame();
-                    }
+                    this.resetGame();
                     break;
                 case 'Escape':
                     if (this.state === GameState.PLAYING) {
@@ -241,28 +280,38 @@ class Game {
             }
         });
 
-        // 增加焦点管理
+        // 焦点管理
         this.canvas.addEventListener('focus', () => {
             this.canvas.classList.add('focused');
         });
 
         this.canvas.addEventListener('blur', () => {
             this.canvas.classList.remove('focused');
+            // 如果失去焦点且游戏正在进行，暂停游戏
+            if (this.state === GameState.PLAYING) {
+                this.pauseGame();
+            }
         });
 
         // 触摸目标优化
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            // 点击发射球
+            if (this.state === GameState.PLAYING && this.balls.length > 0 && !this.balls[0].launched) {
+                this.launchBall();
+            }
         }, { passive: false });
 
         // 按钮事件
         document.getElementById('startBtn').addEventListener('click', () => {
+            this.canvas.focus();
             if (this.state === GameState.MENU || this.state === GameState.PAUSED) {
                 this.startGame();
             }
         });
 
         document.getElementById('pauseBtn').addEventListener('click', () => {
+            this.canvas.focus();
             if (this.state === GameState.PLAYING) {
                 this.pauseGame();
             } else if (this.state === GameState.PAUSED) {
@@ -271,14 +320,17 @@ class Game {
         });
 
         document.getElementById('restartBtn').addEventListener('click', () => {
+            this.canvas.focus();
             this.resetGame();
         });
 
         document.getElementById('playAgainBtn').addEventListener('click', () => {
+            this.canvas.focus();
             this.resetGame();
         });
 
         document.getElementById('nextLevelBtn').addEventListener('click', () => {
+            this.canvas.focus();
             this.nextLevel();
         });
 
@@ -292,6 +344,7 @@ class Game {
         this.state = GameState.PLAYING;
         document.getElementById('pauseBtn').innerHTML = '<i class="fas fa-pause"></i> 暂停';
         this.hideAllScreens();
+        this.canvas.focus();
     }
 
     pauseGame() {
@@ -302,6 +355,7 @@ class Game {
     resumeGame() {
         this.state = GameState.PLAYING;
         document.getElementById('pauseBtn').innerHTML = '<i class="fas fa-pause"></i> 暂停';
+        this.canvas.focus();
     }
 
     resetGame() {
@@ -314,7 +368,7 @@ class Game {
 
         this.resetBall();
         this.initBricks();
-        this.state = GameState.PLAYING;
+        this.state = GameState.MENU;
         this.hideAllScreens();
         this.updateUI();
     }
@@ -327,7 +381,7 @@ class Game {
         this.resetBall();
         this.initBricks();
         this.powerups = [];
-        this.state = GameState.PLAYING;
+        this.state = GameState.MENU;
         this.hideAllScreens();
         this.updateUI();
     }
@@ -378,7 +432,7 @@ class Game {
         this.draw();
 
         // 继续游戏循环
-        requestAnimationFrame(() => this.gameLoop());
+        this.animationId = requestAnimationFrame(() => this.gameLoop());
     }
 
     clearCanvas() {
@@ -410,36 +464,54 @@ class Game {
         for (let i = this.balls.length - 1; i >= 0; i--) {
             const ball = this.balls[i];
 
+            // 如果球还没发射，跳过更新
+            if (!ball.launched) {
+                continue;
+            }
+
             // 移动球
             ball.x += ball.dx;
             ball.y += ball.dy;
 
             // 墙壁碰撞检测
-            if (ball.x - ball.radius < 0 || ball.x + ball.radius > CONFIG.canvasWidth) {
-                ball.dx = -ball.dx;
+            if (ball.x - ball.radius < 0) {
+                ball.x = ball.radius;
+                ball.dx = Math.abs(ball.dx);
+                this.createParticles(ball.x, ball.y, 3, '#e74c3c');
+            }
+
+            if (ball.x + ball.radius > CONFIG.canvasWidth) {
+                ball.x = CONFIG.canvasWidth - ball.radius;
+                ball.dx = -Math.abs(ball.dx);
                 this.createParticles(ball.x, ball.y, 3, '#e74c3c');
             }
 
             if (ball.y - ball.radius < 0) {
-                ball.dy = -ball.dy;
+                ball.y = ball.radius;
+                ball.dy = Math.abs(ball.dy);
                 this.createParticles(ball.x, ball.y, 3, '#e74c3c');
             }
 
             // 球掉落到底部
             if (ball.y + ball.radius > CONFIG.canvasHeight) {
                 this.balls.splice(i, 1);
-                this.createParticles(ball.x, ball.y, 10, '#e74c3c');
+                this.createParticles(ball.x, CONFIG.canvasHeight, 10, '#e74c3c');
                 continue;
             }
 
             // 挡板碰撞检测
             if (this.checkPaddleCollision(ball)) {
+                // 确保球在挡板上方
+                ball.y = this.paddle.y - ball.radius;
+
                 // 根据击中挡板的位置计算反弹角度
                 const hitPosition = (ball.x - this.paddle.x) / this.paddle.width;
                 const angle = (hitPosition - 0.5) * Math.PI / 2; // -45° 到 +45°
 
-                ball.dx = Math.sin(angle) * ball.speed;
-                ball.dy = -Math.cos(angle) * ball.speed;
+                // 重新计算速度，保持球的速度恒定
+                const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                ball.dx = Math.sin(angle) * speed;
+                ball.dy = -Math.abs(Math.cos(angle) * speed);
 
                 this.createParticles(ball.x, ball.y, 5, '#3498db');
             }
@@ -497,13 +569,17 @@ class Game {
     }
 
     checkPaddleCollision(ball) {
+        if (!ball.launched) return false;
         return ball.x + ball.radius > this.paddle.x &&
                ball.x - ball.radius < this.paddle.x + this.paddle.width &&
                ball.y + ball.radius > this.paddle.y &&
-               ball.y - ball.radius < this.paddle.y + this.paddle.height;
+               ball.y - ball.radius < this.paddle.y + this.paddle.height &&
+               ball.dy > 0; // 只有球向下移动时才检测碰撞
     }
 
     checkBrickCollision(ball) {
+        if (!ball.launched) return;
+
         for (const brick of this.bricks) {
             if (brick.visible &&
                 ball.x + ball.radius > brick.x &&
@@ -562,10 +638,10 @@ class Game {
     }
 
     checkPowerupCollision(powerup) {
-        return powerup.x > this.paddle.x &&
-               powerup.x < this.paddle.x + this.paddle.width &&
-               powerup.y > this.paddle.y &&
-               powerup.y < this.paddle.y + this.paddle.height;
+        return powerup.x + powerup.size > this.paddle.x &&
+               powerup.x - powerup.size < this.paddle.x + this.paddle.width &&
+               powerup.y + powerup.size > this.paddle.y &&
+               powerup.y - powerup.size < this.paddle.y + this.paddle.height;
     }
 
     createParticles(x, y, count, color) {
@@ -637,24 +713,30 @@ class Game {
 
             case PowerupType.BALL_FAST:
                 this.balls.forEach(ball => {
-                    const currentVelocity = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
-                    if (currentVelocity > 0) {
-                        ball.speed *= 1.5;
-                        const scale = ball.speed / currentVelocity;
-                        ball.dx *= scale;
-                        ball.dy *= scale;
+                    if (ball.launched) {
+                        const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                        if (currentSpeed > 0) {
+                            const newSpeed = Math.min(currentSpeed * 1.5, 15);
+                            const ratio = newSpeed / currentSpeed;
+                            ball.dx *= ratio;
+                            ball.dy *= ratio;
+                            ball.speed = newSpeed;
+                        }
                     }
                 });
                 break;
 
             case PowerupType.BALL_SLOW:
                 this.balls.forEach(ball => {
-                    const currentVelocity = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
-                    if (currentVelocity > 0) {
-                        ball.speed = Math.max(ball.speed * 0.7, 2); // Prevent stopping
-                        const scale = ball.speed / currentVelocity;
-                        ball.dx *= scale;
-                        ball.dy *= scale;
+                    if (ball.launched) {
+                        const currentSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+                        if (currentSpeed > 0) {
+                            const newSpeed = Math.max(currentSpeed * 0.7, 3);
+                            const ratio = newSpeed / currentSpeed;
+                            ball.dx *= ratio;
+                            ball.dy *= ratio;
+                            ball.speed = newSpeed;
+                        }
                     }
                 });
                 break;
@@ -662,12 +744,14 @@ class Game {
             case PowerupType.MULTI_BALL:
                 const currentBalls = [...this.balls];
                 currentBalls.forEach(ball => {
-                    const newBall = {
-                        ...ball,
-                        dx: -ball.dx,
-                        dy: -ball.dy
-                    };
-                    this.balls.push(newBall);
+                    if (ball.launched) {
+                        const newBall = {
+                            ...ball,
+                            dx: -ball.dx,
+                            dy: ball.dy
+                        };
+                        this.balls.push(newBall);
+                    }
                 });
                 break;
         }
@@ -845,7 +929,19 @@ class Game {
     }
 
     drawGameState() {
-        if (this.state === GameState.PAUSED) {
+        if (this.state === GameState.MENU) {
+            // 半透明背景
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            this.ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = 'bold 36px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText('点击开始或按空格键', CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2);
+
+            this.ctx.font = '24px Arial';
+            this.ctx.fillText('点击Canvas发射球', CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2 + 50);
+        } else if (this.state === GameState.PAUSED) {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             this.ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 

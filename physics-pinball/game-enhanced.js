@@ -209,6 +209,9 @@ class EnhancedPinballGame {
         this.targetFPS = 60;
         this.frameInterval = 1000 / this.targetFPS;
 
+        // 存储事件处理器引用以便清理
+        this.handlers = {};
+
         this.init();
     }
 
@@ -390,18 +393,18 @@ class EnhancedPinballGame {
 
     bindEvents() {
         // 键盘事件
-        this.keyDownHandler = (e) => this.handleKeyDown(e);
-        this.keyUpHandler = (e) => this.handleKeyUp(e);
+        this.handlers.keyDown = (e) => this.handleKeyDown(e);
+        this.handlers.keyUp = (e) => this.handleKeyUp(e);
 
-        document.addEventListener('keydown', this.keyDownHandler);
-        document.addEventListener('keyup', this.keyUpHandler);
+        document.addEventListener('keydown', this.handlers.keyDown);
+        document.addEventListener('keyup', this.handlers.keyUp);
 
         // 按钮事件
         const startBtn = document.getElementById('start-btn');
         const restartBtn = document.getElementById('restart-btn');
 
         if (startBtn) {
-            this.startBtnHandler = () => {
+            this.handlers.startBtn = () => {
                 if (this.state.gameOver) {
                     this.restart();
                 } else {
@@ -409,84 +412,84 @@ class EnhancedPinballGame {
                 }
             };
 
-            startBtn.addEventListener('click', this.startBtnHandler);
+            startBtn.addEventListener('click', this.handlers.startBtn);
 
             startBtn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    this.startBtnHandler();
+                    this.handlers.startBtn();
                 }
             });
         }
 
         if (restartBtn) {
-            this.restartBtnHandler = () => this.restart();
+            this.handlers.restartBtn = () => this.restart();
 
-            restartBtn.addEventListener('click', this.restartBtnHandler);
+            restartBtn.addEventListener('click', this.handlers.restartBtn);
 
             restartBtn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    this.restartBtnHandler();
+                    this.handlers.restartBtn();
                 }
             });
         }
 
         // 窗口失焦事件
-        this.blurHandler = () => {
+        this.handlers.blur = () => {
             if (this.state.running && !this.state.paused) {
                 this.togglePause();
             }
         };
-        window.addEventListener('blur', this.blurHandler);
+        window.addEventListener('blur', this.handlers.blur);
 
         // 页面可见性变化
-        this.visibilityHandler = () => {
+        this.handlers.visibilityChange = () => {
             if (document.hidden && this.state.running && !this.state.paused) {
                 this.togglePause();
             }
         };
-        document.addEventListener('visibilitychange', this.visibilityHandler);
+        document.addEventListener('visibilitychange', this.handlers.visibilityChange);
     }
 
     bindTouchEvents() {
         // 触摸事件支持
-        this.touchStartHandler = (e) => {
+        this.handlers.touchStart = (e) => {
             e.preventDefault();
             this.handleTouchStart(e);
         };
 
-        this.touchMoveHandler = (e) => {
+        this.handlers.touchMove = (e) => {
             e.preventDefault();
             this.handleTouchMove(e);
         };
 
-        this.touchEndHandler = (e) => {
+        this.handlers.touchEnd = (e) => {
             e.preventDefault();
             this.handleTouchEnd(e);
         };
 
-        this.canvas.addEventListener('touchstart', this.touchStartHandler, { passive: false });
-        this.canvas.addEventListener('touchmove', this.touchMoveHandler, { passive: false });
-        this.canvas.addEventListener('touchend', this.touchEndHandler, { passive: false });
+        this.canvas.addEventListener('touchstart', this.handlers.touchStart, { passive: false });
+        this.canvas.addEventListener('touchmove', this.handlers.touchMove, { passive: false });
+        this.canvas.addEventListener('touchend', this.handlers.touchEnd, { passive: false });
 
         // 鼠标事件（用于桌面触摸模拟）
-        this.mouseDownHandler = (e) => {
+        this.handlers.mouseDown = (e) => {
             this.handleMouseDown(e);
         };
 
-        this.mouseMoveHandler = (e) => {
+        this.handlers.mouseMove = (e) => {
             this.handleMouseMove(e);
         };
 
-        this.mouseUpHandler = () => {
+        this.handlers.mouseUp = () => {
             this.handleMouseUp();
         };
 
-        this.canvas.addEventListener('mousedown', this.mouseDownHandler);
-        this.canvas.addEventListener('mousemove', this.mouseMoveHandler);
-        this.canvas.addEventListener('mouseup', this.mouseUpHandler);
-        this.canvas.addEventListener('mouseleave', this.mouseUpHandler);
+        this.canvas.addEventListener('mousedown', this.handlers.mouseDown);
+        this.canvas.addEventListener('mousemove', this.handlers.mouseMove);
+        this.canvas.addEventListener('mouseup', this.handlers.mouseUp);
+        this.canvas.addEventListener('mouseleave', this.handlers.mouseUp);
     }
 
     setupAccessibility() {
@@ -717,7 +720,7 @@ class EnhancedPinballGame {
 
         if (statusEl) statusEl.textContent = '游戏准备中';
         if (messageEl) messageEl.textContent = '点击开始按钮或按空格键发射球';
-        if (startBtn) startBtn.textContent = '发射球';
+        if (startBtn) startBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i> 发射球';
 
         this.announceScreenReaderMessage('游戏已重新开始。当前分数：0，最高分：' + this.state.highScore);
     }
@@ -740,7 +743,7 @@ class EnhancedPinballGame {
 
                 if (statusEl) statusEl.textContent = '游戏暂停';
                 if (messageEl) messageEl.textContent = '按P键或点击继续按钮继续游戏';
-                if (startBtn) startBtn.textContent = '继续游戏';
+                if (startBtn) startBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i> 继续游戏';
             }
         } else {
             this.announceScreenReaderMessage('游戏继续。');
@@ -915,7 +918,7 @@ class EnhancedPinballGame {
                 if (messageEl) {
                     messageEl.textContent = `最终分数: ${this.state.score}${this.state.score > this.state.highScore ? ' (新纪录!)' : ''}`;
                 }
-                if (startBtn) startBtn.textContent = '重新开始';
+                if (startBtn) startBtn.innerHTML = '<i class="fas fa-redo" aria-hidden="true"></i> 重新开始';
             }
 
             // 检查并更新最高分
@@ -943,7 +946,7 @@ class EnhancedPinballGame {
 
                 if (statusEl) statusEl.textContent = '准备发射';
                 if (messageEl) messageEl.textContent = `剩余生命: ${this.state.lives}`;
-                if (startBtn) startBtn.textContent = '发射球';
+                if (startBtn) startBtn.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i> 发射球';
             }
         }
     }
@@ -1230,36 +1233,55 @@ class EnhancedPinballGame {
         }
 
         // 移除事件监听器
-        document.removeEventListener('keydown', this.keyDownHandler);
-        document.removeEventListener('keyup', this.keyUpHandler);
-        window.removeEventListener('blur', this.blurHandler);
-        document.removeEventListener('visibilitychange', this.visibilityHandler);
+        if (this.handlers.keyDown) {
+            document.removeEventListener('keydown', this.handlers.keyDown);
+        }
+        if (this.handlers.keyUp) {
+            document.removeEventListener('keyup', this.handlers.keyUp);
+        }
+        if (this.handlers.blur) {
+            window.removeEventListener('blur', this.handlers.blur);
+        }
+        if (this.handlers.visibilityChange) {
+            document.removeEventListener('visibilitychange', this.handlers.visibilityChange);
+        }
 
-        this.canvas.removeEventListener('touchstart', this.touchStartHandler);
-        this.canvas.removeEventListener('touchmove', this.touchMoveHandler);
-        this.canvas.removeEventListener('touchend', this.touchEndHandler);
-        this.canvas.removeEventListener('mousedown', this.mouseDownHandler);
-        this.canvas.removeEventListener('mousemove', this.mouseMoveHandler);
-        this.canvas.removeEventListener('mouseup', this.mouseUpHandler);
-        this.canvas.removeEventListener('mouseleave', this.mouseUpHandler);
+        if (this.handlers.touchStart) {
+            this.canvas.removeEventListener('touchstart', this.handlers.touchStart);
+        }
+        if (this.handlers.touchMove) {
+            this.canvas.removeEventListener('touchmove', this.handlers.touchMove);
+        }
+        if (this.handlers.touchEnd) {
+            this.canvas.removeEventListener('touchend', this.handlers.touchEnd);
+        }
+        if (this.handlers.mouseDown) {
+            this.canvas.removeEventListener('mousedown', this.handlers.mouseDown);
+        }
+        if (this.handlers.mouseMove) {
+            this.canvas.removeEventListener('mousemove', this.handlers.mouseMove);
+        }
+        if (this.handlers.mouseUp) {
+            this.canvas.removeEventListener('mouseup', this.handlers.mouseUp);
+        }
+        this.canvas.removeEventListener('mouseleave', this.handlers.mouseUp);
 
         const startBtn = document.getElementById('start-btn');
         const restartBtn = document.getElementById('restart-btn');
 
-        if (startBtn && this.startBtnHandler) {
-            startBtn.removeEventListener('click', this.startBtnHandler);
+        if (startBtn && this.handlers.startBtn) {
+            startBtn.removeEventListener('click', this.handlers.startBtn);
         }
-        if (restartBtn && this.restartBtnHandler) {
-            restartBtn.removeEventListener('click', this.restartBtnHandler);
+        if (restartBtn && this.handlers.restartBtn) {
+            restartBtn.removeEventListener('click', this.handlers.restartBtn);
         }
 
         clearTimeout(this.resizeTimeout);
     }
 }
 
-// 初始化游戏
-window.addEventListener('DOMContentLoaded', () => {
-    // 检查浏览器兼容性
+// 检查浏览器兼容性并初始化游戏
+function initGame() {
     const canvas = document.getElementById('game-canvas');
     if (!canvas || !canvas.getContext) {
         console.error('您的浏览器不支持Canvas。请使用现代浏览器如Chrome、Firefox或Edge。');
@@ -1270,7 +1292,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 创建游戏实例
+    // 创建游戏实例并导出到window
     window.enhancedGame = new EnhancedPinballGame();
 
     // 添加触摸提示
@@ -1280,7 +1302,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 添加键盘导航说明
     console.log('键盘控制：←→ 箭头键移动挡板，空格键发射球，R键重新开始，P键暂停');
-});
+}
+
+// 等待DOM加载完成
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGame);
+} else {
+    // DOM已经加载完成
+    initGame();
+}
 
 // 导出游戏类供测试使用
 if (typeof module !== 'undefined' && module.exports) {

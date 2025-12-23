@@ -43,6 +43,11 @@ class PlatformJumperGame {
     this.audioCtx = null;
     this.isMobile = this.checkMobile();
 
+    // 初始化尺寸
+    this.width = 800;
+    this.height = 500;
+
+    // 延迟初始化，确保 DOM 完全加载
     this.init();
   }
 
@@ -89,15 +94,19 @@ class PlatformJumperGame {
 
   beep(freq = 440, type = 'sine', duration = 0.1) {
     if (!this.audioCtx) return;
-    const osc = this.audioCtx.createOscillator();
-    const gain = this.audioCtx.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    osc.connect(gain);
-    gain.connect(this.audioCtx.destination);
-    osc.start();
-    gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + duration);
-    osc.stop(this.audioCtx.currentTime + duration);
+    try {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + duration);
+      osc.stop(this.audioCtx.currentTime + duration);
+    } catch(e) {
+      // 音频播放失败时静默处理
+    }
   }
 
   resize() {
@@ -110,10 +119,22 @@ class PlatformJumperGame {
     if (this.entities.platforms.length > 0) {
       // 如果玩家超出屏幕，重新定位
       if (this.entities.player.x > this.width) this.entities.player.x = this.width - 50;
+      // 更新地面平台位置
+      if (this.entities.platforms.length > 0) {
+        this.entities.platforms[0].y = this.height - 40;
+        this.entities.platforms[0].w = this.width;
+      }
     }
   }
 
   resetLevel() {
+    // 确保尺寸已正确设置
+    if (!this.width || !this.height) {
+      const rect = this.canvas.parentElement.getBoundingClientRect();
+      this.width = rect.width || 800;
+      this.height = rect.height || 500;
+    }
+
     // 基础平台
     this.entities.platforms = [{
       x: 0, y: this.height - 40, w: this.width, h: 40, moving: false
@@ -355,17 +376,24 @@ class PlatformJumperGame {
     if (p.x > this.width - p.w) p.x = this.width - p.w;
     if (p.y > this.height) this.handleDeath();
 
-    // 关卡完成（到达顶部）
-    if (p.y < 50) {
+    // 关卡完成（到达顶部 - 使用更宽松的条件）
+    const levelCompleteThreshold = Math.max(30, Math.min(50, this.height * 0.1));
+    if (p.y < levelCompleteThreshold) {
       this.state.running = false;
       this.showOverlay('levelCompleteScreen');
       document.getElementById('completedLevel').textContent = this.state.level;
       document.getElementById('levelCoins').textContent = this.state.collectedCoins;
+      this.beep(523, 'sine', 0.1);
+      setTimeout(() => this.beep(659, 'sine', 0.1), 100);
+      setTimeout(() => this.beep(784, 'sine', 0.2), 200);
       this.announceScreenReader(`关卡完成！获得${this.state.collectedCoins}个金币，总得分：${this.state.score}`);
     }
   }
 
   handleDeath() {
+    // 防止多次触发死亡
+    if (this.entities.player.invulnerable) return;
+
     this.state.lives--;
     this.updateUI();
     this.beep(150, 'sawtooth', 0.3);
@@ -379,10 +407,14 @@ class PlatformJumperGame {
       document.getElementById('finalLevel').textContent = this.state.level;
       this.announceScreenReader(`游戏结束！最终得分：${this.state.score}，收集金币：${this.state.collectedCoins}，关卡进度：${this.state.level}`);
     } else {
-      // 重生
+      // 重生并短暂无敌
       this.entities.player.x = 50;
       this.entities.player.y = this.height - 100;
       this.entities.player.vy = 0;
+      this.entities.player.invulnerable = true;
+      setTimeout(() => {
+        this.entities.player.invulnerable = false;
+      }, 1000);
       this.announceScreenReader(`损失1点生命值，剩余生命：${this.state.lives}，重生！`);
     }
   }
@@ -409,7 +441,13 @@ class PlatformJumperGame {
         this.ctx.fillStyle = CONFIG.colors.coin;
         this.ctx.fill();
         this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 2;
         this.ctx.stroke();
+        // 金币闪光效果
+        this.ctx.beginPath();
+        this.ctx.arc(c.x - 3, c.y - 3, c.r/3, 0, Math.PI*2);
+        this.ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        this.ctx.fill();
       }
     });
 
@@ -425,6 +463,12 @@ class PlatformJumperGame {
 
     // 绘制玩家
     const p = this.entities.player;
+
+    // 无敌状态闪烁效果
+    if (p.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
+      this.ctx.globalAlpha = 0.5;
+    }
+
     this.ctx.fillStyle = CONFIG.colors.player;
     this.ctx.fillRect(p.x, p.y, p.w, p.h);
 
@@ -432,6 +476,14 @@ class PlatformJumperGame {
     this.ctx.fillStyle = 'white';
     this.ctx.fillRect(p.x + 5, p.y + 10, 8, 8);
     this.ctx.fillRect(p.x + p.w - 13, p.y + 10, 8, 8);
+
+    // 眼珠
+    this.ctx.fillStyle = '#1f2937';
+    const eyeOffset = this.input.left ? -2 : (this.input.right ? 2 : 0);
+    this.ctx.fillRect(p.x + 7 + eyeOffset, p.y + 12, 4, 4);
+    this.ctx.fillRect(p.x + p.w - 11 + eyeOffset, p.y + 12, 4, 4);
+
+    this.ctx.globalAlpha = 1;
   }
 
   loop() {

@@ -316,7 +316,8 @@ class TypingTest {
         this.updateStats();
         this.renderText();
         this.updateButtonStates();
-        this.updateCursorPosition();
+        // 使用 requestAnimationFrame 确保 DOM 更新后再更新光标位置
+        requestAnimationFrame(() => this.updateCursorPosition());
     }
 
     /**
@@ -722,15 +723,36 @@ class TypingTest {
         const cursor = document.getElementById('cursor');
         if (!cursor) return;
 
+        const textContainer = this.elements.text.parentElement;
+        if (!textContainer) return;
+
         const spans = this.elements.text.querySelectorAll('span');
-        const currentIndex = Math.min(this.state.currentPosition, spans.length - 1);
+
+        // 修复：当没有字符时，将光标放在起始位置
+        if (spans.length === 0) {
+            // 获取容器的 padding
+            const containerStyle = window.getComputedStyle(textContainer);
+            const paddingLeft = parseFloat(containerStyle.paddingLeft) || 0;
+            const paddingTop = parseFloat(containerStyle.paddingTop) || 0;
+
+            // 获取第一个字符的估算高度
+            const fontSize = parseFloat(window.getComputedStyle(this.elements.text).fontSize) || 18;
+
+            cursor.style.transform = `translate(${paddingLeft}px, ${paddingTop}px)`;
+            return;
+        }
+
+        // 修复：确保 currentIndex 在有效范围内
+        const maxIndex = Math.max(0, spans.length - 1);
+        const currentIndex = Math.min(this.state.currentPosition, maxIndex);
 
         if (currentIndex >= 0 && spans[currentIndex]) {
             const rect = spans[currentIndex].getBoundingClientRect();
-            const textContainer = this.elements.text.parentElement;
+            const containerRect = textContainer.getBoundingClientRect();
 
-            const x = rect.left - textContainer.getBoundingClientRect().left;
-            const y = rect.top - textContainer.getBoundingClientRect().top;
+            // 计算相对位置
+            const x = rect.left - containerRect.left;
+            const y = rect.top - containerRect.top;
 
             cursor.style.transform = `translate(${x}px, ${y}px)`;
         }

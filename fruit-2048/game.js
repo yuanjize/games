@@ -16,6 +16,7 @@ class FruitGame {
         // 音频上下文 - 单例模式，避免重复创建
         this.audioContext = null;
         this.previousScore = 0;
+        this.lastTouchEnd = 0;
 
         // 水果等级定义
         this.fruits = [
@@ -93,7 +94,7 @@ class FruitGame {
     bindEvents() {
         // 键盘控制
         document.addEventListener('keydown', (e) => {
-            if (this.gameOver) return;
+            if (this.gameOver && e.key !== 'Enter' && e.key !== 'r' && e.key !== 'R') return;
 
             switch(e.key) {
                 case 'ArrowUp':
@@ -117,7 +118,7 @@ class FruitGame {
                     this.reset();
                     break;
                 case 'Enter':
-                    if (this.gameOver && this.elements.gameOverModal.classList.contains('active')) {
+                    if (this.gameOver && this.elements.gameOverModal && this.elements.gameOverModal.classList.contains('active')) {
                         this.reset();
                     }
                     break;
@@ -251,7 +252,7 @@ class FruitGame {
                 e.preventDefault();
             }
             this.lastTouchEnd = now;
-        }, false);
+        }, { passive: false });
     }
 
     getRandomBasicFruit() {

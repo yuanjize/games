@@ -10,13 +10,25 @@ class MemoryGame {
             matches: document.getElementById('matches'),
             timer: document.getElementById('timer')
         };
-        
-        this.config = {
-            easy: { rows: 4, cols: 4 },
-            medium: { rows: 6, cols: 6 },
-            hard: { rows: 8, cols: 8 }
+
+        this.bestScores = {
+            easy: document.getElementById('bestTimeEasy'),
+            medium: document.getElementById('bestTimeMedium'),
+            hard: document.getElementById('bestTimeHard')
         };
-        
+
+        this.bestMoves = {
+            easy: document.getElementById('bestMovesEasy'),
+            medium: document.getElementById('bestMovesMedium'),
+            hard: document.getElementById('bestMovesHard')
+        };
+
+        this.config = {
+            easy: { rows: 4, cols: 4, pairs: 8 },
+            medium: { rows: 6, cols: 6, pairs: 18 },
+            hard: { rows: 8, cols: 8, pairs: 32 }
+        };
+
         this.themes = {
             animals: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🪱', '🐛', '🦋', '🐌'],
             fruits: ['🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🫒', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶️', '🫑', '🥒', '🥬', '🥦', '🧄', '🧅', '🍄', '🥜']
@@ -35,12 +47,56 @@ class MemoryGame {
         };
 
         this.audioCtx = null;
+        this.loadBestScores();
         this.init();
     }
 
     init() {
         this.bindEvents();
         this.restart();
+    }
+
+    loadBestScores() {
+        const stored = localStorage.getItem('memoryCardsBestScores');
+        if (stored) {
+            this.savedScores = JSON.parse(stored);
+        } else {
+            this.savedScores = {
+                easy: { time: null, moves: null },
+                medium: { time: null, moves: null },
+                hard: { time: null, moves: null }
+            };
+        }
+        this.updateBestScoresDisplay();
+    }
+
+    saveBestScore(difficulty, time, moves) {
+        const current = this.savedScores[difficulty];
+        let isNewRecord = false;
+
+        if (current.time === null || time < current.time) {
+            current.time = time;
+            isNewRecord = true;
+        }
+        if (current.moves === null || moves < current.moves) {
+            current.moves = moves;
+            isNewRecord = true;
+        }
+
+        if (isNewRecord) {
+            localStorage.setItem('memoryCardsBestScores', JSON.stringify(this.savedScores));
+            this.updateBestScoresDisplay();
+        }
+
+        return isNewRecord;
+    }
+
+    updateBestScoresDisplay() {
+        ['easy', 'medium', 'hard'].forEach(difficulty => {
+            const score = this.savedScores[difficulty];
+            this.bestScores[difficulty].textContent = score.time ? this.formatTime(score.time) : '--:--';
+            this.bestMoves[difficulty].textContent = score.moves !== null ? score.moves : '--';
+        });
     }
 
     initAudio() {
@@ -136,7 +192,7 @@ class MemoryGame {
                 e.preventDefault();
                 this.restart();
             }
-            // 空格键也重新开始
+            // 空格键也重新开始（当焦点不在按钮上时）
             if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
                 e.preventDefault();
                 this.restart();
@@ -187,22 +243,22 @@ class MemoryGame {
         this.state.matched = [];
         this.state.locked = false;
         this.updateStats();
-        
+
         // Setup Grid
         const cfg = this.config[this.state.difficulty];
         this.board.className = `game-board grid-${cfg.rows}x${cfg.cols}`;
-        
+
         // Generate Cards
-        const count = (cfg.rows * cfg.cols) / 2;
+        const count = cfg.pairs;
         const icons = this.themes[this.state.theme].slice(0, count);
         const pairs = [...icons, ...icons];
-        
+
         // Shuffle
         for (let i = pairs.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
         }
-        
+
         this.board.innerHTML = '';
         this.state.cards = pairs.map((icon, index) => {
             const card = document.createElement('div');
@@ -233,7 +289,7 @@ class MemoryGame {
             this.board.appendChild(card);
             return { element: card, icon, index, isFlipped: false };
         });
-        
+
         this.startTimer();
     }
 
@@ -272,6 +328,7 @@ class MemoryGame {
             this.state.matched.push(i1, i2);
             this.state.flipped = [];
             this.state.locked = false;
+            this.updateStats();
 
             // 提供匹配成功的屏幕阅读器反馈
             const matchStatus = document.createElement('div');
@@ -310,10 +367,28 @@ class MemoryGame {
 
     win() {
         this.stopTimer();
+        const finalTime = Math.floor((Date.now() - this.state.startTime) / 1000);
+        const finalMoves = this.state.moves;
+        const totalPairs = Math.floor(this.state.cards.length / 2);
+
         setTimeout(() => {
-            document.getElementById('winModal').classList.add('active');
-            document.getElementById('winTime').textContent = this.formatTime(Math.floor((Date.now() - this.state.startTime)/1000));
-            document.getElementById('winMoves').textContent = this.state.moves;
+            const winModal = document.getElementById('winModal');
+            const bestRecordMessage = document.getElementById('bestRecordMessage');
+
+            document.getElementById('winTime').textContent = this.formatTime(finalTime);
+            document.getElementById('winMoves').textContent = finalMoves;
+            document.getElementById('winMatches').textContent = totalPairs;
+
+            // 检查是否是新记录
+            const isNewRecord = this.saveBestScore(this.state.difficulty, finalTime, finalMoves);
+
+            if (isNewRecord) {
+                bestRecordMessage.style.display = 'flex';
+            } else {
+                bestRecordMessage.style.display = 'none';
+            }
+
+            winModal.classList.add('active');
         }, 500);
     }
 
@@ -338,7 +413,9 @@ class MemoryGame {
 
     updateStats() {
         this.stats.moves.textContent = this.state.moves;
-        this.stats.matches.textContent = Math.floor(this.state.matched.length / 2);
+        const currentPairs = Math.floor(this.state.matched.length / 2);
+        const totalPairs = this.config[this.state.difficulty].pairs;
+        this.stats.matches.textContent = `${currentPairs} / ${totalPairs}`;
     }
 }
 
