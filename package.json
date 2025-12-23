@@ -4,10 +4,10 @@
   "description": "Collection of 10 web games built with HTML, CSS and JavaScript",
   "main": "worker.js",
   "scripts": {
-    "build": "echo 'Building static site...'",
+    "build": "bash build.sh",
     "dev": "npx wrangler dev",
-    "deploy": "npx wrangler deploy",
-    "deploy:production": "npx wrangler deploy --env production",
+    "deploy": "npm run build && npx wrangler deploy --assets=./dist",
+    "deploy:production": "npm run build && npx wrangler deploy --env production --assets=./dist",
     "tail": "npx wrangler tail"
   },
   "keywords": ["games", "web-games", "javascript-games", "cloudflare-workers"],

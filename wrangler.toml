@@ -2,18 +2,10 @@ name = "games"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
-# 静态资源绑定
+# 静态资源绑定（使用构建输出目录）
 [assets]
-directory = "."
+directory = "./dist"
 binding = "ASSETS"
-# 排除不需要部署的文件和目录
-exclude = [
-    "node_modules/**",
-    ".wrangler/**",
-    ".git/**",
-    ".gitignore",
-    "wrangler.toml"
-]
 
 # 路由配置（部署后需要手动设置）
 # routes = [
