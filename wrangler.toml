@@ -1,4 +1,4 @@
-name = "web-games-collection"
+name = "games"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
@@ -6,6 +6,14 @@ compatibility_date = "2024-01-01"
 [assets]
 directory = "."
 binding = "ASSETS"
+# 排除不需要部署的文件和目录
+exclude = [
+    "node_modules/**",
+    ".wrangler/**",
+    ".git/**",
+    ".gitignore",
+    "wrangler.toml"
+]
 
 # 路由配置（部署后需要手动设置）
 # routes = [
