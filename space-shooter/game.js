@@ -3,6 +3,7 @@
  * 完整功能的太空射击游戏
  * 包含暗色/亮色模式、微交互、加载动画、音效优化、可访问性增强、手势优化
  * 第1轮特效优化：敌人爆炸粒子、子弹拖尾、飞船尾焰、屏幕震动
+ * 第2轮音效优化：音调变化射击、多层爆炸、背景音乐系统、音效管理器
  */
 
 class SpaceShooterGame {
@@ -72,11 +73,22 @@ class SpaceShooterGame {
         // 动画帧ID
         this.animationFrameId = null;
 
-        // 新增：Web Audio API 上下文
+        // ========== 第2轮音效优化：增强版音效系统 ==========
         this.audioContext = null;
         this.audioBuffers = {};
+        this.backgroundMusicNodes = [];
+        this.soundManager = {
+            masterVolume: 0.5,
+            sfxVolume: 0.7,
+            musicVolume: 0.3,
+            pitchShift: 1.0,
+            isInitialized: false
+        };
 
-        // 新增：主题管理
+        // 射击音效音调序列（用于变化效果）
+        this.shootPitchSequence = 0;
+
+        // ========== 主题管理 ==========
         this.currentTheme = localStorage.getItem('theme') || 'dark';
         this.highContrastMode = localStorage.getItem('highContrast') === 'true';
 
@@ -182,6 +194,8 @@ class SpaceShooterGame {
         // 初始化音频上下文
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // 预生成所有音效
+            this.generateAllSoundEffects();
         } catch (e) {
             console.log('Web Audio API 不支持');
         }
@@ -211,7 +225,33 @@ class SpaceShooterGame {
         }, 100);
     }
 
-    // ========== Web Audio API 音效系统 ==========
+    // ========== 第2轮音效优化：统一音效管理器 ==========
+    /**
+     * 音效管理器 - 统一管理所有音效的播放、音量、音调等
+     */
+    getSoundManager() {
+        return this.soundManager;
+    }
+
+    setMasterVolume(volume) {
+        this.soundManager.masterVolume = Math.max(0, Math.min(1, volume));
+    }
+
+    setSfxVolume(volume) {
+        this.soundManager.sfxVolume = Math.max(0, Math.min(1, volume));
+    }
+
+    setMusicVolume(volume) {
+        this.soundManager.musicVolume = Math.max(0, Math.min(1, volume));
+        // 更新当前播放的背景音乐音量
+        this.backgroundMusicNodes.forEach(node => {
+            if (node.gainNode) {
+                node.gainNode.gain.value = this.soundManager.musicVolume * this.soundManager.masterVolume;
+            }
+        });
+    }
+
+    // ========== 第2轮音效优化：Web Audio API 音效系统 ==========
     async initAudio() {
         if (!this.audioContext) {
             try {
@@ -227,50 +267,83 @@ class SpaceShooterGame {
             await this.audioContext.resume();
         }
 
-        // 预加载音效
-        this.loadSoundEffects();
+        this.soundManager.isInitialized = true;
     }
 
-    loadSoundEffects() {
-        // 使用 Web Audio API 生成音效（无需外部文件）
+    /**
+     * 生成所有游戏音效
+     */
+    generateAllSoundEffects() {
+        if (!this.audioContext) return;
+
         this.audioBuffers = {
-            shoot: this.createLaserSound(),
-            explosion: this.createExplosionSound(),
+            // 射击音效（多个变体用于音调变化）
+            shoot: this.createLaserSound(800, 0.1),
+            shootHigh: this.createLaserSound(1000, 0.08),
+            shootLow: this.createLaserSound(600, 0.12),
+
+            // 爆炸音效（多个强度）
+            explosion: this.createExplosionSound(0.3),
+            explosionBig: this.createExplosionSound(0.5),
+            explosionSmall: this.createExplosionSound(0.15),
+
+            // 其他音效
             hit: this.createHitSound(),
-            gameOver: this.createGameOverSound()
+            gameOver: this.createGameOverSound(),
+            powerup: this.createPowerupSound(),
+            pause: this.createPauseSound()
         };
     }
 
-    createLaserSound() {
-        const duration = 0.1;
+    /**
+     * 创建激光音效 - 第2轮优化：带音调变化
+     * @param {number} baseFreq - 基础频率
+     * @param {number} duration - 持续时间
+     */
+    createLaserSound(baseFreq = 800, duration = 0.1) {
         const sampleRate = this.audioContext.sampleRate;
         const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
         const data = buffer.getChannelData(0);
 
         for (let i = 0; i < buffer.length; i++) {
             const t = i / sampleRate;
-            // 激光音效：快速下降的频率
-            data[i] = Math.sin(2 * Math.PI * (800 - 400 * t) * t) * Math.exp(-t * 20);
+            // 激光音效：快速下降的频率 + 谐波
+            const freq = baseFreq - (baseFreq * 0.5 * t);
+            const harmonic = Math.sin(2 * Math.PI * freq * 2 * t) * 0.3;
+            data[i] = (Math.sin(2 * Math.PI * freq * t) + harmonic) * Math.exp(-t * 25);
         }
 
         return buffer;
     }
 
-    createExplosionSound() {
-        const duration = 0.3;
+    /**
+     * 创建爆炸音效 - 第2轮优化：多层声音叠加
+     * @param {number} duration - 持续时间
+     */
+    createExplosionSound(duration = 0.3) {
         const sampleRate = this.audioContext.sampleRate;
-        const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
-        const data = buffer.getChannelData(0);
+        const buffer = this.audioContext.createBuffer(2, sampleRate * duration, sampleRate); // 立体声
 
-        for (let i = 0; i < buffer.length; i++) {
-            const t = i / sampleRate;
-            // 爆炸音效：白噪声 + 快速衰减
-            data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 10);
+        for (let channel = 0; channel < 2; channel++) {
+            const data = buffer.getChannelData(channel);
+
+            for (let i = 0; i < buffer.length; i++) {
+                const t = i / sampleRate;
+                // 多层爆炸效果：低频轰鸣 + 高频碎裂
+                const lowFreq = Math.sin(2 * Math.PI * 80 * t) * Math.exp(-t * 8);
+                const noise = (Math.random() * 2 - 1) * Math.exp(-t * 12);
+                const crackle = (Math.random() * 2 - 1) * Math.exp(-t * 25) * 0.5;
+
+                data[i] = (lowFreq * 0.4 + noise * 0.4 + crackle * 0.2);
+            }
         }
 
         return buffer;
     }
 
+    /**
+     * 创建击中音效
+     */
     createHitSound() {
         const duration = 0.15;
         const sampleRate = this.audioContext.sampleRate;
@@ -279,13 +352,17 @@ class SpaceShooterGame {
 
         for (let i = 0; i < buffer.length; i++) {
             const t = i / sampleRate;
-            // 击中音效：短促的高频音
-            data[i] = Math.sin(2 * Math.PI * 1200 * t) * Math.exp(-t * 30);
+            // 击中音效：短促的高频音 + 快速衰减
+            const freq = 1200 - 400 * t;
+            data[i] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 30);
         }
 
         return buffer;
     }
 
+    /**
+     * 创建游戏结束音效
+     */
     createGameOverSound() {
         const duration = 0.8;
         const sampleRate = this.audioContext.sampleRate;
@@ -295,8 +372,8 @@ class SpaceShooterGame {
         for (let i = 0; i < buffer.length; i++) {
             const t = i / sampleRate;
             // 游戏结束音效：下降的旋律
-            const frequencies = [523, 494, 440, 392];
-            const freqIndex = Math.floor(t * 8);
+            const frequencies = [523, 494, 440, 392, 349, 330, 294, 262];
+            const freqIndex = Math.floor(t * 10);
             const freq = frequencies[Math.min(freqIndex, frequencies.length - 1)];
             data[i] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 3) * 0.5;
         }
@@ -304,22 +381,259 @@ class SpaceShooterGame {
         return buffer;
     }
 
-    playWebAudioSound(buffer, volume = 0.3) {
+    /**
+     * 创建道具获取音效 - 第2轮新增
+     */
+    createPowerupSound() {
+        const duration = 0.3;
+        const sampleRate = this.audioContext.sampleRate;
+        const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < buffer.length; i++) {
+            const t = i / sampleRate;
+            // 上升的音调表示获得奖励
+            const freq = 400 + t * 800;
+            data[i] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 8) * 0.6;
+        }
+
+        return buffer;
+    }
+
+    /**
+     * 创建暂停音效 - 第2轮新增
+     */
+    createPauseSound() {
+        const duration = 0.2;
+        const sampleRate = this.audioContext.sampleRate;
+        const buffer = this.audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < buffer.length; i++) {
+            const t = i / sampleRate;
+            // 暂停音效：柔和的提示音
+            data[i] = Math.sin(2 * Math.PI * 440 * t) * Math.exp(-t * 15) * 0.4;
+        }
+
+        return buffer;
+    }
+
+    /**
+     * 播放 Web Audio 音效 - 第2轮优化：支持音调变化
+     * @param {AudioBuffer} buffer - 音频缓冲区
+     * @param {number} volume - 音量 (0-1)
+     * @param {number} pitch - 音调变化 (0.5-2.0)
+     * @param {number} pan - 声相 (-1左, 0中, 1右)
+     */
+    playWebAudioSound(buffer, volume = 0.3, pitch = 1.0, pan = 0) {
         if (!this.audioContext || !this.state.soundEnabled || !buffer) return;
 
         try {
             const source = this.audioContext.createBufferSource();
             const gainNode = this.audioContext.createGain();
+            const pannerNode = this.audioContext.createStereoPanner();
 
             source.buffer = buffer;
-            gainNode.gain.value = volume;
+            source.playbackRate.value = pitch; // 音调变化
 
+            // 应用音量控制
+            const finalVolume = volume * this.soundManager.sfxVolume * this.soundManager.masterVolume;
+            gainNode.gain.value = finalVolume;
+
+            // 声相设置
+            pannerNode.pan.value = Math.max(-1, Math.min(1, pan));
+
+            // 连接节点: source -> gain -> panner -> destination
             source.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
+            gainNode.connect(pannerNode);
+            pannerNode.connect(this.audioContext.destination);
 
             source.start(0);
+
+            // 自动清理
+            source.onended = () => {
+                gainNode.disconnect();
+                pannerNode.disconnect();
+            };
         } catch (e) {
             console.log('音频播放失败:', e);
+        }
+    }
+
+    /**
+     * 播放射击音效 - 第2轮优化：带音调变化
+     */
+    playShootSound() {
+        if (!this.state.soundEnabled) return;
+
+        // 循环使用不同的音调
+        const pitches = [1.0, 1.1, 0.9, 1.2, 0.8];
+        const pitch = pitches[this.shootPitchSequence % pitches.length];
+        this.shootPitchSequence++;
+
+        // 随机选择射击音效变体
+        const variants = ['shoot', 'shootHigh', 'shootLow'];
+        const variant = variants[Math.floor(Math.random() * variants.length)];
+
+        this.playWebAudioSound(this.audioBuffers[variant], 0.4, pitch);
+    }
+
+    /**
+     * 播放爆炸音效 - 第2轮优化：根据大小选择
+     * @param {string} size - 爆炸大小 ('small', 'normal', 'big')
+     */
+    playExplosionSound(size = 'normal') {
+        if (!this.state.soundEnabled) return;
+
+        const soundMap = {
+            'small': 'explosionSmall',
+            'normal': 'explosion',
+            'big': 'explosionBig'
+        };
+
+        const volumeMap = {
+            'small': 0.2,
+            'normal': 0.4,
+            'big': 0.6
+        };
+
+        const soundKey = soundMap[size] || 'explosion';
+        const volume = volumeMap[size] || 0.4;
+
+        this.playWebAudioSound(this.audioBuffers[soundKey], volume);
+    }
+
+    // ========== 第2轮音效优化：背景音乐系统 ==========
+    /**
+     * 生成背景音乐 - 使用合成器创建循环音乐
+     */
+    createBackgroundMusic() {
+        if (!this.audioContext) return;
+
+        // 音乐配置
+        const bpm = 120;
+        const beatDuration = 60 / bpm;
+
+        // 创建音乐序列
+        const melody = [
+            { note: 261.63, duration: beatDuration },  // C4
+            { note: 293.66, duration: beatDuration * 0.5 },  // D4
+            { note: 329.63, duration: beatDuration * 0.5 },  // E4
+            { note: 349.23, duration: beatDuration },  // F4
+            { note: 329.63, duration: beatDuration * 0.5 },  // E4
+            { note: 293.66, duration: beatDuration * 0.5 },  // D4
+            { note: 261.63, duration: beatDuration * 2 },  // C4
+        ];
+
+        const bass = [
+            { note: 65.41, duration: beatDuration * 2 },  // C2
+            { note: 65.41, duration: beatDuration * 2 },
+            { note: 73.42, duration: beatDuration * 2 },  // D2
+            { note: 65.41, duration: beatDuration * 2 },
+        ];
+
+        return { melody, bass, beatDuration };
+    }
+
+    /**
+     * 播放背景音乐 - 第2轮新增
+     */
+    playBackgroundMusic() {
+        if (!this.audioContext || !this.state.musicEnabled) return;
+
+        // 停止现有的背景音乐
+        this.stopBackgroundMusic();
+
+        const music = this.createBackgroundMusic();
+        const startTime = this.audioContext.currentTime + 0.1;
+
+        // 创建旋律轨道
+        let currentTime = startTime;
+        music.melody.forEach(({ note, duration }) => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            oscillator.type = 'square';
+            oscillator.frequency.value = note;
+
+            gainNode.gain.setValueAtTime(0, currentTime);
+            gainNode.gain.linearRampToValueAtTime(
+                this.soundManager.musicVolume * this.soundManager.masterVolume * 0.15,
+                currentTime + 0.01
+            );
+            gainNode.gain.linearRampToValueAtTime(0, currentTime + duration - 0.01);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            oscillator.start(currentTime);
+            oscillator.stop(currentTime + duration);
+
+            this.backgroundMusicNodes.push({ oscillator, gainNode });
+
+            currentTime += duration;
+        });
+
+        // 创建低音轨道
+        currentTime = startTime;
+        music.bass.forEach(({ note, duration }) => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.value = note;
+
+            gainNode.gain.setValueAtTime(0, currentTime);
+            gainNode.gain.linearRampToValueAtTime(
+                this.soundManager.musicVolume * this.soundManager.masterVolume * 0.3,
+                currentTime + 0.01
+            );
+            gainNode.gain.linearRampToValueAtTime(0, currentTime + duration - 0.01);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            oscillator.start(currentTime);
+            oscillator.stop(currentTime + duration);
+
+            this.backgroundMusicNodes.push({ oscillator, gainNode });
+
+            currentTime += duration;
+        });
+
+        // 循环播放
+        const loopDuration = currentTime - startTime;
+        this.backgroundMusicLoop = setTimeout(() => {
+            if (this.state.musicEnabled && this.state.running && !this.state.paused) {
+                this.playBackgroundMusic();
+            }
+        }, loopDuration * 1000);
+    }
+
+    /**
+     * 停止背景音乐
+     */
+    stopBackgroundMusic() {
+        // 停止所有音乐节点
+        this.backgroundMusicNodes.forEach(node => {
+            try {
+                if (node.oscillator) {
+                    node.oscillator.stop();
+                }
+                if (node.gainNode) {
+                    node.gainNode.disconnect();
+                }
+            } catch (e) {
+                // 忽略已停止的节点错误
+            }
+        });
+
+        this.backgroundMusicNodes = [];
+
+        // 清除循环定时器
+        if (this.backgroundMusicLoop) {
+            clearTimeout(this.backgroundMusicLoop);
+            this.backgroundMusicLoop = null;
         }
     }
 
@@ -735,6 +1049,7 @@ class SpaceShooterGame {
         this.particles = [];
         this.thrusterFlames = [];
         this.screenShake.active = false;
+        this.shootPitchSequence = 0; // 重置射击音调序列
         this.player.x = this.width / 2 - this.player.w / 2;
         this.player.y = this.height - 80;
         this.player.cd = 0;
@@ -1052,7 +1367,11 @@ class SpaceShooterGame {
         this.hideOverlays();
         this.lastTime = performance.now();
         this.gameLoop();
-        this.playSound('bgMusic', true);
+
+        // 第2轮优化：播放背景音乐
+        if (this.state.musicEnabled) {
+            this.playBackgroundMusic();
+        }
     }
 
     gameLoop() {
@@ -1075,6 +1394,10 @@ class SpaceShooterGame {
             if (this.animationFrameId) {
                 cancelAnimationFrame(this.animationFrameId);
             }
+            // 第2轮优化：暂停时播放音效
+            this.playWebAudioSound(this.audioBuffers.pause, 0.3);
+            // 暂停背景音乐
+            this.stopBackgroundMusic();
         } else {
             this.resume();
         }
@@ -1113,6 +1436,11 @@ class SpaceShooterGame {
 
         this.lastTime = performance.now();
         this.gameLoop();
+
+        // 第2轮优化：恢复背景音乐
+        if (this.state.musicEnabled) {
+            this.playBackgroundMusic();
+        }
     }
 
     backToMenu() {
@@ -1124,7 +1452,7 @@ class SpaceShooterGame {
         }
         this.reset();
         this.showOverlay('startScreen');
-        this.stopSound('bgMusic');
+        this.stopBackgroundMusic();
         this.drawInitialBackground();
     }
 
@@ -1134,8 +1462,10 @@ class SpaceShooterGame {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
-        this.stopSound('bgMusic');
-        this.playSound('gameOverSound');
+        this.stopBackgroundMusic();
+
+        // 第2轮优化：播放游戏结束音效（使用新系统）
+        this.playWebAudioSound(this.audioBuffers.gameOver, 0.5);
 
         // 更新统计数据
         this.updateStats();
@@ -1267,7 +1597,9 @@ class SpaceShooterGame {
                 maxTrailLength: 8 // 拖尾长度
             });
             this.player.cd = 0.2;
-            this.playSound('shootSound');
+
+            // 第2轮优化：使用新的射击音效系统
+            this.playShootSound();
         }
     }
 
@@ -1320,7 +1652,10 @@ class SpaceShooterGame {
                 this.createParticles(e.x + e.w / 2, e.y + e.h / 2, 'hit', 20);
 
                 this.enemies.splice(i, 1);
-                this.playSound('hitSound');
+
+                // 第2轮优化：使用新的爆炸音效
+                this.playWebAudioSound(this.audioBuffers.hit, 0.5);
+
                 this.updateUI();
 
                 if (this.state.lives <= 0) {
@@ -1341,7 +1676,10 @@ class SpaceShooterGame {
 
                     this.enemies.splice(i, 1);
                     this.bullets.splice(j, 1);
-                    this.playSound('explosionSound');
+
+                    // 第2轮优化：使用新的爆炸音效（带大小变化）
+                    this.playExplosionSound('normal');
+
                     this.updateUI();
                     break;
                 }
@@ -1602,24 +1940,27 @@ class SpaceShooterGame {
         }
     }
 
-    // ========== 音效控制 ==========
+    // ========== 第2轮优化：音效控制 ==========
     playSound(soundId, loop = false) {
-        if (!this.state.soundEnabled) return;
-
-        // 优先使用 Web Audio API
+        // 优先使用新的 Web Audio API 音效系统
         const soundMap = {
-            'shootSound': 'shoot',
-            'explosionSound': 'explosion',
-            'hitSound': 'hit',
-            'gameOverSound': 'gameOver'
+            'shootSound': () => this.playShootSound(),
+            'explosionSound': () => this.playExplosionSound('normal'),
+            'hitSound': () => this.playWebAudioSound(this.audioBuffers.hit, 0.5),
+            'gameOverSound': () => this.playWebAudioSound(this.audioBuffers.gameOver, 0.5),
+            'bgMusic': () => {
+                if (this.state.musicEnabled) {
+                    this.playBackgroundMusic();
+                }
+            }
         };
 
-        if (soundMap[soundId] && this.audioBuffers[soundMap[soundId]]) {
-            this.playWebAudioSound(this.audioBuffers[soundMap[soundId]]);
+        if (soundMap[soundId]) {
+            soundMap[soundId]();
             return;
         }
 
-        // 背景音乐继续使用 audio 元素
+        // 兼容旧的 audio 元素方式
         const sound = document.getElementById(soundId);
         if (sound) {
             sound.currentTime = 0;
@@ -1631,6 +1972,13 @@ class SpaceShooterGame {
     }
 
     stopSound(soundId) {
+        // 停止背景音乐
+        if (soundId === 'bgMusic') {
+            this.stopBackgroundMusic();
+            return;
+        }
+
+        // 兼容旧的 audio 元素方式
         const sound = document.getElementById(soundId);
         if (sound) {
             sound.pause();
@@ -1663,9 +2011,9 @@ class SpaceShooterGame {
             btn.setAttribute('aria-label', `背景音乐开关，当前为${this.state.musicEnabled ? '开启' : '关闭'}状态`);
 
             if (this.state.musicEnabled && this.state.running && !this.state.paused) {
-                this.playSound('bgMusic', true);
+                this.playBackgroundMusic();
             } else {
-                this.stopSound('bgMusic');
+                this.stopBackgroundMusic();
             }
         }
     }
@@ -1820,19 +2168,29 @@ class SpaceShooterGame {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
-        this.stopSound('bgMusic');
+        this.stopBackgroundMusic();
+
+        // 清理音频上下文
+        if (this.audioContext) {
+            this.audioContext.close();
+        }
     }
 }
 
 // 游戏初始化
 window.addEventListener('DOMContentLoaded', () => {
     window.game = new SpaceShooterGame();
-    console.log('太空射击游戏已加载完成 - 第1轮特效优化已应用');
-    console.log('优化内容：');
+    console.log('太空射击游戏已加载完成 - 第2轮音效优化已应用');
+    console.log('第1轮特效优化：');
     console.log('  - 敌人爆炸粒子效果（多色碎片四散）');
     console.log('  - 子弹轨迹效果（发光拖尾）');
     console.log('  - 飞船推进器火焰（尾焰动画）');
     console.log('  - 屏幕震动效果（被击中时震动）');
+    console.log('第2轮音效优化：');
+    console.log('  - 射击音效（带音调变化循环）');
+    console.log('  - 爆炸音效（多层次立体声）');
+    console.log('  - 背景音乐系统（合成器生成）');
+    console.log('  - 统一音效管理器（音量/音调/声相控制）');
 });
 
 // 页面卸载时清理资源

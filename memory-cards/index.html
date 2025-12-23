@@ -35,17 +35,23 @@
         </div>
     </div>
 
-    <!-- 暗色/亮色模式切换按钮 -->
+    <!-- 浮动控制按钮 -->
     <button class="theme-toggle" id="themeToggle" aria-label="切换主题模式" title="切换亮色/暗色模式">
         <i class="fas fa-moon" id="themeIcon"></i>
     </button>
 
-    <!-- 高对比度模式切换按钮 -->
     <button class="contrast-toggle" id="contrastToggle" aria-label="切换高对比度模式" title="切换高对比度模式">
         <i class="fas fa-adjust"></i>
     </button>
 
-    <!-- 帮助按钮 -->
+    <button class="sound-toggle" id="soundToggle" aria-label="切换音效" title="音效开关">
+        <i class="fas fa-volume-up" id="soundIcon"></i>
+    </button>
+
+    <button class="sound-settings-btn" id="soundSettingsBtn" aria-label="音效设置" title="音效设置">
+        <i class="fas fa-sliders-h"></i>
+    </button>
+
     <button class="help-button" id="helpButton" aria-label="游戏帮助" title="游戏说明">
         <i class="fas fa-question"></i>
     </button>
@@ -76,6 +82,7 @@
                         <li><kbd>Enter</kbd> / <kbd>Space</kbd> - 翻开卡片 / 确认</li>
                         <li><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> - 难度选择</li>
                         <li><kbd>Ctrl+R</kbd> - 重新开始</li>
+                        <li><kbd>M</kbd> - 静音/取消静音</li>
                         <li><kbd>Escape</kbd> - 关闭弹窗</li>
                     </ul>
                 </section>
@@ -95,6 +102,66 @@
                         <li><strong>困难 (8x8)</strong> - 32对卡片，适合挑战</li>
                     </ul>
                 </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音效设置弹窗 -->
+    <div class="sound-settings-modal" id="soundSettingsModal" role="dialog" aria-labelledby="sound-settings-title">
+        <div class="sound-settings-content">
+            <div class="sound-settings-header">
+                <h2 id="sound-settings-title"><i class="fas fa-volume-up"></i> 音效设置</h2>
+                <button class="close-modal" id="closeSoundSettings" aria-label="关闭音效设置">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="sound-settings-body">
+                <!-- 音效开关 -->
+                <div class="sound-setting-row">
+                    <div class="sound-setting-label">
+                        <i class="fas fa-volume-up"></i>
+                        <span>启用音效</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="soundEnabledToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <!-- 主音量控制 -->
+                <div class="sound-setting-row">
+                    <div class="sound-setting-label">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>主音量</span>
+                    </div>
+                    <div class="volume-control">
+                        <input type="range" id="masterVolume" class="volume-slider" min="0" max="100" value="50">
+                        <span class="volume-value" id="masterVolumeValue">50%</span>
+                    </div>
+                </div>
+
+                <!-- 音效预览 -->
+                <div class="sound-preview-section">
+                    <h3><i class="fas fa-headphones"></i> 音效预览</h3>
+                    <div class="sound-preview-buttons">
+                        <button class="preview-btn" data-sound="flip" aria-label="预览翻牌音效">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>翻牌</span>
+                        </button>
+                        <button class="preview-btn" data-sound="match" aria-label="预览匹配音效">
+                            <i class="fas fa-check"></i>
+                            <span>匹配</span>
+                        </button>
+                        <button class="preview-btn" data-sound="noMatch" aria-label="预览失败音效">
+                            <i class="fas fa-times"></i>
+                            <span>失败</span>
+                        </button>
+                        <button class="preview-btn" data-sound="win" aria-label="预览胜利音效">
+                            <i class="fas fa-trophy"></i>
+                            <span>胜利</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -254,7 +321,7 @@
         </main>
 
         <footer class="game-footer" role="contentinfo">
-            <p>© 2025 记忆翻牌游戏 | 使用纯HTML、CSS和JavaScript开发</p>
+            <p>2025 记忆翻牌游戏 | 使用纯HTML、CSS和JavaScript开发</p>
             <p class="instructions">游戏说明：点击卡片翻开，找出所有匹配的图案。尽量用最少的步数和时间完成游戏！</p>
         </footer>
     </div>
@@ -299,6 +366,7 @@
         </div>
     </div>
 
+    <script src="audio-manager.js"></script>
     <script src="game.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /**
  * Memory Cards - Modern Class Implementation
- * Enhanced with theme switching, particles, gestures, and accessibility
+ * Enhanced with AudioManager for sound effects
  */
 
 class MemoryGame {
@@ -17,6 +17,16 @@ class MemoryGame {
         this.helpButton = document.getElementById('helpButton');
         this.helpModal = document.getElementById('helpModal');
         this.closeHelp = document.getElementById('closeHelp');
+
+        // Sound control elements
+        this.soundToggle = document.getElementById('soundToggle');
+        this.soundIcon = document.getElementById('soundIcon');
+        this.soundSettingsBtn = document.getElementById('soundSettingsBtn');
+        this.soundSettingsModal = document.getElementById('soundSettingsModal');
+        this.closeSoundSettings = document.getElementById('closeSoundSettings');
+        this.soundEnabledToggle = document.getElementById('soundEnabledToggle');
+        this.masterVolume = document.getElementById('masterVolume');
+        this.masterVolumeValue = document.getElementById('masterVolumeValue');
 
         // Stats elements
         this.stats = {
@@ -69,10 +79,8 @@ class MemoryGame {
             highContrast: false
         };
 
-        // Audio context and settings
-        this.audioCtx = null;
-        this.audioEnabled = true;
-        this.masterGain = null;
+        // Audio Manager instance
+        this.audioManager = new AudioManager();
 
         // Gesture tracking
         this.gestureState = {
@@ -91,6 +99,7 @@ class MemoryGame {
         // Initialize
         this.loadBestScores();
         this.initTheme();
+        this.initSoundControls();
         this.startLoadingSequence();
     }
 
@@ -126,6 +135,101 @@ class MemoryGame {
     }
 
     /**
+     * 初始化音效控制
+     */
+    initSoundControls() {
+        // 更新音效图标状态
+        this.updateSoundIcon();
+
+        // 更新音效设置UI状态
+        this.soundEnabledToggle.checked = this.audioManager.isEnabled();
+        this.masterVolume.value = this.audioManager.getVolume() * 100;
+        this.masterVolumeValue.textContent = `${Math.round(this.audioManager.getVolume() * 100)}%`;
+
+        // 音效开关按钮
+        this.soundToggle.addEventListener('click', () => {
+            this.audioManager.toggleEnabled();
+            this.updateSoundIcon();
+            this.soundEnabledToggle.checked = this.audioManager.isEnabled();
+        });
+
+        // 音效设置按钮
+        this.soundSettingsBtn.addEventListener('click', () => {
+            this.audioManager.init().then(() => {
+                this.toggleSoundSettings(true);
+            });
+        });
+
+        // 关闭音效设置
+        this.closeSoundSettings.addEventListener('click', () => this.toggleSoundSettings(false));
+
+        // 点击外部关闭音效设置
+        this.soundSettingsModal.addEventListener('click', (e) => {
+            if (e.target === this.soundSettingsModal) {
+                this.toggleSoundSettings(false);
+            }
+        });
+
+        // 音效启用切换
+        this.soundEnabledToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                this.audioManager.init().then(() => {
+                    this.audioManager.settings.enabled = true;
+                    this.audioManager.saveSettings();
+                    this.audioManager.playClick();
+                });
+            } else {
+                this.audioManager.settings.enabled = false;
+                this.audioManager.saveSettings();
+            }
+            this.updateSoundIcon();
+        });
+
+        // 主音量控制
+        this.masterVolume.addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            this.audioManager.setVolume(volume);
+            this.masterVolumeValue.textContent = `${e.target.value}%`;
+        });
+
+        // 音效预览按钮
+        document.querySelectorAll('.preview-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const soundName = btn.dataset.sound;
+                this.audioManager.init().then(() => {
+                    this.audioManager.previewSound(soundName);
+                });
+            });
+        });
+    }
+
+    /**
+     * 更新音效图标
+     */
+    updateSoundIcon() {
+        if (this.audioManager.isEnabled()) {
+            this.soundIcon.className = 'fas fa-volume-up';
+        } else {
+            this.soundIcon.className = 'fas fa-volume-mute';
+        }
+    }
+
+    /**
+     * 切换音效设置弹窗
+     */
+    toggleSoundSettings(show) {
+        if (show) {
+            this.soundSettingsModal.classList.add('active');
+            this.closeSoundSettings.focus();
+        } else {
+            this.soundSettingsModal.classList.remove('active');
+        }
+        if (this.audioManager.isEnabled()) {
+            this.audioManager.playClick();
+        }
+    }
+
+    /**
      * 初始化主题
      */
     initTheme() {
@@ -153,7 +257,7 @@ class MemoryGame {
         document.documentElement.setAttribute('data-theme', this.state.themeMode);
         localStorage.setItem('memoryCardsTheme', this.state.themeMode);
         this.updateThemeIcon();
-        this.playSound('theme', 0.1);
+        this.audioManager.playThemeSwitch();
     }
 
     /**
@@ -163,7 +267,7 @@ class MemoryGame {
         this.state.highContrast = !this.state.highContrast;
         document.documentElement.classList.toggle('high-contrast', this.state.highContrast);
         this.contrastToggle.classList.toggle('active', this.state.highContrast);
-        this.playSound('ui', 0.08);
+        this.audioManager.playClick();
     }
 
     /**
@@ -172,11 +276,12 @@ class MemoryGame {
     toggleHelp(show) {
         if (show) {
             this.helpModal.classList.add('active');
+            this.audioManager.playHelpOpen();
             this.closeHelp.focus();
         } else {
             this.helpModal.classList.remove('active');
+            this.audioManager.playHelpClose();
         }
-        this.playSound('ui', 0.05);
     }
 
     /**
@@ -318,105 +423,6 @@ class MemoryGame {
     }
 
     /**
-     * 初始化音频系统
-     */
-    initAudio() {
-        if (this.audioCtx) return;
-        try {
-            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            this.masterGain = this.audioCtx.createGain();
-            this.masterGain.gain.value = 0.3;
-            this.masterGain.connect(this.audioCtx.destination);
-        } catch (e) {
-            console.warn('Web Audio API not supported');
-        }
-    }
-
-    /**
-     * 播放音效 - 增强版
-     */
-    playSound(type, volume = 0.15) {
-        if (!this.audioCtx || !this.audioEnabled) return;
-
-        // 恢复音频上下文（如果被挂起）
-        if (this.audioCtx.state === 'suspended') {
-            this.audioCtx.resume();
-        }
-
-        const now = this.audioCtx.currentTime;
-        const sounds = {
-            flip: { freq: 600, type: 'sine', duration: 0.08, slide: -100 },
-            match: { freq: 880, type: 'sine', duration: 0.15, slide: 200 },
-            matchSuccess: { freq: 1100, type: 'sine', duration: 0.2, slide: 0 },
-            noMatch: { freq: 300, type: 'triangle', duration: 0.12, slide: -50 },
-            win: [
-                { freq: 523.25, duration: 0.15 },
-                { freq: 659.25, duration: 0.15 },
-                { freq: 783.99, duration: 0.15 },
-                { freq: 1046.50, duration: 0.3 }
-            ],
-            pause: { freq: 400, type: 'square', duration: 0.1, slide: 0 },
-            resume: { freq: 500, type: 'square', duration: 0.1, slide: 100 },
-            ui: { freq: 800, type: 'sine', duration: 0.05, slide: 0 },
-            theme: { freq: 700, type: 'triangle', duration: 0.12, slide: 150 }
-        };
-
-        const sound = sounds[type];
-        if (!sound) return;
-
-        if (Array.isArray(sound)) {
-            // 播放音符序列
-            sound.forEach((note, index) => {
-                setTimeout(() => {
-                    this.playNote(note.freq, 'sine', note.duration, volume);
-                }, index * 150);
-            });
-        } else {
-            // 播放单个音符
-            this.playNote(sound.freq, sound.type, sound.duration, volume, sound.slide);
-        }
-    }
-
-    /**
-     * 播放音符
-     */
-    playNote(freq, type, duration, volume, slide = 0) {
-        if (!this.audioCtx) return;
-
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, this.audioCtx.currentTime);
-
-        if (slide !== 0) {
-            osc.frequency.linearRampToValueAtTime(
-                freq + slide,
-                this.audioCtx.currentTime + duration
-            );
-        }
-
-        gain.gain.setValueAtTime(volume, this.audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(
-            0.001,
-            this.audioCtx.currentTime + duration
-        );
-
-        osc.connect(gain);
-        gain.connect(this.masterGain || this.audioCtx.destination);
-
-        osc.start();
-        osc.stop(this.audioCtx.currentTime + duration);
-    }
-
-    /**
-     * 旧版 beep 方法（保持兼容）
-     */
-    beep(freq = 523.25, type = 'sine', duration = 0.1) {
-        this.playNote(freq, type, duration, 0.15);
-    }
-
-    /**
      * 暂停/继续游戏
      */
     togglePause() {
@@ -445,7 +451,7 @@ class MemoryGame {
         this.pauseOverlay.classList.add('active');
         this.pauseOverlay.setAttribute('aria-hidden', 'false');
 
-        this.playSound('pause', 0.1);
+        this.audioManager.playPause();
     }
 
     /**
@@ -467,7 +473,7 @@ class MemoryGame {
         this.pauseOverlay.classList.remove('active');
         this.pauseOverlay.setAttribute('aria-hidden', 'true');
 
-        this.playSound('resume', 0.1);
+        this.audioManager.playResume();
     }
 
     /**
@@ -584,8 +590,19 @@ class MemoryGame {
                 e.preventDefault();
                 this.restart();
             }
+            // M 键静音/取消静音
+            if (e.key === 'm' || e.key === 'M') {
+                if (!this.helpModal.classList.contains('active') &&
+                    !this.soundSettingsModal.classList.contains('active') &&
+                    !document.getElementById('winModal').classList.contains('active')) {
+                    e.preventDefault();
+                    this.audioManager.toggleEnabled();
+                    this.updateSoundIcon();
+                    this.soundEnabledToggle.checked = this.audioManager.isEnabled();
+                }
+            }
             // 空格键也重新开始（当焦点不在按钮上时）
-            if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') {
+            if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON' && document.activeElement.tagName !== 'INPUT') {
                 e.preventDefault();
                 this.restart();
             }
@@ -593,6 +610,8 @@ class MemoryGame {
             if (e.key === 'Escape') {
                 if (this.helpModal.classList.contains('active')) {
                     this.toggleHelp(false);
+                } else if (this.soundSettingsModal.classList.contains('active')) {
+                    this.toggleSoundSettings(false);
                 } else if (document.getElementById('winModal').classList.contains('active')) {
                     this.closeWinModal();
                 }
@@ -600,6 +619,7 @@ class MemoryGame {
             // P 键暂停/继续
             if (e.key === 'p' || e.key === 'P') {
                 if (!this.helpModal.classList.contains('active') &&
+                    !this.soundSettingsModal.classList.contains('active') &&
                     !document.getElementById('winModal').classList.contains('active')) {
                     e.preventDefault();
                     this.togglePause();
@@ -607,7 +627,8 @@ class MemoryGame {
             }
             // H 键显示帮助
             if (e.key === 'h' || e.key === 'H') {
-                if (!document.getElementById('winModal').classList.contains('active')) {
+                if (!this.soundSettingsModal.classList.contains('active') &&
+                    !document.getElementById('winModal').classList.contains('active')) {
                     e.preventDefault();
                     this.toggleHelp(true);
                 }
@@ -625,9 +646,6 @@ class MemoryGame {
      * 设置触摸手势
      */
     setupTouchGestures() {
-        let lastTouchTime = 0;
-        let touchCount = 0;
-
         // 游戏板双指点击暂停
         this.board.addEventListener('touchstart', (e) => {
             const now = Date.now();
@@ -662,7 +680,7 @@ class MemoryGame {
      */
     showCardHint(card) {
         card.classList.add('hint');
-        this.playSound('ui', 0.05);
+        this.audioManager.playClick();
 
         setTimeout(() => {
             card.classList.remove('hint');
@@ -680,6 +698,7 @@ class MemoryGame {
             b.setAttribute('tabindex', isActive ? '0' : '-1');
         });
         this.state.difficulty = difficulty;
+        this.audioManager.playDifficultyChange();
         this.restart();
     }
 
@@ -689,6 +708,7 @@ class MemoryGame {
     toggleCardTheme() {
         this.state.theme = this.state.theme === 'animals' ? 'fruits' : 'animals';
         this.updateThemeButton();
+        this.audioManager.playClick();
         this.restart();
     }
 
@@ -713,7 +733,10 @@ class MemoryGame {
      * 重新开始游戏
      */
     restart() {
-        this.initAudio();
+        this.audioManager.init().then(() => {
+            this.audioManager.playClick();
+        });
+
         this.state.isPaused = false;
         this.state.elapsedTime = 0;
         this.stopTimer(false);
@@ -782,7 +805,6 @@ class MemoryGame {
         });
 
         this.startTimer();
-        this.playSound('ui', 0.05);
     }
 
     /**
@@ -795,7 +817,7 @@ class MemoryGame {
         const card = this.state.cards[index];
         if (this.state.locked || card.isFlipped || this.state.matched.includes(index)) return;
 
-        this.playSound('flip', 0.08);
+        this.audioManager.playFlip();
 
         card.element.classList.add('flipped');
         card.isFlipped = true;
@@ -820,8 +842,7 @@ class MemoryGame {
 
         if (c1.icon === c2.icon) {
             // 匹配成功
-            this.playSound('match', 0.12);
-            setTimeout(() => this.playSound('matchSuccess', 0.15), 100);
+            this.audioManager.playMatch();
 
             c1.element.classList.add('matched');
             c2.element.classList.add('matched');
@@ -864,7 +885,7 @@ class MemoryGame {
         } else {
             // 不匹配
             setTimeout(() => {
-                this.playSound('noMatch', 0.1);
+                this.audioManager.playNoMatch();
                 c1.element.classList.remove('flipped');
                 c2.element.classList.remove('flipped');
                 c1.isFlipped = false;
@@ -911,12 +932,13 @@ class MemoryGame {
 
             if (isNewRecord) {
                 bestRecordMessage.style.display = 'flex';
+                this.audioManager.playNewRecord();
             } else {
                 bestRecordMessage.style.display = 'none';
+                this.audioManager.playWin();
             }
 
             winModal.classList.add('active');
-            this.playSound('win', 0.15);
         }, 500);
     }
 
