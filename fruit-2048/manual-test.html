@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水果2048 - 手动测试页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section h2 {
+            margin-bottom: 15px;
+            color: #8b5cf6;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            width: 200px;
+            margin: 10px 0;
+        }
+        .test-cell {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .test-btn {
+            padding: 10px 20px;
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .test-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+        .test-btn:active {
+            transform: translateY(0);
+        }
+        .test-btn.success {
+            background: #10b981;
+        }
+        .test-btn.error {
+            background: #ef4444;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .result.pass {
+            border-left: 4px solid #10b981;
+        }
+        .result.fail {
+            border-left: 4px solid #ef4444;
+        }
+        .iframe-container {
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            height: 700px;
+            margin-top: 20px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .status-badge.passed {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .status-badge.failed {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 水果2048 - 手动测试工具</h1>
+
+        <div class="test-section">
+            <h2>游戏预览 <span class="status-badge pending" id="game-status">待测试</span></h2>
+            <div class="iframe-container">
+                <iframe src="index.html" id="game-frame"></iframe>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>1. 游戏初始化测试</h2>
+            <p>检查游戏是否正确加载并初始化</p>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testInitialization()">测试初始化</button>
+            </div>
+            <div class="result" id="result-init">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. 键盘控制测试</h2>
+            <p>测试方向键控制是否正常工作</p>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testKeyboardControls()">测试键盘控制</button>
+                <button class="test-btn" onclick="sendKey('ArrowUp')">↑ 向上</button>
+                <button class="test-btn" onclick="sendKey('ArrowDown')">↓ 向下</button>
+                <button class="test-btn" onclick="sendKey('ArrowLeft')">← 向左</button>
+                <button class="test-btn" onclick="sendKey('ArrowRight')">→ 向右</button>
+                <button class="test-btn" onclick="sendKey('r')">R 重置</button>
+            </div>
+            <div class="result" id="result-keyboard">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. 分数系统测试</h2>
+            <p>检查分数计算是否正确</p>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testScoring()">测试分数计算</button>
+                <button class="test-btn" onclick="getScores()">获取当前分数</button>
+            </div>
+            <div class="result" id="result-scoring">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. 游戏结束检测测试</h2>
+            <p>测试游戏结束状态的检测</p>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testGameOver()">测试游戏结束</button>
+                <button class="test-btn" onclick="checkGameOverState()">检查游戏状态</button>
+            </div>
+            <div class="result" id="result-gameover">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. UI/功能测试</h2>
+            <p>测试各种UI功能</p>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="testRestart()">测试重新开始</button>
+                <button class="test-btn" onclick="testInstructions()">测试游戏说明</button>
+                <button class="test-btn" onclick="testSoundToggle()">测试音效切换</button>
+            </div>
+            <div class="result" id="result-ui">等待测试...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>6. 综合测试报告</h2>
+            <p>运行所有测试并生成报告</p>
+            <div class="test-buttons">
+                <button class="test-btn" onclick="runAllTests()">运行所有测试</button>
+            </div>
+            <div class="result" id="result-all">点击按钮开始测试...</div>
+        </div>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('game-frame');
+        let testResults = {
+            init: false,
+            keyboard: false,
+            scoring: false,
+            gameover: false,
+            ui: false
+        };
+
+        // 等待iframe加载完成
+        iframe.addEventListener('load', () => {
+            document.getElementById('game-status').textContent = '已加载';
+            document.getElementById('game-status').className = 'status-badge passed';
+        });
+
+        // 获取游戏实例
+        function getGame() {
+            try {
+                return iframe.contentWindow.game;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // 测试初始化
+        function testInitialization() {
+            const game = getGame();
+            const result = document.getElementById('result-init');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            const checks = [];
+
+            // 检查游戏对象
+            checks.push(game ? '游戏实例存在' : '游戏实例不存在');
+            checks.push(game.grid ? '网格存在' : '网格不存在');
+            checks.push(game.score !== undefined ? '分数初始化' : '分数未初始化');
+            checks.push(game.fruits ? '水果数据存在' : '水果数据不存在');
+            checks.push(game.elements ? 'DOM元素存在' : 'DOM元素不存在');
+
+            // 检查网格大小
+            if (game.grid && game.grid.length === 4 && game.grid[0].length === 4) {
+                checks.push('网格大小正确 (4x4)');
+            } else {
+                checks.push('网格大小错误');
+            }
+
+            // 检查初始水果数量
+            let fruitCount = 0;
+            if (game.grid) {
+                for (let r = 0; r < game.grid.length; r++) {
+                    for (let c = 0; c < game.grid[r].length; c++) {
+                        if (game.grid[r][c]) fruitCount++;
+                    }
+                }
+            }
+            checks.push(fruitCount === 2 ? `初始水果数量正确 (${fruitCount})` : `初始水果数量错误 (${fruitCount})`);
+
+            const passed = checks.filter(c => !c.includes('不存在') && !c.includes('错误') && !c.includes('未')).length;
+            const total = checks.length;
+
+            result.innerHTML = `<strong>测试结果: ${passed}/${total} 通过</strong><br>` + checks.map(c => `• ${c}`).join('<br>');
+            result.className = passed === total ? 'result pass' : 'result fail';
+            testResults.init = passed === total;
+        }
+
+        // 发送按键到游戏
+        function sendKey(key) {
+            const game = getGame();
+            if (!game) {
+                alert('游戏未加载');
+                return;
+            }
+
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const event = new KeyboardEvent('keydown', {
+                key: key,
+                bubbles: true,
+                cancelable: true
+            });
+            iframeDoc.dispatchEvent(event);
+
+            document.getElementById('result-keyboard').textContent = `已发送按键: ${key}`;
+        }
+
+        // 测试键盘控制
+        function testKeyboardControls() {
+            const game = getGame();
+            const result = document.getElementById('result-keyboard');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            const checks = [];
+
+            // 记录初始状态
+            const initialScore = game.score;
+            const initialGrid = JSON.stringify(game.grid);
+
+            // 测试每个方向
+            const directions = ['up', 'down', 'left', 'right'];
+            let moved = false;
+
+            directions.forEach(dir => {
+                const beforeScore = game.score;
+                game.move(dir);
+                if (game.score !== beforeScore || game.grid.some((row, r) =>
+                    row.some((cell, c) => {
+                        const initialCell = JSON.parse(initialGrid)[r][c];
+                        return (cell ? cell.level : null) !== (initialCell ? initialCell.level : null);
+                    })
+                )) {
+                    moved = true;
+                }
+            });
+
+            checks.push(moved ? '方向键控制有效' : '方向键控制无效');
+            checks.push(game.elements.board ? '游戏板存在' : '游戏板不存在');
+            checks.push('所有方向键测试完成');
+
+            const passed = checks.filter(c => !c.includes('无效') && !c.includes('不存在')).length;
+            result.innerHTML = `<strong>测试结果: ${passed}/${checks.length} 通过</strong><br>` + checks.map(c => `• ${c}`).join('<br>');
+            result.className = passed === checks.length ? 'result pass' : 'result fail';
+            testResults.keyboard = passed === checks.length;
+        }
+
+        // 获取当前分数
+        function getScores() {
+            const game = getGame();
+            if (!game) {
+                alert('游戏未加载');
+                return;
+            }
+
+            document.getElementById('result-scoring').innerHTML =
+                `当前分数: ${game.score}<br>最高分数: ${game.bestScore}`;
+        }
+
+        // 测试分数计算
+        function testScoring() {
+            const game = getGame();
+            const result = document.getElementById('result-scoring');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            const checks = [];
+
+            // 重置游戏
+            game.reset();
+            const initialScore = game.score;
+            checks.push(initialScore === 0 ? `初始分数为0` : `初始分数为${initialScore}`);
+
+            // 进行一些移动来获取分数
+            for (let i = 0; i < 10; i++) {
+                const directions = ['up', 'down', 'left', 'right'];
+                game.move(directions[Math.floor(Math.random() * 4)]);
+            }
+
+            const finalScore = game.score;
+            checks.push(finalScore > 0 ? `分数增加有效 (当前: ${finalScore})` : `分数未增加`);
+
+            // 检查最高分
+            if (finalScore > game.bestScore) {
+                checks.push(`最高分更新正确`);
+            } else {
+                checks.push(`当前分数不超过最高分`);
+            }
+
+            const passed = checks.filter(c => !c.includes('未') && !c.includes('错误')).length;
+            result.innerHTML = `<strong>测试结果: ${passed}/${checks.length} 通过</strong><br>` + checks.map(c => `• ${c}`).join('<br>');
+            result.className = passed === checks.length ? 'result pass' : 'result fail';
+            testResults.scoring = passed === checks.length;
+        }
+
+        // 测试游戏结束检测
+        function testGameOver() {
+            const game = getGame();
+            const result = document.getElementById('result-gameover');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            const checks = [];
+
+            // 重置游戏
+            game.reset();
+            checks.push(!game.gameOver ? '游戏重置后未结束' : '游戏重置后已结束');
+
+            // 检查游戏结束检测函数
+            checks.push(typeof game.checkState === 'function' ? 'checkState方法存在' : 'checkState方法不存在');
+            checks.push(typeof game.showGameOver === 'function' ? 'showGameOver方法存在' : 'showGameOver方法不存在');
+
+            const passed = checks.filter(c => !c.includes('不存在') && !c.includes('已结束')).length;
+            result.innerHTML = `<strong>测试结果: ${passed}/${checks.length} 通过</strong><br>` + checks.map(c => `• ${c}`).join('<br>');
+            result.className = passed === checks.length ? 'result pass' : 'result fail';
+            testResults.gameover = passed === checks.length;
+        }
+
+        // 检查游戏结束状态
+        function checkGameOverState() {
+            const game = getGame();
+            const result = document.getElementById('result-gameover');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            result.innerHTML =
+                `游戏结束状态: ${game.gameOver ? '是' : '否'}<br>` +
+                `当前分数: ${game.score}<br>` +
+                `最高分数: ${game.bestScore}`;
+        }
+
+        // 测试重新开始
+        function testRestart() {
+            const game = getGame();
+            const result = document.getElementById('result-ui');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            game.reset();
+            const checks = [];
+            checks.push(!game.gameOver ? '重置后游戏未结束' : '重置后游戏已结束');
+            checks.push(game.score === 0 ? '重置后分数为0' : `重置后分数为${game.score}`);
+
+            // 计算水果数量
+            let fruitCount = 0;
+            for (let r = 0; r < game.grid.length; r++) {
+                for (let c = 0; c < game.grid[r].length; c++) {
+                    if (game.grid[r][c]) fruitCount++;
+                }
+            }
+            checks.push(fruitCount === 2 ? `重置后有2个水果` : `重置后有${fruitCount}个水果`);
+
+            result.innerHTML = `<strong>重新开始测试:</strong><br>` + checks.map(c => `• ${c}`).join('<br>');
+            result.className = checks.every(c => !c.includes('已结束') && !c.includes('为') || c.includes('0') || c.includes('2个')) ? 'result pass' : 'result fail';
+        }
+
+        // 测试游戏说明
+        function testInstructions() {
+            const game = getGame();
+            const result = document.getElementById('result-ui');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            if (game.elements.instructionsModal) {
+                game.elements.instructionsModal.classList.add('active');
+                result.innerHTML = `<strong>游戏说明模态框:</strong> 已打开<br>请检查iframe中是否显示游戏说明`;
+                setTimeout(() => {
+                    game.elements.instructionsModal.classList.remove('active');
+                }, 2000);
+            } else {
+                result.innerHTML = `<strong>游戏说明模态框:</strong> 不存在`;
+            }
+        }
+
+        // 测试音效切换
+        function testSoundToggle() {
+            const game = getGame();
+            const result = document.getElementById('result-ui');
+
+            if (!game) {
+                result.textContent = '✗ 游戏未加载';
+                result.className = 'result fail';
+                return;
+            }
+
+            game.toggleSound();
+            result.innerHTML = `<strong>音效切换:</strong> 当前状态: ${game.soundEnabled ? '开启' : '关闭'}`;
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            const result = document.getElementById('result-all');
+            result.innerHTML = '正在运行所有测试...';
+
+            testResults = {
+                init: false,
+                keyboard: false,
+                scoring: false,
+                gameover: false,
+                ui: false
+            };
+
+            // 依次运行测试
+            testInitialization();
+            await sleep(500);
+
+            testKeyboardControls();
+            await sleep(500);
+
+            testScoring();
+            await sleep(500);
+
+            testGameOver();
+            await sleep(500);
+
+            testRestart();
+            await sleep(500);
+
+            // 生成报告
+            const passed = Object.values(testResults).filter(v => v).length;
+            const total = Object.keys(testResults).length;
+
+            let report = `<strong>综合测试报告: ${passed}/${total} 通过</strong><br><br>`;
+            report += `• 初始化测试: ${testResults.init ? '✓ 通过' : '✗ 失败'}<br>`;
+            report += `• 键盘控制测试: ${testResults.keyboard ? '✓ 通过' : '✗ 失败'}<br>`;
+            report += `• 分数系统测试: ${testResults.scoring ? '✓ 通过' : '✗ 失败'}<br>`;
+            report += `• 游戏结束检测: ${testResults.gameover ? '✓ 通过' : '✗ 失败'}<br>`;
+            report += `• UI功能测试: ${testResults.ui ? '✓ 通过' : '✗ 失败'}<br><br>`;
+
+            if (passed === total) {
+                report += `<strong style="color: #10b981;">🎉 所有测试通过！游戏功能正常。</strong>`;
+            } else {
+                report += `<strong style="color: #ef4444;">⚠️ 有测试失败，请检查相关功能。</strong>`;
+            }
+
+            result.innerHTML = report;
+            result.className = passed === total ? 'result pass' : 'result fail';
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

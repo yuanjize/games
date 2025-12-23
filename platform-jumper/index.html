@@ -2,7 +2,9 @@
 <html lang="zh-CN" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="平台跳跃大冒险 - 一个使用原生JavaScript开发的2D平台跳跃游戏，收集金币，避开危险，挑战你的极限！">
   <meta name="keywords" content="平台跳跃游戏, JavaScript游戏, 2D游戏, 网页游戏, 休闲游戏">
   <meta name="author" content="游戏开发者">
@@ -285,6 +287,7 @@
                 id="mobileLeft"
                 class="mobile-btn"
                 aria-label="向左移动"
+                touch-action="none"
               >
                 <i class="fas fa-arrow-left" aria-hidden="true"></i>
               </button>
@@ -293,6 +296,7 @@
                 id="mobileJump"
                 class="mobile-btn jump-btn"
                 aria-label="跳跃"
+                touch-action="none"
               >
                 <i class="fas fa-arrow-up" aria-hidden="true"></i>
               </button>
@@ -301,6 +305,7 @@
                 id="mobileRight"
                 class="mobile-btn"
                 aria-label="向右移动"
+                touch-action="none"
               >
                 <i class="fas fa-arrow-right" aria-hidden="true"></i>
               </button>

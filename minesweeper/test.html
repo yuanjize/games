@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>扫雷游戏测试页面</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00dbde;
+            text-align: center;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section h2 {
+            color: #fc00ff;
+            margin-top: 0;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        .test-item input {
+            margin-right: 10px;
+        }
+        .test-item label {
+            flex: 1;
+            cursor: pointer;
+        }
+        .test-item.passed {
+            background: rgba(0, 255, 136, 0.2);
+        }
+        .test-item.failed {
+            background: rgba(255, 0, 0, 0.2);
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.pending { background: #666; }
+        .status.running { background: #ffc107; color: #000; }
+        .status.passed { background: #00ff88; color: #000; }
+        .status.failed { background: #ff4444; }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: linear-gradient(135deg, #00dbde, #fc00ff);
+            color: #fff;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        #results {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .summary-item {
+            text-align: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        .summary-item .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00dbde;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>扫雷游戏测试套件</h1>
+
+        <div class="button-group">
+            <button onclick="runAllTests()">运行所有测试</button>
+            <button onclick="openGame()">在新窗口打开游戏</button>
+            <button onclick="resetTests()">重置测试</button>
+        </div>
+
+        <div class="summary">
+            <div class="summary-item">
+                <div class="value" id="total-count">0</div>
+                <div>总测试</div>
+            </div>
+            <div class="summary-item">
+                <div class="value" id="passed-count">0</div>
+                <div>通过</div>
+            </div>
+            <div class="summary-item">
+                <div class="value" id="failed-count">0</div>
+                <div>失败</div>
+            </div>
+            <div class="summary-item">
+                <div class="value" id="success-rate">0%</div>
+                <div>成功率</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>功能测试清单</h2>
+
+            <div class="test-item" id="test-1">
+                <input type="checkbox" id="check-1">
+                <label for="check-1">游戏启动后显示9x9网格（初级难度）</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-2">
+                <input type="checkbox" id="check-2">
+                <label for="check-2">点击任意格子开始游戏</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-3">
+                <input type="checkbox" id="check-3">
+                <label for="check-3">首次点击不会踩到地雷（安全区保护）</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-4">
+                <input type="checkbox" id="check-4">
+                <label for="check-4">左键点击翻开格子</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-5">
+                <input type="checkbox" id="check-5">
+                <label for="check-5">右键点击标记/取消旗帜</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-6">
+                <input type="checkbox" id="check-6">
+                <label for="check-6">旗帜标记正确更新剩余地雷数</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-7">
+                <input type="checkbox" id="check-7">
+                <label for="check-7">点击地雷触发游戏失败</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-8">
+                <input type="checkbox" id="check-8">
+                <label for="check-8">失败后显示所有地雷位置</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-9">
+                <input type="checkbox" id="check-9">
+                <label for="check-9">翻开所有安全格子触发游戏胜利</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-10">
+                <input type="checkbox" id="check-10">
+                <label for="check-10">双击数字格快速翻开周围（当旗帜数量正确时）</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-11">
+                <input type="checkbox" id="check-11">
+                <label for="check-11">计时器正确工作</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-12">
+                <input type="checkbox" id="check-12">
+                <label for="check-12">难度切换功能正常（初级/中级/高级）</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-13">
+                <input type="checkbox" id="check-13">
+                <label for="check-13">重新开始按钮正常工作</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-14">
+                <input type="checkbox" id="check-14">
+                <label for="check-14">洪水填充算法正确翻开大片安全区域</label>
+                <span class="status pending">待测试</span>
+            </div>
+
+            <div class="test-item" id="test-15">
+                <input type="checkbox" id="check-15">
+                <label for="check-15">移动端长按标记旗帜功能</label>
+                <span class="status pending">待测试</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>游戏预览</h2>
+            <iframe src="index.html" id="game-frame"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            total: 15,
+            passed: 0,
+            failed: 0
+        };
+
+        function updateSummary() {
+            document.getElementById('total-count').textContent = testResults.total;
+            document.getElementById('passed-count').textContent = testResults.passed;
+            document.getElementById('failed-count').textContent = testResults.failed;
+            const rate = testResults.total > 0
+                ? Math.round((testResults.passed / testResults.total) * 100)
+                : 0;
+            document.getElementById('success-rate').textContent = rate + '%';
+        }
+
+        function setTestStatus(testId, status) {
+            const testItem = document.getElementById(testId);
+            const statusSpan = testItem.querySelector('.status');
+
+            testItem.classList.remove('passed', 'failed');
+            statusSpan.className = 'status ' + status;
+
+            if (status === 'passed') {
+                testItem.classList.add('passed');
+                testResults.passed++;
+            } else if (status === 'failed') {
+                testItem.classList.add('failed');
+                testResults.failed++;
+            }
+
+            updateSummary();
+        }
+
+        function resetTests() {
+            testResults = { total: 15, passed: 0, failed: 0 };
+
+            for (let i = 1; i <= 15; i++) {
+                const testItem = document.getElementById('test-' + i);
+                const checkbox = document.getElementById('check-' + i);
+                const statusSpan = testItem.querySelector('.status');
+
+                testItem.classList.remove('passed', 'failed');
+                checkbox.checked = false;
+                statusSpan.className = 'status pending';
+                statusSpan.textContent = '待测试';
+            }
+
+            updateSummary();
+        }
+
+        function openGame() {
+            window.open('index.html', '_blank');
+        }
+
+        function runAllTests() {
+            alert('请在游戏窗口中手动执行以下测试：\n\n' +
+                  '1. 测试基本功能（点击、标记）\n' +
+                  '2. 测试游戏逻辑（失败、胜利）\n' +
+                  '3. 测试高级功能（双击、难度切换）\n\n' +
+                  '测试完成后，勾选相应的复选框记录结果。');
+        }
+
+        // 为每个测试项添加事件监听
+        for (let i = 1; i <= 15; i++) {
+            const checkbox = document.getElementById('check-' + i);
+            checkbox.addEventListener('change', function() {
+                const testId = 'test-' + i;
+                if (this.checked) {
+                    setTestStatus(testId, 'passed');
+                } else {
+                    setTestStatus(testId, 'pending');
+                }
+            });
+        }
+
+        // 初始化
+        updateSummary();
+    </script>
+</body>
+</html>

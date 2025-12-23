@@ -2,10 +2,13 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="太空射击游戏 - 一款使用原生JavaScript开发的HTML5 Canvas射击游戏">
     <meta name="keywords" content="太空射击,HTML5游戏,Canvas游戏,JavaScript游戏">
     <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>太空射击游戏 | Space Shooter</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,8 +34,6 @@
         <!-- 游戏主画布 -->
         <div class="canvas-wrapper">
             <canvas id="gameCanvas"
-                    width="800"
-                    height="600"
                     role="application"
                     aria-label="太空射击游戏区域"
                     aria-live="polite"

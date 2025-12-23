@@ -2,13 +2,25 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
     <meta name="description" content="打字速度测试游戏 - 提升您的打字速度和准确性，支持多种难度和游戏模式">
     <meta name="keywords" content="打字测试,打字速度,打字游戏,typing test,WPM">
     <title>打字速度测试游戏</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pIVpG8hZ5ZcVZL2Q6nF8dXEc7NhG6kGp8o2I6LJfBfRZnq7r3mYHN0hQ5c5k5k5k5k5k5k5k5k5k5k5k5k5k5k" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* iOS 安全区域内联样式 - 避免样式闪烁 */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">

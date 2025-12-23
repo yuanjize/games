@@ -112,8 +112,20 @@ class PlatformJumperGame {
 
   resize() {
     const rect = this.canvas.parentElement.getBoundingClientRect();
-    this.canvas.width = rect.width;
-    this.canvas.height = rect.height;
+    const dpr = window.devicePixelRatio || 1;
+
+    // 考虑设备像素比以获得清晰的渲染
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
+
+    // 设置CSS尺寸
+    this.canvas.style.width = rect.width + 'px';
+    this.canvas.style.height = rect.height + 'px';
+
+    // 缩放上下文以匹配设备像素比
+    this.ctx.scale(dpr, dpr);
+
+    // 保存逻辑尺寸
     this.width = rect.width;
     this.height = rect.height;
 
@@ -143,43 +155,53 @@ class PlatformJumperGame {
       this.state.invulnerabilityTimer = null;
     }
 
+    // 清空现有实体
+    this.entities.coins = [];
+    this.entities.spikes = [];
+
     // 基础平台
     this.entities.platforms = [{
       x: 0, y: this.height - 40, w: this.width, h: 40, moving: false
     }];
 
+    // 根据屏幕尺寸调整平台生成参数
+    const isSmallScreen = this.width < 400;
+    const platformGap = isSmallScreen ? 80 : 100;
+    const minPlatformWidth = isSmallScreen ? 60 : 100;
+    const maxPlatformWidth = isSmallScreen ? 80 : 150;
+
     // 生成平台
-    let y = this.height - 150;
-    while (y > 80) {
-      const w = 100 + Math.random() * 100;
-      const x = Math.random() * (this.width - w);
+    let y = this.height - (isSmallScreen ? 120 : 150);
+    while (y > (isSmallScreen ? 60 : 80)) {
+      const w = minPlatformWidth + Math.random() * (maxPlatformWidth - minPlatformWidth);
+      const x = Math.max(0, Math.random() * (this.width - w));
       this.entities.platforms.push({
         x, y, w, h: 20,
         moving: this.state.level > 1 && Math.random() > 0.7,
-        dir: 1, speed: 2, limit: 100, originX: x
+        dir: 1, speed: 2, limit: Math.min(80, this.width / 4), originX: x
       });
 
       // 生成金币机会
       if (Math.random() > 0.3) {
         this.entities.coins.push({
-          x: x + w/2, y: y - 20, r: 10, collected: false
+          x: x + w/2, y: y - 20, r: isSmallScreen ? 8 : 10, collected: false
         });
       }
 
       // 生成尖刺机会（第2关及以上）
       if (this.state.level > 1 && Math.random() > 0.8) {
         this.entities.spikes.push({
-          x: x + 20, y: y - 20, w: 20, h: 20
+          x: Math.min(x + 10, this.width - 30), y: y - 20, w: isSmallScreen ? 15 : 20, h: isSmallScreen ? 15 : 20
         });
       }
 
-      y -= 100;
+      y -= platformGap;
     }
 
     // 添加顶部平台作为关卡目标
-    const topPlatformWidth = Math.min(200, this.width - 100);
+    const topPlatformWidth = Math.min(isSmallScreen ? 120 : 200, this.width - 50);
     this.entities.platforms.push({
-      x: (this.width - topPlatformWidth) / 2,
+      x: Math.max(10, (this.width - topPlatformWidth) / 2),
       y: 20,
       w: topPlatformWidth,
       h: 20,
@@ -187,10 +209,11 @@ class PlatformJumperGame {
       isGoal: true
     });
 
-    // 重置玩家位置
+    // 重置玩家位置和尺寸（小屏幕上角色稍小）
+    const playerScale = isSmallScreen ? 0.8 : 1;
     this.entities.player = {
-      x: 50, y: this.height - 100,
-      w: 30, h: 40,
+      x: 30, y: this.height - 100,
+      w: Math.round(30 * playerScale), h: Math.round(40 * playerScale),
       vx: 0, vy: 0,
       grounded: false,
       invulnerable: false
@@ -219,42 +242,88 @@ class PlatformJumperGame {
       if (e.key === 'ArrowRight') this.input.right = false;
     });
 
-    // 触摸事件
-    const touchHandler = (key, val) => (e) => {
+    // 触摸事件 - 改进的多点触控支持
+    const handleTouchStart = (key) => (e) => {
       e.preventDefault();
-      this.input[key] = val;
-      if (val) this.announceScreenReader(key === 'left' ? '向左移动' : '向右移动');
+      this.input[key] = true;
+      if (key !== 'jump') {
+        this.announceScreenReader(key === 'left' ? '向左移动' : '向右移动');
+      }
+    };
+
+    const handleTouchEnd = (key) => (e) => {
+      e.preventDefault();
+      this.input[key] = false;
     };
 
     const leftBtn = document.getElementById('mobileLeft');
     if (leftBtn) {
-      leftBtn.addEventListener('touchstart', touchHandler('left', true));
-      leftBtn.addEventListener('touchend', touchHandler('left', false));
-      leftBtn.addEventListener('mousedown', touchHandler('left', true));
-      leftBtn.addEventListener('mouseup', touchHandler('left', false));
+      // 使用 pointer events 以获得更好的触摸支持
+      leftBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        this.input.left = true;
+        leftBtn.setPointerCapture(e.pointerId);
+      });
+      leftBtn.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        this.input.left = false;
+      });
+      leftBtn.addEventListener('pointerleave', (e) => {
+        this.input.left = false;
+      });
+      leftBtn.addEventListener('pointercancel', (e) => {
+        this.input.left = false;
+      });
+      // 保留鼠标事件作为后备
+      leftBtn.addEventListener('mousedown', () => this.input.left = true);
+      leftBtn.addEventListener('mouseup', () => this.input.left = false);
       leftBtn.addEventListener('mouseleave', () => this.input.left = false);
     }
 
     const rightBtn = document.getElementById('mobileRight');
     if (rightBtn) {
-      rightBtn.addEventListener('touchstart', touchHandler('right', true));
-      rightBtn.addEventListener('touchend', touchHandler('right', false));
-      rightBtn.addEventListener('mousedown', touchHandler('right', true));
-      rightBtn.addEventListener('mouseup', touchHandler('right', false));
+      rightBtn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        this.input.right = true;
+        rightBtn.setPointerCapture(e.pointerId);
+      });
+      rightBtn.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        this.input.right = false;
+      });
+      rightBtn.addEventListener('pointerleave', (e) => {
+        this.input.right = false;
+      });
+      rightBtn.addEventListener('pointercancel', (e) => {
+        this.input.right = false;
+      });
+      // 保留鼠标事件作为后备
+      rightBtn.addEventListener('mousedown', () => this.input.right = true);
+      rightBtn.addEventListener('mouseup', () => this.input.right = false);
       rightBtn.addEventListener('mouseleave', () => this.input.right = false);
     }
 
     const jumpBtn = document.getElementById('mobileJump');
     if (jumpBtn) {
-      jumpBtn.addEventListener('touchstart', (e) => {
+      jumpBtn.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         if (this.state.running) this.jump();
+        jumpBtn.setPointerCapture(e.pointerId);
       });
+      // 保留鼠标事件作为后备
       jumpBtn.addEventListener('mousedown', (e) => {
         e.preventDefault();
         if (this.state.running) this.jump();
       });
     }
+
+    // 防止画布上的默认触摸行为（滚动、缩放等）
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+    this.canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+    }, { passive: false });
 
     // UI按钮
     const startBtn = document.getElementById('startButton');
@@ -599,13 +668,3 @@ document.addEventListener('contextmenu', (e) => {
     e.preventDefault();
   }
 });
-
-// 防止iOS上的双击缩放
-let lastTouchEnd = 0;
-document.addEventListener('touchend', (e) => {
-  const now = (new Date()).getTime();
-  if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
-  }
-  lastTouchEnd = now;
-}, false);

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打砖块游戏测试工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 20px;
+        }
+        h1 { color: #3498db; margin-bottom: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-section {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section h2 {
+            color: #f39c12;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #0f3460;
+            border-radius: 4px;
+        }
+        .test-item.pass { border-left: 4px solid #2ecc71; }
+        .test-item.fail { border-left: 4px solid #e74c3c; }
+        .test-item.pending { border-left: 4px solid #95a5a6; }
+        .test-status {
+            width: 80px;
+            font-weight: bold;
+        }
+        .test-status.pass { color: #2ecc71; }
+        .test-status.fail { color: #e74c3c; }
+        .test-status.pending { color: #95a5a6; }
+        .test-desc { flex: 1; }
+        .btn {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .btn:hover { background: #2980b9; }
+        .btn.success { background: #2ecc71; }
+        .btn.danger { background: #e74c3c; }
+        .console-output {
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-box {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .info-label { color: #95a5a6; font-size: 12px; }
+        .info-value { color: #3498db; font-size: 24px; font-weight: bold; }
+        .hidden { display: none; }
+        iframe {
+            width: 100%;
+            height: 700px;
+            border: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 打砖块游戏自动化测试工具</h1>
+
+        <!-- 游戏预览 -->
+        <div class="test-section">
+            <h2>游戏预览</h2>
+            <iframe id="gameFrame" src="index.html"></iframe>
+        </div>
+
+        <!-- 测试控制面板 -->
+        <div class="test-section">
+            <h2>测试控制</h2>
+            <button class="btn" onclick="runAllTests()">▶ 运行所有测试</button>
+            <button class="btn" onclick="runBasicTests()">📋 基础功能测试</button>
+            <button class="btn" onclick="runGameplayTests()">🎮 游戏玩法测试</button>
+            <button class="btn danger" onclick="resetTests()">🔄 重置测试</button>
+        </div>
+
+        <!-- 实时游戏状态 -->
+        <div class="test-section">
+            <h2>实时游戏状态</h2>
+            <div class="game-info">
+                <div class="info-box">
+                    <div class="info-label">游戏状态</div>
+                    <div class="info-value" id="info-state">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">得分</div>
+                    <div class="info-value" id="info-score">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">生命</div>
+                    <div class="info-value" id="info-lives">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">关卡</div>
+                    <div class="info-value" id="info-level">-</div>
+                </div>
+            </div>
+            <div class="game-info" style="margin-top: 15px;">
+                <div class="info-box">
+                    <div class="info-label">球数量</div>
+                    <div class="info-value" id="info-balls">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">可见砖块</div>
+                    <div class="info-value" id="info-bricks">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">道具数量</div>
+                    <div class="info-value" id="info-powerups">-</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">粒子数量</div>
+                    <div class="info-value" id="info-particles">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 测试结果 -->
+        <div class="test-section">
+            <h2>测试结果</h2>
+            <div id="test-results"></div>
+        </div>
+
+        <!-- 测试日志 -->
+        <div class="test-section">
+            <h2>测试日志</h2>
+            <div class="console-output" id="console-output">等待测试开始...</div>
+        </div>
+    </div>
+
+    <script>
+        const gameFrame = document.getElementById('gameFrame');
+        const consoleOutput = document.getElementById('console-output');
+        const testResults = document.getElementById('test-results');
+
+        let gameWindow = null;
+        let testCount = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        // 等待游戏加载
+        function waitForGame() {
+            return new Promise((resolve) => {
+                const checkGame = () => {
+                    try {
+                        if (gameFrame.contentWindow && gameFrame.contentWindow.brickBreakerGame) {
+                            gameWindow = gameFrame.contentWindow;
+                            resolve(gameWindow.brickBreakerGame);
+                        } else {
+                            setTimeout(checkGame, 100);
+                        }
+                    } catch (e) {
+                        setTimeout(checkGame, 100);
+                    }
+                };
+                checkGame();
+            });
+        }
+
+        // 日志输出
+        function log(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const icons = {
+                'info': 'ℹ️',
+                'pass': '✅',
+                'fail': '❌',
+                'warn': '⚠️',
+                'test': '🧪'
+            };
+            const icon = icons[type] || '•';
+            consoleOutput.textContent += `[${timestamp}] ${icon} ${msg}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        // 清空日志
+        function clearLog() {
+            consoleOutput.textContent = '';
+        }
+
+        // 添加测试结果
+        function addTestResult(name, passed, message = '') {
+            testCount++;
+            if (passed) passedTests++; else failedTests++;
+
+            const div = document.createElement('div');
+            div.className = `test-item ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <span class="test-status ${passed ? 'pass' : 'fail'}">${passed ? 'PASS' : 'FAIL'}</span>
+                <span class="test-desc">${name}${message ? ' - ' + message : ''}</span>
+            `;
+            testResults.appendChild(div);
+        }
+
+        // 重置测试
+        function resetTests() {
+            testCount = 0;
+            passedTests = 0;
+            failedTests = 0;
+            testResults.innerHTML = '';
+            clearLog();
+            log('测试已重置', 'info');
+        }
+
+        // 获取游戏状态
+        function getGameState() {
+            if (!gameWindow || !gameWindow.brickBreakerGame) return null;
+            const game = gameWindow.brickBreakerGame;
+            return {
+                state: game.state,
+                score: game.score,
+                lives: game.lives,
+                level: game.level,
+                balls: game.balls ? game.balls.length : 0,
+                visibleBricks: game.bricks ? game.bricks.filter(b => b.visible).length : 0,
+                powerups: game.powerups ? game.powerups.length : 0,
+                particles: game.particles ? game.particles.length : 0,
+                paddleWidth: game.paddle ? game.paddle.width : 0
+            };
+        }
+
+        // 更新状态显示
+        function updateStateDisplay() {
+            const state = getGameState();
+            if (!state) return;
+
+            document.getElementById('info-state').textContent = state.state || '-';
+            document.getElementById('info-score').textContent = state.score;
+            document.getElementById('info-lives').textContent = state.lives;
+            document.getElementById('info-level').textContent = state.level;
+            document.getElementById('info-balls').textContent = state.balls;
+            document.getElementById('info-bricks').textContent = state.visibleBricks;
+            document.getElementById('info-powerups').textContent = state.powerups;
+            document.getElementById('info-particles').textContent = state.particles;
+        }
+
+        // 基础功能测试
+        async function runBasicTests() {
+            clearLog();
+            log('开始基础功能测试...', 'test');
+
+            const game = await waitForGame();
+            log('游戏已加载', 'pass');
+
+            // 测试1: 初始状态
+            log('测试1: 检查初始状态', 'test');
+            if (game.score === 0 && game.lives === 3 && game.level === 1) {
+                addTestResult('初始状态检查', true, `得分=0, 生命=3, 关卡=1`);
+                log('初始状态正确', 'pass');
+            } else {
+                addTestResult('初始状态检查', false, `得分=${game.score}, 生命=${game.lives}, 关卡=${game.level}`);
+                log('初始状态错误', 'fail');
+            }
+
+            // 测试2: 开始游戏
+            log('测试2: 开始游戏', 'test');
+            game.startGame();
+            await sleep(200);
+            if (game.state === 'playing') {
+                addTestResult('开始游戏', true);
+                log('游戏成功进入PLAYING状态', 'pass');
+            } else {
+                addTestResult('开始游戏', false, `状态=${game.state}`);
+                log('游戏状态错误', 'fail');
+            }
+
+            // 测试3: 发射球
+            log('测试3: 发射球', 'test');
+            if (game.balls && game.balls.length > 0) {
+                game.launchBall();
+                await sleep(200);
+                if (game.balls[0].launched) {
+                    addTestResult('球发射', true);
+                    log('球成功发射', 'pass');
+                } else {
+                    addTestResult('球发射', false, '球未发射');
+                    log('球未能发射', 'fail');
+                }
+            } else {
+                addTestResult('球发射', false, '球不存在');
+                log('球对象不存在', 'fail');
+            }
+
+            // 测试4: 暂停游戏
+            log('测试4: 暂停游戏', 'test');
+            game.pauseGame();
+            await sleep(100);
+            if (game.state === 'paused') {
+                addTestResult('暂停游戏', true);
+                log('游戏成功暂停', 'pass');
+            } else {
+                addTestResult('暂停游戏', false, `状态=${game.state}`);
+                log('暂停状态错误', 'fail');
+            }
+
+            // 测试5: 恢复游戏
+            log('测试5: 恢复游戏', 'test');
+            game.resumeGame();
+            await sleep(100);
+            if (game.state === 'playing') {
+                addTestResult('恢复游戏', true);
+                log('游戏成功恢复', 'pass');
+            } else {
+                addTestResult('恢复游戏', false, `状态=${game.state}`);
+                log('恢复状态错误', 'fail');
+            }
+
+            // 测试6: 砖块初始化
+            log('测试6: 砖块初始化', 'test');
+            const totalBricks = game.bricks ? game.bricks.length : 0;
+            const visibleBricks = game.bricks ? game.bricks.filter(b => b.visible).length : 0;
+            if (totalBricks === 60 && visibleBricks === 60) {
+                addTestResult('砖块初始化', true, `60个砖块全部可见`);
+                log('砖块初始化正确', 'pass');
+            } else {
+                addTestResult('砖块初始化', false, `总数=${totalBricks}, 可见=${visibleBricks}`);
+                log('砖块初始化可能有问题', 'warn');
+            }
+
+            // 测试7: 砖块类型
+            log('测试7: 砖块类型', 'test');
+            const normalBricks = game.bricks.filter(b => b.type === 'normal').length;
+            const strongBricks = game.bricks.filter(b => b.type === 'strong').length;
+            const specialBricks = game.bricks.filter(b => b.type === 'special').length;
+            if (normalBricks > 0 && strongBricks > 0 && specialBricks > 0) {
+                addTestResult('砖块类型分布', true, `普通=${normalBricks}, 坚固=${strongBricks}, 特殊=${specialBricks}`);
+                log('砖块类型分布正确', 'pass');
+            } else {
+                addTestResult('砖块类型分布', false, `普通=${normalBricks}, 坚固=${strongBricks}, 特殊=${specialBricks}`);
+                log('砖块类型分布可能有问题', 'warn');
+            }
+
+            // 测试8: 挡板初始化
+            log('测试8: 挡板初始化', 'test');
+            if (game.paddle && game.paddle.width === 100) {
+                addTestResult('挡板初始化', true, `宽度=${game.paddle.width}`);
+                log('挡板初始化正确', 'pass');
+            } else {
+                addTestResult('挡板初始化', false, `宽度=${game.paddle ? game.paddle.width : 'undefined'}`);
+                log('挡板初始化可能有问题', 'fail');
+            }
+
+            log('基础功能测试完成!', 'test');
+        }
+
+        // 游戏玩法测试
+        async function runGameplayTests() {
+            clearLog();
+            log('开始游戏玩法测试...', 'test');
+
+            const game = await waitForGame();
+            log('游戏已加载', 'pass');
+
+            // 重置游戏
+            game.resetGame();
+            await sleep(100);
+            game.startGame();
+            await sleep(100);
+
+            // 测试1: 键盘控制
+            log('测试1: 键盘控制挡板', 'test');
+            const initialX = game.paddle.x;
+            gameFrame.contentWindow.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight' }));
+            await sleep(50);
+            const newX = game.paddle.x;
+            if (newX > initialX) {
+                addTestResult('键盘控制', true, `挡板移动了 ${newX - initialX}px`);
+                log('键盘控制正常', 'pass');
+            } else {
+                addTestResult('键盘控制', false, '挡板未移动');
+                log('键盘控制可能有问题', 'warn');
+            }
+
+            // 测试2: 砖块碰撞模拟
+            log('测试2: 模拟砖块碰撞', 'test');
+            if (game.balls.length > 0) {
+                const ball = game.balls[0];
+                const brick = game.bricks.find(b => b.visible);
+                if (brick) {
+                    // 将球移动到砖块位置
+                    ball.x = brick.x + brick.width / 2;
+                    ball.y = brick.y + brick.height + ball.radius + 1;
+                    ball.dy = 2;
+                    ball.launched = true;
+                    game.update();
+                    await sleep(50);
+
+                    const hitBrick = game.bricks.find(b => b.x === brick.x && b.y === brick.y);
+                    if (!hitBrick.visible || hitBrick.hits < brick.hits) {
+                        addTestResult('砖块碰撞', true, '砖块被击中');
+                        log('砖块碰撞检测正常', 'pass');
+                    } else {
+                        addTestResult('砖块碰撞', false, '砖块未被击中');
+                        log('砖块碰撞检测可能有问题', 'warn');
+                    }
+                }
+            }
+
+            // 测试3: 挡板碰撞模拟
+            log('测试3: 模拟挡板碰撞', 'test');
+            if (game.balls.length > 0) {
+                const ball = game.balls[0];
+                const oldDY = ball.dy;
+                ball.x = game.paddle.x + game.paddle.width / 2;
+                ball.y = game.paddle.y - ball.radius - 1;
+                ball.dy = 2;
+                ball.launched = true;
+                game.update();
+                await sleep(50);
+
+                if (ball.dy < 0) {
+                    addTestResult('挡板碰撞', true, '球向上反弹');
+                    log('挡板碰撞检测正常', 'pass');
+                } else {
+                    addTestResult('挡板碰撞', false, `dy=${ball.dy}`);
+                    log('挡板碰撞检测可能有问题', 'warn');
+                }
+            }
+
+            // 测试4: 道具创建
+            log('测试4: 道具创建', 'test');
+            const powerupCountBefore = game.powerups.length;
+            game.createPowerup(400, 300);
+            await sleep(50);
+            if (game.powerups.length > powerupCountBefore) {
+                addTestResult('道具创建', true, `创建了 ${game.powerups.length - powerupCountBefore} 个道具`);
+                log('道具创建正常', 'pass');
+            } else {
+                addTestResult('道具创建', false, '道具未创建');
+                log('道具创建可能有问题', 'warn');
+            }
+
+            // 测试5: 道具应用
+            log('测试5: 道具应用', 'test');
+            const oldWidth = game.paddle.width;
+            game.applyPowerup('PADDLE_LONG');
+            await sleep(50);
+            if (game.paddle.width > oldWidth) {
+                addTestResult('加长挡板道具', true, `宽度从 ${oldWidth} 变为 ${game.paddle.width}`);
+                log('加长挡板道具正常', 'pass');
+            } else {
+                addTestResult('加长挡板道具', false, `宽度未变化: ${oldWidth}`);
+                log('加长挡板道具可能有问题', 'warn');
+            }
+
+            // 测试6: 多球道具
+            log('测试6: 多球道具', 'test');
+            const ballCountBefore = game.balls.length;
+            game.balls[0].launched = true;
+            game.balls[0].dx = 2;
+            game.balls[0].dy = -2;
+            game.applyPowerup('MULTI_BALL');
+            await sleep(50);
+            if (game.balls.length > ballCountBefore) {
+                addTestResult('多球道具', true, `球数从 ${ballCountBefore} 变为 ${game.balls.length}`);
+                log('多球道具正常', 'pass');
+            } else {
+                addTestResult('多球道具', false, `球数未变化: ${game.balls.length}`);
+                log('多球道具可能有问题', 'warn');
+            }
+
+            // 测试7: 粒子创建
+            log('测试7: 粒子效果', 'test');
+            const particleCountBefore = game.particles.length;
+            game.createParticles(400, 300, 10, '#ff0000');
+            await sleep(50);
+            if (game.particles.length >= particleCountBefore + 10) {
+                addTestResult('粒子效果', true, `创建了 ${game.particles.length - particleCountBefore} 个粒子`);
+                log('粒子效果正常', 'pass');
+            } else {
+                addTestResult('粒子效果', false, `只创建了 ${game.particles.length - particleCountBefore} 个粒子`);
+                log('粒子效果可能有问题', 'warn');
+            }
+
+            // 测试8: 球掉落检测
+            log('测试8: 球掉落检测', 'test');
+            const livesBefore = game.lives;
+            if (game.balls.length > 0) {
+                game.balls[0].y = 700; // 超出画布
+                game.update();
+                await sleep(50);
+                if (game.balls.length === 0 && game.lives === livesBefore - 1) {
+                    addTestResult('球掉落检测', true, '生命减少1');
+                    log('球掉落检测正常', 'pass');
+                } else {
+                    addTestResult('球掉落检测', false, `球数=${game.balls.length}, 生命=${game.lives}`);
+                    log('球掉落检测可能有问题', 'warn');
+                }
+            }
+
+            // 测试9: 关卡完成
+            log('测试9: 关卡完成检测', 'test');
+            game.bricks.forEach(b => b.visible = false);
+            game.update();
+            await sleep(100);
+            if (game.state === 'level_complete') {
+                addTestResult('关卡完成', true);
+                log('关卡完成检测正常', 'pass');
+            } else {
+                addTestResult('关卡完成', false, `状态=${game.state}`);
+                log('关卡完成检测可能有问题', 'warn');
+            }
+
+            // 测试10: 下一关
+            log('测试10: 下一关功能', 'test');
+            const levelBefore = game.level;
+            game.nextLevel();
+            await sleep(100);
+            if (game.level === levelBefore + 1) {
+                addTestResult('下一关', true, `关卡从 ${levelBefore} 升级到 ${game.level}`);
+                log('下一关功能正常', 'pass');
+            } else {
+                addTestResult('下一关', false, `关卡=${game.level}`);
+                log('下一关功能可能有问题', 'warn');
+            }
+
+            // 测试11: 游戏结束
+            log('测试11: 游戏结束', 'test');
+            game.lives = 0;
+            game.balls = [];
+            game.update();
+            await sleep(100);
+            if (game.state === 'game_over') {
+                addTestResult('游戏结束', true);
+                log('游戏结束检测正常', 'pass');
+            } else {
+                addTestResult('游戏结束', false, `状态=${game.state}`);
+                log('游戏结束检测可能有问题', 'warn');
+            }
+
+            log('游戏玩法测试完成!', 'test');
+        }
+
+        // 运行所有测试
+        async function runAllTests() {
+            resetTests();
+            await runBasicTests();
+            await sleep(500);
+            await runGameplayTests();
+
+            // 显示测试总结
+            log('='.repeat(50), 'info');
+            log(`测试总结: 总计 ${testCount}, 通过 ${passedTests}, 失败 ${failedTests}`, 'test');
+            log('='.repeat(50), 'info');
+        }
+
+        // 辅助函数
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 定期更新状态显示
+        setInterval(() => {
+            updateStateDisplay();
+        }, 500);
+
+        // 页面加载完成后自动等待游戏
+        window.addEventListener('load', () => {
+            log('测试工具已加载，等待游戏初始化...', 'info');
+            waitForGame().then(() => {
+                log('游戏已就绪，可以开始测试!', 'pass');
+            });
+        });
+    </script>
+</body>
+</html>

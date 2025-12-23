@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Memory Cards Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #eee; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .pass { background: #1e4620; border: 1px solid #4ade80; }
+        .fail { background: #4a1e1e; border: 1px solid #f87171; }
+        iframe { width: 100%; height: 600px; border: 2px solid #333; border-radius: 8px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>Memory Cards 游戏测试</h1>
+    <div id="results"></div>
+    <hr>
+    <button onclick="runTests()">运行自动化测试</button>
+    <button onclick="window.open('/memory-cards/', '_blank')">在新窗口打开游戏</button>
+    <hr>
+    <iframe src="/memory-cards/"></iframe>
+    
+    <script>
+        function addResult(message, passed) {
+            const div = document.createElement('div');
+            div.className = 'test-result ' + (passed ? 'pass' : 'fail');
+            div.textContent = (passed ? '[通过] ' : '[失败] ') + message;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        function runTests() {
+            document.getElementById('results').innerHTML = '<h2>测试结果</h2>';
+            
+            // 测试1: 检查iframe是否加载
+            const iframe = document.querySelector('iframe');
+            if (iframe) {
+                addResult('iframe 加载成功', true);
+            } else {
+                addResult('iframe 加载失败', false);
+            }
+            
+            // 测试2: 检查游戏页面是否可访问
+            fetch('/memory-cards/')
+                .then(response => {
+                    addResult('游戏页面 HTTP ' + response.status, response.ok);
+                    return response.text();
+                })
+                .then(html => {
+                    // 检查HTML中是否包含关键元素
+                    const hasGameBoard = html.includes('gameBoard');
+                    const hasRestartBtn = html.includes('restartBtn');
+                    const hasDifficultyBtn = html.includes('difficulty-btn');
+                    
+                    addResult('包含游戏板元素', hasGameBoard);
+                    addResult('包含重新开始按钮', hasRestartBtn);
+                    addResult('包含难度选择按钮', hasDifficultyBtn);
+                })
+                .catch(error => {
+                    addResult('页面加载错误: ' + error.message, false);
+                });
+            
+            // 测试3: 检查CSS文件
+            fetch('/memory-cards/style.css')
+                .then(response => {
+                    addResult('CSS 文件 HTTP ' + response.status, response.ok);
+                    return response.text();
+                })
+                .then(css => {
+                    const hasCardStyles = css.includes('.card');
+                    const hasGameBoardStyles = css.includes('.game-board');
+                    addResult('CSS 包含卡片样式', hasCardStyles);
+                    addResult('CSS 包含游戏板样式', hasGameBoardStyles);
+                })
+                .catch(error => {
+                    addResult('CSS 加载错误: ' + error.message, false);
+                });
+            
+            // 测试4: 检查JS文件
+            fetch('/memory-cards/game.js')
+                .then(response => {
+                    addResult('JS 文件 HTTP ' + response.status, response.ok);
+                    return response.text();
+                })
+                .then(js => {
+                    const hasMemoryGame = js.includes('class MemoryGame');
+                    const hasStopTimer = js.includes('stopTimer');
+                    const hasResetParam = js.includes('resetDisplay');
+                    
+                    addResult('JS 包含 MemoryGame 类', hasMemoryGame);
+                    addResult('JS 包含 stopTimer 方法', hasStopTimer);
+                    addResult('JS stopTimer 支持参数 (修复)', hasResetParam);
+                })
+                .catch(error => {
+                    addResult('JS 加载错误: ' + error.message, false);
+                });
+        }
+        
+        // 页面加载后自动运行测试
+        window.onload = () => {
+            addResult('测试页面加载完成', true);
+            setTimeout(runTests, 1000);
+        };
+    </script>
+</body>
+</html>

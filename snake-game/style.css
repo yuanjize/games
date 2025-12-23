@@ -52,6 +52,104 @@ body {
     touch-action: pan-x pan-y;
 }
 
+/* 安全区域适配（刘海屏设备） */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .game-container {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* 移动端触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 增加触摸目标的最小尺寸 */
+    .btn,
+    .direction-btn,
+    .btn-control {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* 移除悬停效果，只保留激活状态 */
+    .btn:hover,
+    .direction-btn:hover,
+    .btn-control:hover {
+        transform: none;
+    }
+
+    /* 增强触摸反馈 */
+    .btn:active,
+    .direction-btn:active,
+    .btn-control:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+}
+
+/* ================================================
+   横屏模式优化
+   ================================================ */
+
+@media (max-width: 900px) and (orientation: landscape) {
+    .game-container {
+        grid-template-rows: auto 1fr;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .game-header {
+        padding: 8px 15px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+
+    .game-header h1 {
+        font-size: 1.2rem;
+    }
+
+    .back-button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .game-info {
+        display: none;
+    }
+
+    .game-main {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: 1fr;
+        gap: 10px;
+    }
+
+    .game-board-container {
+        max-height: none;
+        min-height: auto;
+    }
+
+    .game-controls {
+        flex-direction: row;
+        padding: 10px;
+        min-width: 180px;
+    }
+
+    .mobile-controls {
+        flex-direction: row;
+    }
+
+    .d-pad {
+        flex-direction: row;
+        transform: rotate(90deg);
+    }
+
+    .game-instructions,
+    .game-footer {
+        display: none;
+    }
+}
+
 /* ================================================
    Layout
    ================================================ */
@@ -61,7 +159,7 @@ body {
     max-width: 900px;
     height: 90vh;
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto auto 1fr auto;
     gap: 20px;
     padding: 20px;
 }
@@ -118,7 +216,7 @@ body {
 }
 
 /* ================================================
-   Game Stats
+   Game Stats (独立区域)
    ================================================ */
 
 .game-info {
@@ -126,6 +224,12 @@ body {
     gap: 30px;
     flex-wrap: wrap;
     justify-content: center;
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 15px 25px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .info-box {
@@ -532,27 +636,270 @@ body {
 }
 
 /* ================================================
-   Responsive Design - Mobile
+   Responsive Design - Small Mobile (iPhone SE, etc.)
    ================================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 400px) {
     .game-container {
         height: 100vh;
-        padding: 10px;
-        grid-template-rows: auto 1fr auto;
-        gap: 10px;
+        height: 100dvh;
+        padding: 6px;
+        grid-template-rows: auto auto 1fr auto auto;
+        gap: 6px;
+        max-width: 100%;
     }
 
+    /* 紧凑的 Header */
     .game-header {
-        padding: 15px;
-        flex-direction: column;
-        gap: 15px;
+        padding: 8px 12px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 8px;
+        border-radius: 12px;
+    }
+
+    .back-button {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        gap: 6px;
+        flex-shrink: 0;
     }
 
     .game-header h1 {
+        font-size: 1.1rem;
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 紧凑的信息栏 */
+    .game-info {
+        display: flex;
+        gap: 6px;
+        width: 100%;
+        justify-content: space-between;
+        padding: 6px 12px;
+        background: var(--panel-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .info-box {
+        min-width: 50px;
+        flex: 1;
+    }
+
+    .info-label {
+        font-size: 0.55rem;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    .info-value {
+        font-size: 0.95rem;
+    }
+
+    /* 主内容区域 */
+    .game-main {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow: hidden;
+    }
+
+    /* 游戏画布区域 - 占据主要空间 */
+    .game-board-container {
+        min-height: 280px;
+        max-height: 320px;
+        border-radius: 12px;
+        flex-shrink: 0;
+    }
+
+    #game-canvas {
+        max-height: 320px;
+        border-radius: 12px;
+    }
+
+    /* 移动控制按钮区域 */
+    .game-controls {
+        padding: 10px 12px;
+        gap: 10px;
+        border-radius: 12px;
+        order: 3;
+        flex-shrink: 0;
+    }
+
+    .control-buttons {
+        gap: 8px;
+    }
+
+    .btn-control {
+        padding: 8px 12px;
+        min-width: 70px;
+        font-size: 0.8rem;
+        border-radius: 20px;
+    }
+
+    /* 方向控制 - 更大的触摸区域 */
+    .mobile-controls {
+        display: flex;
+        order: 4;
+        flex-shrink: 0;
+    }
+
+    .direction-btn {
+        width: 62px;
+        height: 62px;
         font-size: 1.5rem;
+        border-radius: 14px;
+        /* 确保触摸区域足够大 */
+        min-width: 62px;
+        min-height: 62px;
+    }
+
+    .d-pad {
+        gap: 8px;
+    }
+
+    .d-pad-row {
+        gap: 8px;
+    }
+
+    /* 游戏说明 - 在超小屏幕上隐藏或最小化 */
+    .game-instructions {
+        display: none;
+    }
+
+    /* 隐藏桌面控制说明，只显示移动端 */
+    .controls-info {
+        display: none;
+    }
+
+    /* 移动端专用 - 添加滑动提示 */
+    .overlay-content::after {
+        content: "使用下方方向按钮控制蛇的移动";
+        display: block;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    /* Overlay 优化 */
+    .overlay-content {
+        padding: 20px 16px;
+        margin: 10px;
+        max-width: 95%;
+        border-radius: 16px;
+    }
+
+    .overlay-content h2 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+
+    .overlay-content p {
+        font-size: 0.85rem;
+        margin: 8px 0;
+    }
+
+    .controls-info {
+        gap: 8px;
+        margin: 15px 0;
+    }
+
+    .control-item {
+        min-width: 55px;
+        gap: 6px;
+    }
+
+    .control-item .key {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+
+    .control-item span:not(.key) {
+        font-size: 0.75rem;
+    }
+
+    .final-score {
+        padding: 15px;
+        margin: 15px 0;
+    }
+
+    .final-score p {
+        font-size: 0.95rem;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        border-radius: 24px;
+    }
+
+    /* Footer 隐藏或最小化 */
+    .game-footer {
+        display: none;
+    }
+
+    /* 防止页面滚动 */
+    body {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+}
+
+/* ================================================
+   Responsive Design - Medium Mobile
+   ================================================ */
+
+@media (min-width: 401px) and (max-width: 768px) {
+    .game-container {
+        height: 100vh;
+        height: 100dvh;
+        padding: 10px;
+        grid-template-rows: auto auto 1fr auto auto;
+        gap: 10px;
+    }
+
+    /* 隐藏桌面控制说明 */
+    .controls-info {
+        display: none;
+    }
+
+    /* 添加移动端提示 */
+    .overlay-content::after {
+        content: "使用方向按钮或键盘方向键控制";
+        display: block;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .game-header {
+        padding: 12px 18px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        border-radius: 14px;
+    }
+
+    .game-header h1 {
+        font-size: 1.4rem;
         order: -1;
         width: 100%;
+        text-align: center;
     }
 
     .back-button {
@@ -565,6 +912,12 @@ body {
         gap: 10px;
         width: 100%;
         justify-content: space-between;
+        padding: 10px 18px;
+        background: var(--panel-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .info-box {
@@ -572,7 +925,7 @@ body {
     }
 
     .info-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
     }
 
     .info-value {
@@ -580,13 +933,15 @@ body {
     }
 
     .game-main {
-        grid-template-rows: 1fr auto auto;
-        gap: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
     .game-board-container {
         min-height: 35vh;
         max-height: 45vh;
+        border-radius: 14px;
     }
 
     #game-canvas {
@@ -595,17 +950,17 @@ body {
 
     .mobile-controls {
         display: flex;
-        order: 1;
     }
 
     .direction-btn {
-        width: 56px;
-        height: 56px;
+        width: 58px;
+        height: 58px;
         font-size: 1.6rem;
     }
 
     .game-controls {
-        padding: 15px;
+        padding: 15px 18px;
+        border-radius: 14px;
     }
 
     .control-buttons {
@@ -613,18 +968,18 @@ body {
     }
 
     .btn-control {
-        padding: 8px 16px;
-        min-width: 100px;
-        font-size: 0.9rem;
+        padding: 10px 16px;
+        min-width: 90px;
+        font-size: 0.85rem;
     }
 
     .game-instructions {
         padding: 15px;
-        order: 2;
+        border-radius: 14px;
     }
 
     .game-instructions h3 {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 
     .food-types {
@@ -645,6 +1000,7 @@ body {
         padding: 25px 20px;
         margin: 15px;
         max-width: 90%;
+        border-radius: 20px;
     }
 
     .overlay-content h2 {
@@ -671,8 +1027,9 @@ body {
     }
 
     .game-footer {
-        padding: 15px;
-        font-size: 0.8rem;
+        padding: 12px;
+        font-size: 0.75rem;
+        border-radius: 12px;
     }
 }
 
@@ -683,6 +1040,7 @@ body {
 @media (min-width: 769px) and (max-width: 1024px) {
     .game-container {
         max-width: 800px;
+        grid-template-rows: auto auto 1fr auto;
     }
 
     .game-header h1 {
@@ -713,6 +1071,10 @@ body {
    ================================================ */
 
 @media (min-width: 1025px) {
+    .game-container {
+        grid-template-rows: auto auto 1fr auto;
+    }
+
     .game-main {
         grid-template-columns: 3fr 1fr;
         grid-template-rows: auto auto;

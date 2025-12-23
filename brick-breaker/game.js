@@ -489,6 +489,14 @@ class Game {
         document.getElementById('score').textContent = this.score;
         document.getElementById('lives').textContent = this.lives;
         document.getElementById('level').textContent = this.level;
+
+        // 更新 data-value 属性以支持极小屏幕显示
+        const scoreItem = document.querySelector('.score-item[aria-label="当前得分"]');
+        const livesItem = document.querySelector('.score-item[aria-label="剩余生命"]');
+        const levelItem = document.querySelector('.score-item[aria-label="当前关卡"]');
+        if (scoreItem) scoreItem.setAttribute('data-value', this.score);
+        if (livesItem) livesItem.setAttribute('data-value', this.lives);
+        if (levelItem) levelItem.setAttribute('data-value', this.level);
     }
 
     gameLoop() {

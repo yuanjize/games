@@ -38,6 +38,12 @@
     --warning-color: #f59e0b;
     --info-color: #3b82f6;
 
+    /* 安全区域适配 (iPhone X 系列及以后的设备) */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+
     /* 字体系统 */
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'SF Mono', 'Consolas', 'Courier New', monospace;
@@ -98,10 +104,22 @@ body {
     align-items: center;
     min-height: 100vh;
     padding: var(--space-md);
+    padding-top: calc(var(--space-md) + var(--safe-area-inset-top));
+    padding-bottom: calc(var(--space-md) + var(--safe-area-inset-bottom));
+    padding-left: calc(var(--space-md) + var(--safe-area-inset-left));
+    padding-right: calc(var(--space-md) + var(--safe-area-inset-right));
     background-image:
         radial-gradient(circle at 20% 80%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
     overflow-x: hidden;
+    /* 禁用双击缩放和文本选择（移动端优化） */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    /* 防止 iOS 橡皮筋效果 */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
 }
 
 /* ========== 可访问性支持 ========== */
@@ -403,6 +421,29 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    /* 隐藏滚动条但保留滚动功能 (Firefox) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.05);
+}
+
+/* 隐藏滚动条但保留滚动功能 (Webkit/Chrome/Safari) */
+.game-board-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.game-board-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.game-board-container::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+.game-board-container::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-light);
 }
 
 .game-board {
@@ -449,10 +490,9 @@ body {
     padding: 0;
     font-family: inherit;
     color: inherit;
-}
-
-.cell:not(:disabled) {
-    cursor: pointer;
+    /* 移动端触摸优化 */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(245, 158, 11, 0.3);
 }
 
 /* 交互状态 */
@@ -471,6 +511,7 @@ body {
 
 .cell:active:not(.revealed):not(.flagged):not(:disabled) {
     transform: translateY(0);
+    background: rgba(245, 158, 11, 0.3);
 }
 
 /* 翻开状态 */
@@ -683,6 +724,8 @@ body {
     opacity: 0.95;
     transition: opacity var(--transition-slow);
     pointer-events: none;
+    max-width: calc(100vw - 32px);
+    white-space: nowrap;
 }
 
 .mobile-touch-hint i {
@@ -845,50 +888,187 @@ body {
 
 /* 小屏幕移动设备 (< 480px) */
 @media (max-width: 480px) {
-    .game-header h1 {
-        font-size: 1.5rem;
+    body {
+        padding: var(--space-xs);
     }
 
-    .subtitle {
-        font-size: 0.85rem;
-    }
-
-    .game-stats {
+    .game-container {
         gap: var(--space-sm);
     }
 
-    .stat-box {
-        min-width: 90px;
-        padding: var(--space-xs) var(--space-sm);
+    .game-header {
+        padding: var(--space-sm) var(--space-md);
+        flex-direction: column;
+        gap: var(--space-xs);
     }
 
-    .stat-label {
-        font-size: 0.65rem;
+    .back-button {
+        align-self: flex-start;
+        padding: 6px var(--space-sm);
+        font-size: 0.8rem;
     }
 
-    .stat-value {
-        font-size: 1.25rem;
+    .back-button span {
+        display: none;
     }
 
-    .stat-icon {
-        width: 24px;
-        height: 24px;
+    .back-button i {
         font-size: 1rem;
     }
 
-    .cell {
-        width: 24px;
-        height: 24px;
-        font-size: 0.8rem;
-        min-width: 24px;
-        min-height: 24px;
+    .title-area {
+        gap: 2px;
     }
 
-    .back-button,
+    .game-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .game-header h1 i {
+        display: none;
+    }
+
+    .subtitle {
+        font-size: 0.75rem;
+    }
+
+    .game-controls {
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-md);
+    }
+
+    .difficulty-selector {
+        gap: 4px;
+    }
+
     .difficulty-btn {
-        font-size: 0.85rem;
-        padding: 6px 10px;
-        min-width: 90px;
+        min-width: auto;
+        flex: 1;
+        padding: 6px 8px;
+        font-size: 0.75rem;
+        gap: 2px;
+    }
+
+    .difficulty-btn i {
+        font-size: 0.8rem;
+    }
+
+    .game-stats {
+        gap: var(--space-xs);
+        padding: 0;
+    }
+
+    .stat-box {
+        min-width: 70px;
+        padding: 4px var(--space-xs);
+        gap: 2px;
+    }
+
+    .stat-label {
+        font-size: 0.6rem;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+    }
+
+    .stat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 0.9rem;
+    }
+
+    #restart-btn {
+        width: 44px;
+        height: 44px;
+        order: 0;
+    }
+
+    #smile-icon {
+        font-size: 1.4rem;
+    }
+
+    .game-board-container {
+        padding: var(--space-xs);
+        border-radius: var(--radius-md);
+        overflow-x: auto;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+        /* 隐藏滚动条 */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    /* 隐藏滚动条 */
+    .game-board-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .cell {
+        width: 22px;
+        height: 22px;
+        font-size: 0.75rem;
+        min-width: 22px;
+        min-height: 22px;
+    }
+
+    /* 初级网格在小屏幕上的适配 */
+    .game-board.beginner {
+        gap: 1px;
+        padding: 2px;
+    }
+
+    /* 中级和专家级网格支持滚动 */
+    .game-board.intermediate,
+    .game-board.expert {
+        min-width: max-content;
+    }
+
+    .game-instructions {
+        padding: var(--space-sm);
+        gap: var(--space-xs);
+        border-radius: var(--radius-md);
+    }
+
+    .instruction-card {
+        padding: var(--space-sm);
+        gap: 4px;
+    }
+
+    .instruction-icon {
+        font-size: 1.5rem;
+    }
+
+    .instruction-card h3 {
+        font-size: 0.9rem;
+    }
+
+    .instruction-card p {
+        font-size: 0.75rem;
+    }
+
+    .game-status {
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-md);
+    }
+
+    .status-message {
+        font-size: 0.9rem;
+        padding: var(--space-xs);
+    }
+
+    .game-footer {
+        padding: var(--space-sm);
+        border-radius: var(--radius-md);
+    }
+
+    .game-footer p {
+        font-size: 0.8rem;
+    }
+
+    .footer-hint {
+        font-size: 0.7rem;
+        display: none;
     }
 
     .mobile-touch-hint {
@@ -897,10 +1077,181 @@ body {
         bottom: 8px;
         max-width: calc(100vw - 32px);
     }
+}
+
+/* ========== 超小屏幕优化 (iPhone SE 及类似设备) ========== */
+@media (max-width: 375px) {
+    body {
+        padding: 2px;
+    }
+
+    .game-container {
+        gap: 6px;
+    }
+
+    .game-header {
+        padding: 6px var(--space-sm);
+        border-radius: var(--radius-md);
+    }
+
+    .back-button {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+
+    .game-header h1 {
+        font-size: 1.2rem;
+        letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+        font-size: 0.7rem;
+    }
+
+    .game-controls {
+        padding: 6px var(--space-sm);
+        gap: 8px;
+        border-radius: var(--radius-md);
+    }
+
+    .difficulty-btn {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+    }
+
+    .difficulty-btn i {
+        font-size: 0.75rem;
+    }
+
+    .stat-box {
+        min-width: 60px;
+        padding: 2px 4px;
+    }
+
+    .stat-label {
+        font-size: 0.55rem;
+        letter-spacing: 0.3px;
+    }
+
+    .stat-value {
+        font-size: 1rem;
+    }
+
+    .stat-icon {
+        width: 18px;
+        height: 18px;
+        font-size: 0.8rem;
+    }
+
+    #restart-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    #smile-icon {
+        font-size: 1.2rem;
+    }
+
+    .game-board-container {
+        padding: 4px;
+        border-radius: var(--radius-sm);
+    }
+
+    /* 进一步缩小格子尺寸 */
+    .cell {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        min-width: 20px;
+        min-height: 20px;
+        border-radius: 2px;
+    }
+
+    /* 初级网格紧凑布局 */
+    .game-board.beginner {
+        gap: 1px;
+        padding: 2px;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    /* 确保9x9网格适应375px宽度 */
+    .game-board.beginner .cell {
+        width: calc((100vw - 36px) / 9 - 1px);
+        height: calc((100vw - 36px) / 9 - 1px);
+        min-width: 18px;
+        min-height: 18px;
+        font-size: 0.65rem;
+    }
+
+    .game-board.intermediate,
+    .game-board.expert {
+        min-width: max-content;
+    }
+
+    .game-board.intermediate .cell,
+    .game-board.expert .cell {
+        width: 20px;
+        height: 20px;
+        min-width: 20px;
+        min-height: 20px;
+        font-size: 0.7rem;
+    }
 
     .game-instructions {
-        padding: var(--space-md);
-        gap: var(--space-sm);
+        padding: 6px;
+        gap: 4px;
+        border-radius: var(--radius-sm);
+    }
+
+    .instruction-card {
+        padding: 6px;
+        gap: 2px;
+    }
+
+    .instruction-icon {
+        font-size: 1.2rem;
+        margin-bottom: 0;
+    }
+
+    .instruction-card h3 {
+        font-size: 0.8rem;
+    }
+
+    .instruction-card p {
+        font-size: 0.7rem;
+        line-height: 1.2;
+    }
+
+    .game-status {
+        padding: 6px var(--space-sm);
+        border-radius: var(--radius-md);
+    }
+
+    .status-message {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+
+    .game-footer {
+        padding: 6px;
+        border-radius: var(--radius-sm);
+    }
+
+    .game-footer p {
+        font-size: 0.7rem;
+    }
+
+    .mobile-touch-hint {
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        bottom: 4px;
+        max-width: calc(100vw - 24px);
+        border-radius: var(--radius-md);
+    }
+
+    .mobile-touch-hint i {
+        font-size: 0.9rem;
     }
 }
 
@@ -912,19 +1263,54 @@ body {
 
     .game-header {
         padding: var(--space-sm) var(--space-md);
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+
+    .back-button {
+        align-self: center;
     }
 
     .title-area {
         flex-direction: row;
         gap: var(--space-md);
+        flex: 1;
+        justify-content: center;
     }
 
     .game-header h1 {
         font-size: 1.5rem;
     }
 
+    .subtitle {
+        display: none;
+    }
+
     .game-controls {
         padding: var(--space-sm);
+    }
+
+    .difficulty-selector {
+        gap: var(--space-xs);
+    }
+
+    .difficulty-btn {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: 0.8rem;
+    }
+
+    .game-stats {
+        gap: var(--space-sm);
+    }
+
+    .stat-box {
+        min-width: 80px;
+        padding: var(--space-xs) var(--space-sm);
+    }
+
+    #restart-btn {
+        width: 44px;
+        height: 44px;
     }
 
     .game-board-container {
@@ -932,12 +1318,111 @@ body {
     }
 
     .cell {
-        width: 22px;
-        height: 22px;
-        font-size: 0.75rem;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
     }
 
     .game-instructions {
+        display: none;
+    }
+
+    .game-footer {
+        padding: var(--space-sm);
+    }
+
+    .footer-hint {
+        display: none;
+    }
+
+    .mobile-touch-hint {
+        bottom: 8px;
+    }
+}
+
+/* 超小屏幕横屏模式 */
+@media (max-height: 600px) and (orientation: landscape) and (max-width: 667px) {
+    .game-header {
+        padding: 4px var(--space-sm);
+    }
+
+    .back-button span {
+        display: none;
+    }
+
+    .game-header h1 {
+        font-size: 1.2rem;
+    }
+
+    .game-header h1 i {
+        display: none;
+    }
+
+    .title-area {
+        gap: var(--space-sm);
+    }
+
+    .game-controls {
+        padding: 4px var(--space-sm);
+        gap: var(--space-xs);
+    }
+
+    .difficulty-btn {
+        padding: 4px 6px;
+        font-size: 0.7rem;
+    }
+
+    .difficulty-btn span {
+        display: none;
+    }
+
+    .stat-box {
+        min-width: 60px;
+        padding: 2px 4px;
+    }
+
+    .stat-label {
+        font-size: 0.55rem;
+    }
+
+    .stat-value {
+        font-size: 0.9rem;
+    }
+
+    .stat-icon {
+        width: 16px;
+        height: 16px;
+        font-size: 0.75rem;
+    }
+
+    #restart-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    #smile-icon {
+        font-size: 1rem;
+    }
+
+    .game-board-container {
+        padding: 4px;
+    }
+
+    .cell {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+
+    .game-status {
+        padding: 4px var(--space-sm);
+    }
+
+    .status-message {
+        font-size: 0.75rem;
+    }
+
+    .mobile-touch-hint {
         display: none;
     }
 }

@@ -89,10 +89,27 @@ class SpaceShooterGame {
     resize() {
         const rect = this.canvas.parentElement.getBoundingClientRect();
         if (rect.width > 0 && rect.height > 0) {
-            this.canvas.width = rect.width;
-            this.canvas.height = rect.height;
+            // 使用设备像素比来确保高清屏清晰度
+            const dpr = Math.min(window.devicePixelRatio || 1, 2); // 限制最大 DPR 以提升性能
+
+            // 设置画布的显示尺寸
+            this.canvas.style.width = rect.width + 'px';
+            this.canvas.style.height = rect.height + 'px';
+
+            // 设置画布的实际尺寸（乘以设备像素比）
+            this.canvas.width = rect.width * dpr;
+            this.canvas.height = rect.height * dpr;
+
+            // 缩放上下文以匹配设备像素比
+            this.ctx.scale(dpr, dpr);
+
             this.width = rect.width;
             this.height = rect.height;
+
+            // 根据屏幕大小调整玩家尺寸
+            const isMobile = window.innerWidth < 768;
+            this.player.w = isMobile ? 32 : 40;
+            this.player.h = isMobile ? 32 : 40;
 
             // 重新生成星空以适应新尺寸
             this.generateStars();
@@ -100,7 +117,11 @@ class SpaceShooterGame {
             // 重新定位玩家
             if (!this.state.running) {
                 this.player.x = this.width / 2 - this.player.w / 2;
-                this.player.y = this.height - 80;
+                this.player.y = this.height - Math.min(isMobile ? 60 : 80, this.height * 0.15);
+            } else {
+                // 游戏运行时确保玩家在屏幕内
+                this.player.x = Math.max(0, Math.min(this.width - this.player.w, this.player.x));
+                this.player.y = Math.max(0, Math.min(this.height - this.player.h, this.player.y));
             }
         }
 
@@ -310,32 +331,22 @@ class SpaceShooterGame {
             e.preventDefault();
             const touch = e.touches[0];
             this.touch.active = true;
-            this.touch.startX = touch.clientX;
-            this.touch.startY = touch.clientY;
-        });
+            const rect = joystickArea.getBoundingClientRect();
+            // 使用触摸点相对于摇杆中心的位置
+            this.touch.startX = rect.left + rect.width / 2;
+            this.touch.startY = rect.top + rect.height / 2;
+
+            // 立即更新位置
+            this.handleJoystickMove(touch.clientX, touch.clientY, joystickArea);
+        }, { passive: false });
 
         joystickArea.addEventListener('touchmove', (e) => {
             e.preventDefault();
             if (!this.touch.active) return;
 
             const touch = e.touches[0];
-            const deltaX = touch.clientX - this.touch.startX;
-            const deltaY = touch.clientY - this.touch.startY;
-
-            const maxDistance = 50;
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const clampedDistance = Math.min(distance, maxDistance);
-            const angle = Math.atan2(deltaY, deltaX);
-
-            this.touch.moveX = Math.cos(angle) * clampedDistance / maxDistance;
-            this.touch.moveY = Math.sin(angle) * clampedDistance / maxDistance;
-
-            // 更新摇杆视觉
-            const joystickCenter = joystickArea.querySelector('.joystick-center');
-            if (joystickCenter) {
-                joystickCenter.style.transform = `translate(calc(-50% + ${this.touch.moveX * 30}px), calc(-50% + ${this.touch.moveY * 30}px))`;
-            }
-        });
+            this.handleJoystickMove(touch.clientX, touch.clientY, joystickArea);
+        }, { passive: false });
 
         joystickArea.addEventListener('touchend', (e) => {
             e.preventDefault();
@@ -349,16 +360,70 @@ class SpaceShooterGame {
             }
         });
 
-        // 发射按钮
+        // 触摸取消处理
+        joystickArea.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.touch.active = false;
+            this.touch.moveX = 0;
+            this.touch.moveY = 0;
+
+            const joystickCenter = joystickArea.querySelector('.joystick-center');
+            if (joystickCenter) {
+                joystickCenter.style.transform = 'translate(-50%, -50%)';
+            }
+        });
+
+        // 发射按钮 - 支持多点触控
         shootButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.touch.shooting = true;
-        });
+            // 添加触觉反馈（如果设备支持）
+            if (navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+        }, { passive: false });
 
         shootButton.addEventListener('touchend', (e) => {
             e.preventDefault();
             this.touch.shooting = false;
         });
+
+        shootButton.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.touch.shooting = false;
+        });
+    }
+
+    // 处理摇杆移动
+    handleJoystickMove(clientX, clientY, joystickArea) {
+        const deltaX = clientX - this.touch.startX;
+        const deltaY = clientY - this.touch.startY;
+
+        // 根据屏幕尺寸动态调整摇杆参数
+        const isSmallScreen = window.innerWidth < 375;
+        const isMediumScreen = window.innerWidth < 768;
+
+        const maxDistance = isSmallScreen ? 35 : (isMediumScreen ? 40 : 50);
+        const sensitivity = isSmallScreen ? 1.4 : (isMediumScreen ? 1.3 : 1.2);
+
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const clampedDistance = Math.min(distance, maxDistance);
+        const angle = Math.atan2(deltaY, deltaX);
+
+        // 增加灵敏度，使小距离移动更明显
+        this.touch.moveX = Math.cos(angle) * (clampedDistance / maxDistance) * sensitivity;
+        this.touch.moveY = Math.sin(angle) * (clampedDistance / maxDistance) * sensitivity;
+
+        // 限制最大值
+        this.touch.moveX = Math.max(-1, Math.min(1, this.touch.moveX));
+        this.touch.moveY = Math.max(-1, Math.min(1, this.touch.moveY));
+
+        // 更新摇杆视觉
+        const joystickCenter = joystickArea.querySelector('.joystick-center');
+        if (joystickCenter) {
+            const visualOffset = maxDistance * 0.6;
+            joystickCenter.style.transform = `translate(calc(-50% + ${this.touch.moveX * visualOffset}px), calc(-50% + ${this.touch.moveY * visualOffset}px))`;
+        }
     }
 
     // ========== 游戏控制 ==========
@@ -411,11 +476,22 @@ class SpaceShooterGame {
         if (pauseTime) pauseTime.textContent = Math.floor(this.state.gameTime);
 
         this.showOverlay('pauseScreen');
+
+        // 在移动设备上触发一次 resize 以确保画布正确
+        if (window.innerWidth < 768) {
+            this.resize();
+        }
     }
 
     resume() {
         this.state.paused = false;
         this.hideOverlays();
+
+        // 在移动设备上触发一次 resize 以确保画布正确
+        if (window.innerWidth < 768) {
+            this.resize();
+        }
+
         this.lastTime = performance.now();
         this.gameLoop();
     }
@@ -540,11 +616,16 @@ class SpaceShooterGame {
         const isShooting = this.keys['Space'] || this.touch.shooting;
 
         if (isShooting && this.player.cd <= 0) {
+            // 根据屏幕大小调整子弹尺寸
+            const isMobile = window.innerWidth < 768;
+            const bulletWidth = isMobile ? 3 : 4;
+            const bulletHeight = isMobile ? 12 : 15;
+
             this.bullets.push({
-                x: this.player.x + this.player.w / 2 - 2,
+                x: this.player.x + this.player.w / 2 - bulletWidth / 2,
                 y: this.player.y,
-                w: 4,
-                h: 15,
+                w: bulletWidth,
+                h: bulletHeight,
                 s: settings.bulletSpeed
             });
             this.player.cd = 0.2;
@@ -564,11 +645,15 @@ class SpaceShooterGame {
 
     spawnEnemies(settings) {
         if (Math.random() < settings.enemySpawnRate) {
+            // 根据屏幕大小调整敌人尺寸
+            const isMobile = window.innerWidth < 768;
+            const enemySize = isMobile ? 32 : 40;
+
             this.enemies.push({
-                x: Math.random() * (this.width - 40),
+                x: Math.random() * (this.width - enemySize),
                 y: -50,
-                w: 40,
-                h: 40,
+                w: enemySize,
+                h: enemySize,
                 s: settings.enemySpeed + Math.random() * 50
             });
         }
@@ -653,24 +738,30 @@ class SpaceShooterGame {
         this.ctx.beginPath();
         this.ctx.moveTo(x + w / 2, y);
         this.ctx.lineTo(x + w, y + h);
-        this.ctx.lineTo(x + w / 2, y + h - 10);
+        this.ctx.lineTo(x + w / 2, y + h - Math.max(6, h * 0.25));
         this.ctx.lineTo(x, y + h);
         this.ctx.closePath();
         this.ctx.fill();
 
-        // 引擎火焰
+        // 引擎火焰 - 根据飞船大小调整
         this.ctx.fillStyle = '#fbbf24';
+        const flameWidth = Math.max(3, w * 0.125);
+        const flameHeight = Math.max(5, h * 0.25);
+        const flameBaseY = y + h - Math.max(3, h * 0.125);
+        const randomFlame = Math.random() * flameHeight;
+
         this.ctx.beginPath();
-        this.ctx.moveTo(x + w / 2 - 5, y + h - 5);
-        this.ctx.lineTo(x + w / 2 + 5, y + h - 5);
-        this.ctx.lineTo(x + w / 2, y + h + 10 + Math.random() * 10);
+        this.ctx.moveTo(x + w / 2 - flameWidth, flameBaseY);
+        this.ctx.lineTo(x + w / 2 + flameWidth, flameBaseY);
+        this.ctx.lineTo(x + w / 2, y + h + randomFlame);
         this.ctx.closePath();
         this.ctx.fill();
 
-        // 驾驶舱
+        // 驾驶舱 - 根据飞船大小调整
         this.ctx.fillStyle = '#0891b2';
+        const cockpitRadius = Math.max(3, w * 0.125);
         this.ctx.beginPath();
-        this.ctx.arc(x + w / 2, y + h / 2, 5, 0, Math.PI * 2);
+        this.ctx.arc(x + w / 2, y + h / 2, cockpitRadius, 0, Math.PI * 2);
         this.ctx.fill();
     }
 
@@ -691,19 +782,30 @@ class SpaceShooterGame {
             this.ctx.fillStyle = '#f43f5e';
             this.ctx.fillRect(e.x, e.y, e.w, e.h);
 
+            // 根据敌人大小调整眼睛和嘴巴尺寸
+            const eyeSize = Math.max(4, e.w * 0.2);
+            const eyeOffsetX = e.w * 0.2;
+            const eyeOffsetY = e.h * 0.25;
+            const pupilSize = eyeSize * 0.5;
+            const pupilOffset = eyeSize * 0.25;
+            const mouthWidth = e.w * 0.4;
+            const mouthHeight = Math.max(2, e.h * 0.1);
+            const mouthY = e.h * 0.7;
+            const mouthX = e.w * 0.3;
+
             // 敌人眼睛
             this.ctx.fillStyle = '#fff';
-            this.ctx.fillRect(e.x + 8, e.y + 10, 8, 8);
-            this.ctx.fillRect(e.x + 24, e.y + 10, 8, 8);
+            this.ctx.fillRect(e.x + eyeOffsetX, e.y + eyeOffsetY, eyeSize, eyeSize);
+            this.ctx.fillRect(e.x + e.w - eyeOffsetX - eyeSize, e.y + eyeOffsetY, eyeSize, eyeSize);
 
             // 瞳孔
             this.ctx.fillStyle = '#000';
-            this.ctx.fillRect(e.x + 10, e.y + 12, 4, 4);
-            this.ctx.fillRect(e.x + 26, e.y + 12, 4, 4);
+            this.ctx.fillRect(e.x + eyeOffsetX + pupilOffset, e.y + eyeOffsetY + pupilOffset, pupilSize, pupilSize);
+            this.ctx.fillRect(e.x + e.w - eyeOffsetX - eyeSize + pupilOffset, e.y + eyeOffsetY + pupilOffset, pupilSize, pupilSize);
 
             // 嘴巴
             this.ctx.fillStyle = '#000';
-            this.ctx.fillRect(e.x + 12, e.y + 28, 16, 4);
+            this.ctx.fillRect(e.x + mouthX, e.y + mouthY, mouthWidth, mouthHeight);
         });
     }
 

@@ -854,7 +854,9 @@ body {
   border: 1px solid var(--color-gray-700);
 }
 
-/* 响应式设计 */
+/* ========== 移动端优化设计 ========== */
+
+/* 平板和大屏手机 (768px - 1200px) */
 @media (max-width: 1200px) {
   .container {
     grid-template-columns: 280px 1fr;
@@ -878,6 +880,7 @@ body {
   }
 }
 
+/* 中等屏幕手机 (600px - 768px) */
 @media (max-width: 768px) {
   .container {
     grid-template-columns: 1fr;
@@ -888,7 +891,7 @@ body {
       "history"
       "tutorial"
       "footer";
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
 
   .game-board-section {
@@ -901,11 +904,11 @@ body {
   }
 
   body {
-    padding: var(--space-2);
+    padding: var(--space-3) var(--space-2);
   }
 
   .header {
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-3);
   }
 
   .back-button {
@@ -934,7 +937,8 @@ body {
   }
 
   .board {
-    max-width: 300px;
+    max-width: 340px;
+    gap: var(--space-3);
   }
 
   .cell {
@@ -955,45 +959,467 @@ body {
 
   .control-btn {
     flex: 1 1 calc(50% - var(--space-2));
-    min-width: 120px;
+    min-width: 140px;
   }
 }
 
-@media (max-width: 480px) {
+/* 小屏手机 (480px - 600px) */
+@media (max-width: 600px) {
+  body {
+    padding: var(--space-2);
+  }
+
+  .container {
+    gap: var(--space-2);
+  }
+
+  .header {
+    padding: var(--space-3);
+    border-radius: var(--radius-xl);
+  }
+
+  .back-button {
+    font-size: var(--font-size-xs);
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+
   .header h1 {
     font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-1);
   }
 
   .subtitle {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
+  }
+
+  /* 棋盘适配小屏幕 */
+  .game-board-container {
+    padding: var(--space-3);
   }
 
   .board {
-    max-width: 280px;
-    gap: var(--space-3);
+    max-width: 100%;
+    gap: var(--space-2);
+  }
+
+  .cell {
+    font-size: 2rem;
+    border-radius: var(--radius-md);
+  }
+
+  /* 难度选择器优化 */
+  .difficulty-selector {
+    padding: var(--space-3);
+  }
+
+  .difficulty-selector h3 {
+    font-size: var(--font-size-base);
+  }
+
+  .difficulty-buttons {
+    gap: var(--space-2);
+  }
+
+  .difficulty-btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-xs);
+    min-width: 90px;
+    min-height: 50px;
+  }
+
+  .difficulty-btn i {
+    font-size: var(--font-size-base);
+  }
+
+  .difficulty-description {
+    font-size: var(--font-size-xs);
+    padding: var(--space-3);
+  }
+
+  /* 控制按钮优化 - 确保触摸目标至少44x44px */
+  .board-controls {
+    gap: var(--space-2);
+  }
+
+  .control-btn {
+    flex: 1 1 calc(50% - var(--space-2));
+    min-width: 100px;
+    min-height: 48px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+
+  .control-btn i {
+    font-size: var(--font-size-sm);
+  }
+
+  /* 游戏信息面板优化 */
+  .game-info,
+  .history-section {
+    padding: var(--space-3);
+  }
+
+  .player-turn {
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .player-icon {
+    width: 44px;
+    height: 44px;
+    font-size: var(--font-size-xl);
+  }
+
+  .player-name {
+    font-size: var(--font-size-base);
+  }
+
+  .turn-label {
+    font-size: var(--font-size-xs);
+  }
+
+  /* 统计信息网格优化 */
+  .stats-grid {
+    gap: var(--space-2);
+  }
+
+  .stat-item {
+    padding: var(--space-2);
+  }
+
+  .stat-label {
+    font-size: var(--font-size-xs);
+  }
+
+  .stat-value {
+    font-size: var(--font-size-lg);
+  }
+
+  /* 游戏状态文字 */
+  .game-status h3 {
+    font-size: var(--font-size-sm);
+  }
+
+  .status-text {
+    font-size: var(--font-size-base);
+    padding: var(--space-2);
+  }
+
+  /* 历史记录优化 */
+  .history-section h3 {
+    font-size: var(--font-size-base);
+  }
+
+  .history-list {
+    max-height: 150px;
+  }
+
+  .history-item {
+    padding: var(--space-2);
+    font-size: var(--font-size-xs);
+  }
+
+  /* 教程面板优化 */
+  .game-tutorial > h3 {
+    font-size: var(--font-size-base);
+  }
+
+  .tutorial-content,
+  .ai-info {
+    padding: var(--space-3);
+  }
+
+  .tutorial-step {
+    margin-bottom: var(--space-3);
+  }
+
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: var(--font-size-xs);
+  }
+
+  .step-text {
+    font-size: var(--font-size-xs);
+  }
+
+  .ai-info h4 {
+    font-size: var(--font-size-sm);
+  }
+
+  .ai-info li {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* 超小屏手机 (375px - 480px) - iPhone SE 等 */
+@media (max-width: 480px) {
+  body {
+    padding: var(--space-1);
+  }
+
+  .container {
+    gap: var(--space-2);
+  }
+
+  /* 头部进一步压缩 */
+  .header {
+    padding: var(--space-2) var(--space-2) var(--space-3);
+  }
+
+  .back-button {
+    font-size: 0.7rem;
+    padding: var(--space-1) var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .back-button i {
+    font-size: 0.7rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: var(--font-size-sm);
+  }
+
+  /* 棋盘最大化利用屏幕宽度 */
+  .game-board-container {
+    padding: var(--space-2);
+  }
+
+  .board {
+    gap: var(--space-1);
+  }
+
+  .cell {
+    font-size: 1.75rem;
+    border-radius: var(--radius-sm);
+    min-height: 48px; /* 确保触摸目标足够大 */
+  }
+
+  /* 难度按钮垂直排列以获得更大的触摸区域 */
+  .difficulty-buttons {
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .difficulty-btn {
+    width: 100%;
+    min-width: unset;
+    min-height: 44px;
+    flex-direction: row;
+    justify-content: center;
+    padding: var(--space-2);
+  }
+
+  /* 控制按钮全宽排列 */
+  .control-btn {
+    flex: 1 1 100%;
+    min-width: unset;
+    min-height: 44px;
+  }
+
+  /* 玩家图标缩小 */
+  .player-icon {
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-size-lg);
+  }
+
+  .player-name {
+    font-size: var(--font-size-sm);
+  }
+
+  /* 统计值缩小 */
+  .stat-value {
+    font-size: var(--font-size-base);
+  }
+
+  /* 页脚简化 */
+  .footer {
+    font-size: var(--font-size-xs);
+    padding: var(--space-3) 0;
+  }
+
+  .footer-links {
+    font-size: 0.65rem;
+    gap: var(--space-2);
+  }
+
+  .footer-links span {
+    padding: var(--space-1) var(--space-2);
+  }
+}
+
+/* 极小屏 (≤375px) - iPhone SE, iPhone 5/5s 等 */
+@media (max-width: 375px) {
+  body {
+    padding: 0;
+  }
+
+  .container {
+    gap: var(--space-1);
+  }
+
+  /* 移除一些内边距以节省空间 */
+  .header,
+  .game-board-container,
+  .game-info,
+  .history-section,
+  .difficulty-selector {
+    border-radius: var(--radius-md);
+  }
+
+  .header {
+    padding: var(--space-2);
+  }
+
+  .game-board-container,
+  .game-info,
+  .history-section,
+  .tutorial-content,
+  .ai-info {
+    padding: var(--space-2);
+  }
+
+  .difficulty-selector {
+    padding: var(--space-2);
+  }
+
+  /* 棋盘字体进一步缩小但保持可读性 */
+  .cell {
+    font-size: 1.5rem;
+    min-height: 44px;
+  }
+
+  /* 简化难度选择 */
+  .difficulty-selector h3 {
+    font-size: var(--font-size-sm);
+  }
+
+  .difficulty-btn {
+    font-size: 0.75rem;
+    padding: var(--space-1) var(--space-2);
+    min-height: 42px;
+  }
+
+  .difficulty-btn i {
+    font-size: var(--font-size-sm);
+    margin-right: var(--space-1);
+  }
+
+  /* 控制按钮文字简化 */
+  .control-btn {
+    font-size: 0.75rem;
+    padding: var(--space-2);
+    min-height: 42px;
+  }
+
+  .control-btn i {
+    font-size: var(--font-size-xs);
+  }
+
+  /* 玩家回合指示器紧凑化 */
+  .player-turn {
+    padding: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .player-icon {
+    width: 32px;
+    height: 32px;
+    font-size: var(--font-size-base);
+  }
+
+  /* 统计网格紧凑化 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-1);
+  }
+
+  .stat-item {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+  }
+
+  .stat-value {
+    font-size: var(--font-size-sm);
+  }
+
+  /* 历史列表高度减小 */
+  .history-list {
+    max-height: 120px;
+  }
+
+  /* 教程步骤紧凑化 */
+  .tutorial-step {
+    margin-bottom: var(--space-2);
+  }
+
+  .step-number {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+
+  .step-text {
+    font-size: 0.7rem;
+    line-height: 1.4;
+  }
+
+  /* 页脚隐藏部分内容以节省空间 */
+  .footer {
+    padding: var(--space-2) 0;
+  }
+
+  .footer-links {
+    display: none; /* 在极小屏幕隐藏快捷键提示 */
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .container {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "header header"
+      "game-info game-board"
+      "history game-board"
+      "tutorial footer";
+    gap: var(--space-2);
+  }
+
+  .header {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .header h1 {
+    font-size: var(--font-size-xl);
+  }
+
+  .board {
+    max-width: 250px;
   }
 
   .cell {
     font-size: var(--font-size-2xl);
   }
 
-  .control-btn {
-    flex: 1 1 100%;
+  /* 在横屏模式下隐藏一些不太重要的内容 */
+  .tutorial-content,
+  .ai-info {
+    padding: var(--space-3);
   }
 
-  .difficulty-btn {
-    flex: 1 1 100%;
-    margin-bottom: var(--space-2);
-  }
-
-  .player-icon {
-    width: 40px;
-    height: 40px;
-    font-size: var(--font-size-xl);
-  }
-
-  .player-name {
-    font-size: var(--font-size-lg);
+  .history-list {
+    max-height: 100px;
   }
 }
 
@@ -1148,5 +1574,166 @@ body {
 
   .difficulty-btn:active {
     transform: scale(0.95);
+  }
+
+  /* 增加触摸反馈的视觉提示 */
+  .cell:active:not(.occupied) {
+    background: var(--color-primary);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .control-btn:active {
+    opacity: 0.8;
+  }
+}
+
+/* ========== 移动端安全区域适配 (iPhone X 及以上) ========== */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .header {
+    padding-top: calc(var(--space-6) + env(safe-area-inset-top));
+  }
+
+  .footer {
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+}
+
+/* 移动端横屏时的安全区域适配 */
+@supports (padding: env(safe-area-inset-top)) {
+  @media (orientation: landscape) {
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .header {
+      padding-top: var(--space-4);
+    }
+  }
+}
+
+/* ========== 移动端文本选择优化 ========== */
+/* 防止双击选中文本，提升游戏体验 */
+.board,
+.cell,
+.control-btn,
+.difficulty-btn {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 允许历史记录和教程中的文本选择 */
+.history-item,
+.step-text,
+.ai-info li,
+.difficulty-description {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* ========== 移动端滚动优化 ========== */
+.history-list {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* 移动端滚动条隐藏但保持功能 */
+.history-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.history-list {
+  scrollbar-width: none; /* Firefox */
+}
+
+/* ========== 移动端焦点状态优化 ========== */
+/* 在触摸设备上移除焦点环，因为不需要键盘导航指示 */
+@media (hover: none) and (pointer: coarse) {
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: none;
+  }
+
+  /* 但保留键盘用户的焦点指示 */
+  @media (hover: hover) {
+    :focus {
+      outline: 3px solid var(--color-primary-light);
+      outline-offset: 2px;
+    }
+  }
+}
+
+/* ========== 移动端按钮触摸区域扩大 ========== */
+/* 确保所有可点击元素至少有 44x44px 的触摸区域 */
+@media (max-width: 768px) {
+  .back-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .difficulty-btn {
+    min-height: 48px;
+  }
+
+  .control-btn {
+    min-height: 48px;
+  }
+
+  .cell {
+    min-height: 48px;
+  }
+
+  #resetStatsBtn {
+    min-height: 40px;
+  }
+}
+
+/* ========== 移动端字体渲染优化 ========== */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ========== 移动端性能优化 ========== */
+.board,
+.cell,
+.control-btn,
+.difficulty-btn {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* ========== 移动端输入防抖 ========== */
+/* 防止快速点击导致的问题 */
+.cell,
+.control-btn,
+.difficulty-btn,
+.back-button,
+#resetStatsBtn {
+  touch-action: manipulation;
+}
+
+/* ========== 移动端视口高度修复 ========== */
+/* 修复移动浏览器地址栏导致的高度问题 */
+@media (max-width: 768px) {
+  .container {
+    min-height: 100vh;
+    min-height: 100dvh; /* 动态视口高度 */
   }
 }
