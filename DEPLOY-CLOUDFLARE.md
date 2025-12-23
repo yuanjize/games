@@ -34,8 +34,12 @@ npm install -g wrangler
 # 登录
 wrangler login
 
-# 部署到 Cloudflare Pages
-wrangler pages deploy . --project-name=web-games-collection
+# 部署到 Cloudflare Pages (两种方式任选其一)
+# 方式1: 使用 pages deploy 命令
+npx wrangler pages deploy . --project-name=web-games-collection
+
+# 方式2: 使用 deploy 命令 (需要 wrangler.jsonc 配置文件)
+npx wrangler deploy
 ```
 
 ## 项目结构
