@@ -6,9 +6,10 @@ echo ""
 # 检查必要的文件
 echo "1. 检查文件是否存在:"
 echo "   package.json: $(test -f package.json && echo "✓ 存在" || echo "✗ 不存在")"
-echo "   _wrangler.json: $(test -f _wrangler.json && echo "✓ 存在" || echo "✗ 不存在")"
 echo "   index.html: $(test -f index.html && echo "✓ 存在" || echo "✗ 不存在")"
 echo "   style.css: $(test -f style.css && echo "✓ 存在" || echo "✗ 不存在")"
+echo "   _headers: $(test -f _headers && echo "✓ 存在" || echo "✗ 不存在")"
+echo "   _routes.json: $(test -f _routes.json && echo "✓ 存在" || echo "✗ 不存在")"
 echo ""
 
 # 检查游戏文件夹
