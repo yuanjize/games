@@ -191,6 +191,7 @@ body {
   color: var(--color-text-primary);
   line-height: var(--line-height-normal);
   min-height: 100vh;
+  min-height: 100dvh; /* 使用动态视口高度以适配移动浏览器地址栏 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -439,6 +440,57 @@ body {
   box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
 }
 
+/* ========== 回合指示器动画 ========== */
+.player-turn {
+  position: relative;
+}
+
+.player-turn::before {
+  content: '';
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-4);
+  bottom: var(--space-4);
+  width: 4px;
+  background: var(--color-gray-700);
+  border-radius: var(--radius-full);
+  transition: all 0.4s ease;
+}
+
+.player-turn.active-x::before {
+  background: var(--color-player-x);
+  box-shadow: 0 0 10px var(--color-player-x);
+  animation: turnPulseX 1.5s ease-in-out infinite;
+}
+
+.player-turn.active-o::before {
+  background: var(--color-player-o);
+  box-shadow: 0 0 10px var(--color-player-o);
+  animation: turnPulseO 1.5s ease-in-out infinite;
+}
+
+@keyframes turnPulseX {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scaleY(0.85);
+  }
+}
+
+@keyframes turnPulseO {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scaleY(0.85);
+  }
+}
+
 .player-icon {
   width: 50px;
   height: 50px;
@@ -448,6 +500,39 @@ body {
   justify-content: center;
   font-size: var(--font-size-2xl);
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+/* 当前玩家的图标高亮 */
+.player-turn.active-x .player-icon {
+  animation: iconGlowX 1.5s ease-in-out infinite;
+}
+
+.player-turn.active-o .player-icon {
+  animation: iconGlowO 1.5s ease-in-out infinite;
+}
+
+@keyframes iconGlowX {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  }
+}
+
+@keyframes iconGlowO {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
 }
 
 .player-x {
@@ -724,28 +809,36 @@ body {
   cursor: default;
 }
 
-/* ========== 棋子出现动画 ========== */
+/* ========== 棋子落子缩放动画 - 第1轮优化 ========== */
 .cell.x {
   color: var(--color-player-x);
   text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
-  animation: placeX 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: placeX 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 .cell.o {
   color: var(--color-player-o);
   text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-  animation: placeO 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: placeO 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* X 棋子动画 - 从无到有，带旋转和缩放 */
+/* X 棋子动画 - 从小到大弹出，带弹性效果 */
 @keyframes placeX {
   0% {
     opacity: 0;
-    transform: scale(0) rotate(-180deg);
+    transform: scale(0) rotate(-90deg);
+    filter: blur(4px);
   }
-  50% {
+  40% {
     opacity: 1;
-    transform: scale(1.2) rotate(-10deg);
+    transform: scale(1.3) rotate(10deg);
+    filter: blur(0px);
+  }
+  60% {
+    transform: scale(0.9) rotate(-5deg);
+  }
+  80% {
+    transform: scale(1.05) rotate(2deg);
   }
   100% {
     opacity: 1;
@@ -753,15 +846,23 @@ body {
   }
 }
 
-/* O 棋子动画 - 从中心扩散 */
+/* O 棋子动画 - 从小到大弹出，带弹性效果 */
 @keyframes placeO {
   0% {
     opacity: 0;
     transform: scale(0);
+    filter: blur(4px);
   }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.1);
+  40% {
+    opacity: 1;
+    transform: scale(1.3);
+    filter: blur(0px);
+  }
+  60% {
+    transform: scale(0.9);
+  }
+  80% {
+    transform: scale(1.05);
   }
   100% {
     opacity: 1;
@@ -769,9 +870,9 @@ body {
   }
 }
 
-/* ========== 胜利连线动画 ========== */
+/* ========== 胜利路线高亮动画 - 第1轮优化 ========== */
 .cell.winning {
-  animation: winPulse 1.5s ease-in-out infinite;
+  animation: winPulse 1.2s ease-in-out infinite;
   background: linear-gradient(135deg, var(--color-win-line) 0%, #f59e0b 100%);
   color: white;
   text-shadow: none;
@@ -785,7 +886,17 @@ body {
   inset: -3px;
   background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   border-radius: inherit;
-  animation: shimmer 2s infinite;
+  animation: shimmer 1.5s infinite;
+  z-index: -1;
+}
+
+.cell.winning::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  animation: winGlow 1.2s ease-in-out infinite;
   z-index: -1;
 }
 
@@ -795,17 +906,83 @@ body {
     box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
   }
   50% {
-    transform: scale(1.08);
-    box-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+    transform: scale(1.1);
+    box-shadow: 0 0 45px rgba(251, 191, 36, 0.9);
   }
 }
 
 @keyframes shimmer {
   0% {
     transform: translateX(-100%) rotate(45deg);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
   }
   100% {
     transform: translateX(200%) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+@keyframes winGlow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* ========== 新游戏按钮旋转动画 - 第1轮优化 ========== */
+.control-btn.primary {
+  background: var(--color-primary);
+  color: white;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.control-btn.primary:hover:not(:disabled),
+.control-btn.primary:focus:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+.control-btn.primary:active {
+  animation: buttonSpin 0.4s ease-out;
+  transform: scale(0.95);
+}
+
+@keyframes buttonSpin {
+  0% {
+    transform: scale(0.95) rotate(0deg);
+  }
+  50% {
+    transform: scale(0.9) rotate(180deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+  }
+}
+
+/* 按钮图标旋转效果 */
+.control-btn.primary:active i {
+  animation: iconSpin 0.4s ease-out;
+}
+
+@keyframes iconSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(0.8);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
   }
 }
 
@@ -895,13 +1072,6 @@ body {
 .control-btn.primary {
   background: var(--color-primary);
   color: white;
-}
-
-.control-btn.primary:hover:not(:disabled),
-.control-btn.primary:focus:not(:disabled) {
-  background: var(--color-primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
 .control-btn.secondary {
@@ -1552,7 +1722,7 @@ body {
   }
 }
 
-/* 极小屏 (≤375px) - iPhone SE, iPhone 5/5s 等 */
+/* 极小屏 (<=375px) - iPhone SE, iPhone 5/5s 等 */
 @media (max-width: 375px) {
   body {
     padding: 0;

@@ -77,11 +77,29 @@
     --radius-xl: 0.75rem;
     --radius-2xl: 1rem;
     --radius-full: 9999px;
+
+    /* 安全区域变量 */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+
+    /* 游戏特效颜色 - 第1轮视觉优化 */
+    --glow-blue: rgba(59, 130, 246, 0.6);
+    --glow-green: rgba(16, 185, 129, 0.6);
+    --glow-yellow: rgba(245, 158, 11, 0.6);
+    --glow-red: rgba(239, 68, 68, 0.6);
+    --glow-purple: rgba(139, 92, 246, 0.6);
+    --glow-white: rgba(255, 255, 255, 0.8);
 }
 
 body {
     margin: 0;
     padding: 0;
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
     font-family: var(--font-primary);
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -92,9 +110,6 @@ body {
     min-height: 100dvh; /* 动态视口高度，适配移动端 */
     line-height: var(--leading-normal);
     font-size: var(--text-base);
-    /* 移动端安全区域适配 */
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
 }
 
 .container {
@@ -151,8 +166,8 @@ body {
     font-weight: 500;
     transition: all 150ms ease-in-out;
     position: absolute;
-    top: var(--space-6);
-    left: var(--space-6);
+    top: calc(var(--space-6) + var(--safe-area-inset-top));
+    left: calc(var(--space-6) + var(--safe-area-inset-left));
     z-index: 10;
 }
 
@@ -239,12 +254,30 @@ body {
         0 20px 25px -5px rgba(0, 0, 0, 0.3),
         0 0 20px rgba(59, 130, 246, var(--opacity-20));
     margin: 0 auto;
+    /* 第1轮视觉优化: 添加发光动画 */
+    animation: containerGlow 3s ease-in-out infinite alternate;
+}
+
+/* 游戏容器发光动画 */
+@keyframes containerGlow {
+    0% {
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.3),
+            0 0 20px rgba(59, 130, 246, 0.2);
+    }
+    100% {
+        box-shadow:
+            0 20px 25px -5px rgba(0, 0, 0, 0.3),
+            0 0 30px rgba(59, 130, 246, 0.4);
+    }
 }
 
 #gameCanvas {
     width: 100%;
     height: 100%;
     display: block;
+    /* 第1轮视觉优化: 添加平滑过渡 */
+    transition: box-shadow 0.2s ease-out;
 }
 
 /* 屏幕覆盖层 */
@@ -635,8 +668,8 @@ body {
 
     .back-button {
         position: absolute;
-        top: var(--space-4);
-        left: var(--space-3);
+        top: calc(var(--space-4) + var(--safe-area-inset-top));
+        left: calc(var(--space-3) + var(--safe-area-inset-left));
         margin-bottom: 0;
         padding: var(--space-3) var(--space-4);
         min-height: 44px;
@@ -769,12 +802,12 @@ body {
     }
 
     .header {
-        padding-top: var(--space-10);
+        padding-top: calc(var(--space-10) + var(--safe-area-inset-top));
     }
 
     .back-button {
-        top: var(--space-2);
-        left: var(--space-2);
+        top: calc(var(--space-2) + var(--safe-area-inset-top));
+        left: calc(var(--space-2) + var(--safe-area-inset-left));
         padding: var(--space-2) var(--space-3);
         min-width: 40px;
         min-height: 40px;
@@ -918,7 +951,7 @@ body {
     }
 
     .header {
-        padding-top: var(--space-4);
+        padding-top: calc(var(--space-4) + var(--safe-area-inset-top));
     }
 
     .header h1 {
@@ -930,8 +963,8 @@ body {
     }
 
     .back-button {
-        top: var(--space-2);
-        left: var(--space-2);
+        top: calc(var(--space-2) + var(--safe-area-inset-top));
+        left: calc(var(--space-2) + var(--safe-area-inset-left));
         padding: var(--space-2) var(--space-3);
         min-height: 36px;
     }
@@ -1096,13 +1129,22 @@ body {
     .btn,
     .instruction-card,
     .screen-overlay,
-    .score-item span span {
+    .score-item span span,
+    .game-container {
         transition: none;
         animation: none;
     }
 
     @keyframes fadeIn {
         from, to { opacity: 1; }
+    }
+
+    @keyframes containerGlow {
+        0%, 100% {
+            box-shadow:
+                0 20px 25px -5px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(59, 130, 246, 0.2);
+        }
     }
 }
 
@@ -1132,4 +1174,51 @@ body {
     .footer {
         color: black;
     }
+}
+
+/* 第1轮视觉优化: 额外的动画效果 */
+
+/* 道具收集时的动画效果 */
+@keyframes powerupCollect {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+/* 砖块破碎时的屏幕震动效果 */
+@keyframes screenShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+/* 分数增加时的放大动画 */
+@keyframes scoreIncrease {
+    0% {
+        transform: scale(1);
+        color: var(--text-primary);
+    }
+    50% {
+        transform: scale(1.3);
+        color: var(--brand-green);
+    }
+    100% {
+        transform: scale(1);
+        color: var(--text-primary);
+    }
+}
+
+/* 生命减少时的闪烁动画 */
+@keyframes lifeLost {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; color: var(--brand-red); }
 }

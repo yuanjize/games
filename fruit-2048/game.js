@@ -1,6 +1,6 @@
 /**
- * Fruit 2048 - Complete Implementation with Modern UI/UX
- * 整合增强版的所有功能，包括模态框、音效、移动端控制和可访问性
+ * Fruit 2048 - 完整实现，包含现代 UI/UX 交互增强
+ * 第1轮优化：缩放弹跳动画、连击检测系统、新水果出现动画、分数飘字效果
  */
 
 class FruitGame {
@@ -12,6 +12,11 @@ class FruitGame {
         this.gameOver = false;
         this.soundEnabled = true;
         this.nextFruit = this.getRandomBasicFruit();
+
+        // 连击系统
+        this.comboCount = 0;
+        this.comboTimer = null;
+        this.comboTimeout = 2000; // 2秒内连续合并才算连击
 
         // 音频上下文 - 单例模式，避免重复创建
         this.audioContext = null;
@@ -76,6 +81,13 @@ class FruitGame {
         this.nextFruit = this.getRandomBasicFruit();
         this.previousScore = 0;
 
+        // 重置连击系统
+        this.comboCount = 0;
+        if (this.comboTimer) {
+            clearTimeout(this.comboTimer);
+            this.comboTimer = null;
+        }
+
         // 添加初始水果
         this.addRandomFruit();
         this.addRandomFruit();
@@ -132,11 +144,15 @@ class FruitGame {
 
         // 按钮事件绑定
         if (this.elements.restartBtn) {
-            this.elements.restartBtn.addEventListener('click', () => this.reset());
+            this.elements.restartBtn.addEventListener('click', () => {
+                this.playHapticFeedback();
+                this.reset();
+            });
         }
 
         if (this.elements.instructionsBtn) {
             this.elements.instructionsBtn.addEventListener('click', () => {
+                this.playHapticFeedback();
                 if (this.elements.instructionsModal) {
                     this.elements.instructionsModal.classList.add('active');
                 }
@@ -145,6 +161,7 @@ class FruitGame {
 
         if (this.elements.instructionsClose) {
             this.elements.instructionsClose.addEventListener('click', () => {
+                this.playHapticFeedback();
                 if (this.elements.instructionsModal) {
                     this.elements.instructionsModal.classList.remove('active');
                 }
@@ -152,21 +169,31 @@ class FruitGame {
         }
 
         if (this.elements.soundToggle) {
-            this.elements.soundToggle.addEventListener('click', () => this.toggleSound());
+            this.elements.soundToggle.addEventListener('click', () => {
+                this.playHapticFeedback();
+                this.toggleSound();
+            });
         }
 
         if (this.elements.playAgainBtn) {
-            this.elements.playAgainBtn.addEventListener('click', () => this.reset());
+            this.elements.playAgainBtn.addEventListener('click', () => {
+                this.playHapticFeedback();
+                this.reset();
+            });
         }
 
         if (this.elements.shareBtn) {
-            this.elements.shareBtn.addEventListener('click', () => this.shareScore());
+            this.elements.shareBtn.addEventListener('click', () => {
+                this.playHapticFeedback();
+                this.shareScore();
+            });
         }
 
         // Footer 游戏说明链接
         if (this.elements.creditsLink) {
             this.elements.creditsLink.addEventListener('click', (e) => {
                 e.preventDefault();
+                this.playHapticFeedback();
                 if (this.elements.instructionsModal) {
                     this.elements.instructionsModal.classList.add('active');
                 }
@@ -208,6 +235,8 @@ class FruitGame {
 
                 // 最小滑动距离阈值（稍微降低以提高灵敏度）
                 if (Math.max(absDx, absDy) > 20) {
+                    // 滑动时提供触觉反馈
+                    this.playHapticFeedback();
                     if (absDx > absDy) {
                         this.move(dx > 0 ? 'right' : 'left');
                     } else {
@@ -217,11 +246,28 @@ class FruitGame {
             });
         }
 
-        // 移动端按钮控制
+        // 移动端按钮控制 - 增强的触摸事件处理
         if (this.elements.mobileBtns) {
             this.elements.mobileBtns.forEach(btn => {
+                // 触摸事件 - 使用passive: false以允许preventDefault
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.gameOver) return;
+                    btn.classList.add('active');
+                    this.playHapticFeedback();
+                    const direction = btn.getAttribute('data-direction');
+                    this.move(direction);
+                }, { passive: false });
+
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    btn.classList.remove('active');
+                }, { passive: false });
+
+                // 桌面点击支持（保留）
                 btn.addEventListener('click', (e) => {
                     if (this.gameOver) return;
+                    this.playHapticFeedback();
                     const direction = btn.getAttribute('data-direction');
                     this.move(direction);
                 });
@@ -255,6 +301,16 @@ class FruitGame {
         }, { passive: false });
     }
 
+    /**
+     * 触觉反馈（如果设备支持）
+     * 参考贪吃蛇游戏实现
+     */
+    playHapticFeedback() {
+        if ('vibrate' in navigator && this.soundEnabled) {
+            navigator.vibrate(10);
+        }
+    }
+
     getRandomBasicFruit() {
         // 返回基本水果（苹果或橙子）
         const basicFruits = this.fruits.slice(0, 2);
@@ -274,7 +330,7 @@ class FruitGame {
             this.grid[r][c] = {
                 ...this.nextFruit,
                 id: Date.now() + Math.random(),
-                isNew: true
+                isNew: true  // 标记为新水果，用于弹出动画
             };
 
             // 生成下一个水果
@@ -293,8 +349,91 @@ class FruitGame {
         }
     }
 
+    /**
+     * 显示连击提示
+     */
+    showCombo(comboLevel) {
+        // 移除旧的连击显示
+        const oldCombo = this.elements.board.querySelector('.combo-display');
+        if (oldCombo) oldCombo.remove();
+
+        const comboDisplay = document.createElement('div');
+        comboDisplay.className = 'combo-display';
+
+        const comboText = document.createElement('div');
+        comboText.className = 'combo-text';
+        comboText.textContent = 'Combo!';
+
+        const comboNumber = document.createElement('div');
+        comboNumber.className = 'combo-number';
+        comboNumber.textContent = `x${comboLevel}`;
+
+        comboDisplay.appendChild(comboText);
+        comboDisplay.appendChild(comboNumber);
+        this.elements.board.appendChild(comboDisplay);
+
+        // 动画结束后移除元素
+        setTimeout(() => {
+            if (comboDisplay.parentNode) {
+                comboDisplay.remove();
+            }
+        }, 800);
+    }
+
+    /**
+     * 显示分数飘字效果
+     */
+    showFloatingScore(x, y, points, isBonus = false) {
+        const floatingScore = document.createElement('div');
+
+        // 根据分数大小确定样式
+        let sizeClass = 'small';
+        if (points >= 512) sizeClass = 'extra-large';
+        else if (points >= 128) sizeClass = 'large';
+        else if (points >= 32) sizeClass = 'medium';
+
+        if (isBonus) {
+            floatingScore.className = 'combo-bonus-score';
+            floatingScore.textContent = `+${points} 连击加成!`;
+        } else {
+            floatingScore.className = `floating-score ${sizeClass}`;
+            floatingScore.textContent = `+${points}`;
+        }
+
+        // 设置位置
+        floatingScore.style.left = `${x}px`;
+        floatingScore.style.top = `${y}px`;
+
+        document.body.appendChild(floatingScore);
+
+        // 动画结束后移除元素
+        setTimeout(() => {
+            if (floatingScore.parentNode) {
+                floatingScore.remove();
+            }
+        }, isBonus ? 1200 : 1000);
+    }
+
+    /**
+     * 重置连击计时器
+     */
+    resetComboTimer() {
+        if (this.comboTimer) {
+            clearTimeout(this.comboTimer);
+        }
+        this.comboTimer = setTimeout(() => {
+            // 连击超时，重置连击计数
+            if (this.comboCount > 0) {
+                console.log(`连击结束！最高连击: x${this.comboCount}`);
+            }
+            this.comboCount = 0;
+        }, this.comboTimeout);
+    }
+
     move(direction) {
         let moved = false;
+        let mergeCount = 0;  // 本次移动的合并数量
+        let mergeInfo = [];  // 存储合并信息用于分数飘字
 
         // 旋转网格到标准方向（左移动）
         const rotateGrid = (grid) => {
@@ -329,14 +468,26 @@ class FruitGame {
                     const nextLevel = Math.min(merged.level + 1, this.fruits.length);
                     const nextFruit = this.fruits[nextLevel - 1];
 
-                    newRow.push({
+                    const mergedCell = {
                         ...nextFruit,
                         id: Date.now() + Math.random(),
-                        isMerge: true
+                        isMerge: true,  // 标记为合并，用于弹跳动画
+                        mergeRow: r,
+                        mergeCol: newRow.length
+                    };
+
+                    newRow.push(mergedCell);
+
+                    // 记录合并信息
+                    mergeInfo.push({
+                        points: nextFruit.score,
+                        row: r,
+                        col: newRow.length - 1
                     });
 
                     this.score += nextFruit.score;
                     moved = true;
+                    mergeCount++;
 
                     // 播放合并音效
                     if (this.soundEnabled) this.playSound('merge');
@@ -364,6 +515,53 @@ class FruitGame {
         for(let i = 0; i < restoreRotations; i++) this.grid = rotateGrid(this.grid);
 
         if (moved) {
+            // 处理连击系统
+            if (mergeCount > 0) {
+                this.comboCount++;
+                this.resetComboTimer();
+
+                // 显示连击提示
+                if (this.comboCount >= 2) {
+                    this.showCombo(this.comboCount);
+                    // 连击加成分数
+                    const comboBonus = Math.floor(mergeInfo.reduce((sum, info) => sum + info.points, 0) * 0.5 * this.comboCount);
+                    if (comboBonus > 0) {
+                        this.score += comboBonus;
+
+                        // 获取棋盘位置用于显示连击加成
+                        const boardRect = this.elements.board.getBoundingClientRect();
+                        this.showFloatingScore(
+                            boardRect.left + boardRect.width / 2,
+                            boardRect.top + boardRect.height / 2,
+                            comboBonus,
+                            true
+                        );
+                    }
+                }
+
+                // 显示分数飘字
+                const boardRect = this.elements.board.getBoundingClientRect();
+                const cellSize = boardRect.width / this.gridSize;
+
+                // 延迟显示分数飘字，等待合并动画
+                setTimeout(() => {
+                    mergeInfo.forEach((info, index) => {
+                        // 计算合并后的实际位置（考虑旋转恢复）
+                        const actualPos = this.getActualPosition(info.row, info.col, rotations);
+                        const x = boardRect.left + actualPos.col * cellSize + cellSize / 2;
+                        const y = boardRect.top + actualPos.row * cellSize + cellSize / 2;
+
+                        // 稍微错开每个分数飘字的显示时间
+                        setTimeout(() => {
+                            this.showFloatingScore(x, y, info.points);
+                        }, index * 100);
+                    });
+                }, 200);
+            } else {
+                // 没有合并，重置连击
+                this.comboCount = 0;
+            }
+
             this.addRandomFruit();
             this.updateUI();
             this.render();
@@ -375,6 +573,22 @@ class FruitGame {
             // 播放无效移动音效
             if (this.soundEnabled) this.playSound('invalid');
         }
+    }
+
+    /**
+     * 获取合并位置在旋转恢复后的实际坐标
+     */
+    getActualPosition(row, col, rotations) {
+        let r = row, c = col;
+        // 逆向旋转恢复原始位置
+        const restoreRotations = (4 - rotations) % 4;
+        for(let i = 0; i < restoreRotations; i++) {
+            const newR = c;
+            const newC = this.gridSize - 1 - r;
+            r = newR;
+            c = newC;
+        }
+        return { row: r, col: c };
     }
 
     checkState() {
@@ -518,11 +732,13 @@ class FruitGame {
                     // 设置颜色
                     cell.style.color = fruit.color;
 
+                    // 新水果弹出动画
                     if (fruit.isNew) {
                         cell.classList.add('pop');
                         fruit.isNew = false;
                     }
 
+                    // 合并弹跳动画
                     if (fruit.isMerge) {
                         cell.classList.add('merge');
                         fruit.isMerge = false;
@@ -601,6 +817,11 @@ class FruitGame {
                 case 'invalid':
                     oscillator.frequency.setValueAtTime(275, this.audioContext.currentTime);
                     break;
+                // 连击音效
+                case 'combo':
+                    oscillator.frequency.setValueAtTime(550, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, this.audioContext.currentTime + 0.1);
+                    break;
             }
 
             gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
@@ -615,7 +836,7 @@ class FruitGame {
     }
 
     shareScore() {
-        const shareText = `我在水果2048游戏中获得了${this.score}分！快来挑战我吧！`;
+        const shareText = `我在水果2048游戏中获得了${this.score}分！最高连击x${this.comboCount}！快来挑战我吧！`;
 
         if (navigator.share) {
             navigator.share({
@@ -682,6 +903,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 调试信息
     console.log('水果2048游戏已初始化');
+    console.log('第1轮交互增强已启用：');
+    console.log('- 水果合并缩放弹跳动画');
+    console.log('- 连击检测系统');
+    console.log('- 新水果弹出动画');
+    console.log('- 分数飘字效果');
     console.log('操作说明：');
     console.log('- 方向键：移动水果');
     console.log('- R键：重新开始');

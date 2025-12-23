@@ -1,6 +1,7 @@
 /**
  * Minesweeper - Modern Class Implementation
  * Fully optimized version with bug fixes and performance improvements
+ * Round 1: Enhanced interaction feedback - flag animation, number reveal, error marking, victory celebration
  */
 
 class MinesweeperGame {
@@ -29,14 +30,17 @@ class MinesweeperGame {
         this.lastClickTime = 0;
         this.lastClickCell = null;
         this.clickThrottleDelay = 150;
-        this.longPressDelay = 450; // 缩短长按时间
+        this.longPressDelay = 450;
         this.touchMoved = false;
+
+        // 动画配置
+        this.animationsEnabled = true;
 
         // 游戏状态
         this.state = {
             difficulty: 'beginner',
             grid: [],
-            gameState: 'ready', // ready, playing, won, lost
+            gameState: 'ready',
             minesLeft: 10,
             time: 0,
             timerInterval: null,
@@ -51,6 +55,11 @@ class MinesweeperGame {
         // 双击检测
         this.lastDoubleClickTime = 0;
         this.doubleClickDelay = 300;
+
+        // 烟花效果
+        this.fireworksCanvas = null;
+        this.fireworksCtx = null;
+        this.fireworksAnimationId = null;
 
         this.init();
     }
@@ -91,7 +100,6 @@ class MinesweeperGame {
         if (!this.audioEnabled || !this.audioCtx) return;
 
         try {
-            // 恢复音频上下文（如果被暂停）
             if (this.audioCtx.state === 'suspended') {
                 this.audioCtx.resume();
             }
@@ -127,7 +135,6 @@ class MinesweeperGame {
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', () => this.handleDifficultyChange(btn));
 
-            // Enter键支持
             btn.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -152,14 +159,12 @@ class MinesweeperGame {
         const r = parseInt(focusedCell.dataset.r);
         const c = parseInt(focusedCell.dataset.c);
 
-        // F键：标记旗帜
         if (e.key === 'f' || e.key === 'F') {
             if (!focusedCell.classList.contains('revealed')) {
                 this.handleRightClick(r, c);
             }
         }
 
-        // 空格键：翻开格子
         if (e.key === ' ') {
             if (!focusedCell.classList.contains('revealed')) {
                 this.handleClick(r, c);
@@ -167,7 +172,6 @@ class MinesweeperGame {
             }
         }
 
-        // 方向键：导航
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
             this.navigateCell(r, c, e.key);
@@ -231,6 +235,7 @@ class MinesweeperGame {
      */
     reset() {
         this.stopTimer();
+        this.stopFireworks();
         this.state.time = 0;
         this.state.gameState = 'ready';
         this.updateTimer();
@@ -248,10 +253,8 @@ class MinesweeperGame {
             this.gameStatusElement.className = 'game-status';
         }
 
-        // 显示/隐藏移动端提示
         this.toggleMobileHint(this.isMobile);
 
-        // 设置游戏板样式
         this.boardElement.className = `game-board ${this.state.difficulty}`;
         this.boardElement.innerHTML = '';
 
@@ -286,10 +289,8 @@ class MinesweeperGame {
         cell.setAttribute('role', 'button');
         cell.setAttribute('aria-label', `行${r + 1}列${c + 1}，未翻开`);
 
-        // 移除button默认样式
         cell.style.cssText = '';
 
-        // 绑定事件
         this.attachCellEvents(cell, r, c);
 
         return cell;
@@ -312,13 +313,11 @@ class MinesweeperGame {
             if (this.smileBtn) this.smileBtn.className = 'fas fa-smile';
 
             if (e.button === 0 && !this.isTouch) {
-                // 检查双击
                 const now = Date.now();
                 const isDoubleClick = (now - this.lastDoubleClickTime) < this.doubleClickDelay &&
                                      this.lastClickCell === cell;
 
                 if (isDoubleClick && cell.classList.contains('revealed') && cell.textContent) {
-                    // 双击已翻开的数字格子
                     this.handleDoubleClick(r, c);
                 } else {
                     this.handleClick(r, c);
@@ -346,7 +345,6 @@ class MinesweeperGame {
             cell.addEventListener('touchstart', (e) => {
                 if (this.state.gameState === 'won' || this.state.gameState === 'lost') return;
 
-                // 只处理单点触控
                 if (e.touches.length === 1) {
                     this.touchStartTime = Date.now();
                     this.touchStartPos = {
@@ -360,7 +358,6 @@ class MinesweeperGame {
             }, { passive: true });
 
             cell.addEventListener('touchmove', (e) => {
-                // 检测是否移动超过阈值
                 if (e.touches.length === 1) {
                     const dx = Math.abs(e.touches[0].clientX - this.touchStartPos.x);
                     const dy = Math.abs(e.touches[0].clientY - this.touchStartPos.y);
@@ -373,23 +370,18 @@ class MinesweeperGame {
             cell.addEventListener('touchend', (e) => {
                 if (this.state.gameState === 'won' || this.state.gameState === 'lost') return;
 
-                // 恢复笑脸
                 if (this.smileBtn) this.smileBtn.className = 'fas fa-smile';
 
-                // 如果触摸移动了，不处理
                 if (this.touchMoved) return;
 
                 const touchDuration = Date.now() - this.touchStartTime;
 
                 if (touchDuration >= this.longPressDelay) {
-                    // 长按：标记旗帜
                     this.handleRightClick(r, c);
-                    // 提供震动反馈（如果支持）
                     if (navigator.vibrate) {
                         navigator.vibrate(50);
                     }
                 } else if (touchDuration > 50) {
-                    // 短按：翻开格子（避免误触）
                     this.handleClick(r, c);
                 }
             }, { passive: true });
@@ -400,7 +392,6 @@ class MinesweeperGame {
      * 处理左键点击
      */
     handleClick(r, c) {
-        // 节流控制
         const now = Date.now();
         if (now - this.lastClickTime < this.clickThrottleDelay) {
             return;
@@ -425,7 +416,7 @@ class MinesweeperGame {
     }
 
     /**
-     * 处理右键点击（标记旗帜）
+     * 处理右键点击（标记旗帜）- 增强版带动画
      */
     handleRightClick(r, c) {
         if (this.state.gameState === 'won' || this.state.gameState === 'lost') return;
@@ -435,17 +426,31 @@ class MinesweeperGame {
         const cell = this.state.grid[r][c];
         if (cell.isRevealed) return;
 
-        cell.isFlagged = !cell.isFlagged;
-        cell.element.classList.toggle('flagged');
+        const isPlacing = !cell.isFlagged;
+        cell.isFlagged = isPlacing;
 
-        if (cell.isFlagged) {
+        if (isPlacing) {
+            // 添加标记动画
+            cell.element.classList.add('flagging');
             cell.element.setAttribute('aria-label', `行${r + 1}列${c + 1}，已标记旗帜`);
             this.state.minesLeft--;
             this.beep(600, 'triangle', 0.05);
+
+            // 动画结束后移除临时类
+            setTimeout(() => {
+                cell.element.classList.add('flagged');
+                cell.element.classList.remove('flagging');
+            }, 50);
         } else {
+            // 移除标记动画
+            cell.element.classList.add('unflagging');
             cell.element.setAttribute('aria-label', `行${r + 1}列${c + 1}，未翻开`);
             this.state.minesLeft++;
             this.beep(500, 'triangle', 0.05);
+
+            setTimeout(() => {
+                cell.element.classList.remove('flagged', 'unflagging');
+            }, 300);
         }
         this.updateMines();
     }
@@ -462,7 +467,6 @@ class MinesweeperGame {
         const cfg = this.config[this.state.difficulty];
         let flagCount = 0;
 
-        // 计算周围旗帜数量
         for (let dr = -1; dr <= 1; dr++) {
             for (let dc = -1; dc <= 1; dc++) {
                 if (dr === 0 && dc === 0) continue;
@@ -475,7 +479,6 @@ class MinesweeperGame {
             }
         }
 
-        // 如果旗帜数量等于数字，翻开周围未标记的格子
         if (flagCount === cell.adjacent) {
             for (let dr = -1; dr <= 1; dr++) {
                 for (let dc = -1; dc <= 1; dc++) {
@@ -503,7 +506,6 @@ class MinesweeperGame {
             const r = Math.floor(Math.random() * cfg.rows);
             const c = Math.floor(Math.random() * cfg.cols);
 
-            // 避开安全区域（点击位置周围3x3）
             if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
 
             if (!this.state.grid[r][c].isMine) {
@@ -512,7 +514,6 @@ class MinesweeperGame {
             }
         }
 
-        // 计算每个格子周围的地雷数量
         for (let r = 0; r < cfg.rows; r++) {
             for (let c = 0; c < cfg.cols; c++) {
                 if (!this.state.grid[r][c].isMine) {
@@ -544,7 +545,7 @@ class MinesweeperGame {
     }
 
     /**
-     * 翻开格子
+     * 翻开格子 - 增强版带数字渐变动画
      */
     reveal(r, c) {
         const cell = this.state.grid[r][c];
@@ -555,7 +556,7 @@ class MinesweeperGame {
         this.state.revealedCells++;
 
         if (cell.isMine) {
-            cell.element.classList.add('mine');
+            cell.element.classList.add('mine', 'exploded');
             cell.element.setAttribute('aria-label', `行${r + 1}列${c + 1}，地雷`);
             cell.element.textContent = '';
             this.lose();
@@ -565,12 +566,10 @@ class MinesweeperGame {
         this.beep(800, 'sine', 0.03);
 
         if (cell.adjacent > 0) {
-            cell.element.textContent = cell.adjacent;
-            cell.element.classList.add(`number-${cell.adjacent}`);
-            cell.element.setAttribute('aria-label', `行${r + 1}列${c + 1}，周围${cell.adjacent}个地雷`);
+            // 添加数字渐变动画
+            this.animateNumberReveal(cell.element, cell.adjacent);
         } else {
             cell.element.setAttribute('aria-label', `行${r + 1}列${c + 1}，安全`);
-            // BFS洪水填充算法 - 优化版使用指针
             this.floodFill(r, c);
         }
 
@@ -578,12 +577,50 @@ class MinesweeperGame {
     }
 
     /**
-     * 洪水填充算法 - 优化的BFS实现
+     * 数字揭示动画 - 从0渐变到目标数字
+     */
+    animateNumberReveal(cellElement, targetNumber) {
+        if (!this.animationsEnabled) {
+            cellElement.textContent = targetNumber;
+            cellElement.classList.add(`number-${targetNumber}`);
+            cellElement.setAttribute('aria-label', `行${cellElement.dataset.r}列${cellElement.dataset.c}，周围${targetNumber}个地雷`);
+            return;
+        }
+
+        const duration = 400;
+        const steps = 8;
+        const stepDuration = duration / steps;
+        let currentStep = 0;
+
+        cellElement.classList.add('number-animating');
+
+        const animate = () => {
+            if (currentStep < steps) {
+                const displayNumber = Math.floor((targetNumber / steps) * (currentStep + 1));
+                cellElement.textContent = displayNumber;
+                cellElement.style.opacity = 0.5 + (0.5 * (currentStep + 1) / steps);
+                currentStep++;
+                setTimeout(animate, stepDuration);
+            } else {
+                cellElement.textContent = targetNumber;
+                cellElement.classList.add(`number-${targetNumber}`);
+                cellElement.classList.remove('number-animating');
+                cellElement.style.opacity = '';
+                cellElement.setAttribute('aria-label', `行${cellElement.dataset.r}列${cellElement.dataset.c}，周围${targetNumber}个地雷`);
+            }
+        };
+
+        animate();
+    }
+
+    /**
+     * 洪水填充算法
      */
     floodFill(startR, startC) {
         const cfg = this.config[this.state.difficulty];
         const queue = [{ r: startR, c: startC }];
         let head = 0;
+        let delay = 0;
 
         while (head < queue.length) {
             const curr = queue[head++];
@@ -602,9 +639,13 @@ class MinesweeperGame {
                                 neighbor.element.setAttribute('aria-label', `行${nr + 1}列${nc + 1}，安全`);
                                 queue.push({ r: nr, c: nc });
                             } else {
-                                neighbor.element.textContent = neighbor.adjacent;
-                                neighbor.element.classList.add(`number-${neighbor.adjacent}`);
-                                neighbor.element.setAttribute('aria-label', `行${nr + 1}列${nc + 1}，周围${neighbor.adjacent}个地雷`);
+                                // 延迟显示数字以创建波纹效果
+                                const cellInfo = { element: neighbor.element, number: neighbor.adjacent, r: nr, c: nc };
+                                setTimeout(() => {
+                                    this.animateNumberReveal(cellInfo.element, cellInfo.number);
+                                    cellInfo.element.setAttribute('aria-label', `行${cellInfo.r + 1}列${cellInfo.c + 1}，周围${cellInfo.number}个地雷`);
+                                }, delay);
+                                delay += 20;
                             }
                         }
                     }
@@ -614,7 +655,7 @@ class MinesweeperGame {
     }
 
     /**
-     * 游戏失败
+     * 游戏失败 - 增强版带闪烁动画
      */
     lose() {
         this.state.gameState = 'lost';
@@ -623,27 +664,32 @@ class MinesweeperGame {
         if (this.smileBtn) this.smileBtn.className = 'fas fa-dizzy';
         this.beep(100, 'sawtooth', 0.5);
 
-        // 更新状态消息
         if (this.statusMessageElement) {
             this.statusMessageElement.textContent = '游戏失败！点击笑脸重新开始';
             this.gameStatusElement.classList.remove('won');
             this.gameStatusElement.classList.add('lost');
         }
 
-        // 显示所有地雷
-        this.state.grid.forEach((row, r) => row.forEach((cell, c) => {
-            if (cell.isMine && !cell.isFlagged) {
-                cell.element.classList.add('revealed', 'mine');
-                cell.element.setAttribute('aria-label', `行${r + 1}列${c + 1}，地雷`);
-            } else if (!cell.isMine && cell.isFlagged) {
-                // 标记错误的地雷
-                cell.element.classList.add('wrong-flag');
-            }
-        }));
+        // 显示所有地雷和错误标记
+        this.state.grid.forEach((row, r) => {
+            row.forEach((cell, c) => {
+                if (cell.isMine && !cell.isFlagged) {
+                    setTimeout(() => {
+                        cell.element.classList.add('revealed', 'mine', 'exploded');
+                        cell.element.setAttribute('aria-label', `行${r + 1}列${c + 1}，地雷`);
+                    }, Math.random() * 500);
+                } else if (!cell.isMine && cell.isFlagged) {
+                    // 错误标记 - 增强闪烁效果
+                    setTimeout(() => {
+                        cell.element.classList.add('wrong-flag', 'error-flash');
+                    }, 600 + Math.random() * 300);
+                }
+            });
+        });
     }
 
     /**
-     * 检查游戏胜利
+     * 检查游戏胜利 - 增强版带庆祝动画
      */
     checkWin() {
         const cfg = this.config[this.state.difficulty];
@@ -655,12 +701,12 @@ class MinesweeperGame {
 
             if (this.smileBtn) this.smileBtn.className = 'fas fa-sunglasses';
 
-            // 播放胜利音效
-            this.beep(523, 'sine', 0.1);
-            setTimeout(() => this.beep(659, 'sine', 0.1), 100);
-            setTimeout(() => this.beep(784, 'sine', 0.2), 200);
+            // 播放胜利音效序列
+            this.beep(523, 'sine', 0.15);
+            setTimeout(() => this.beep(659, 'sine', 0.15), 150);
+            setTimeout(() => this.beep(784, 'sine', 0.2), 300);
+            setTimeout(() => this.beep(1047, 'sine', 0.3), 500);
 
-            // 更新状态消息
             if (this.statusMessageElement) {
                 this.statusMessageElement.textContent = `恭喜胜利！用时 ${this.state.time} 秒`;
                 this.gameStatusElement.classList.remove('lost');
@@ -671,12 +717,232 @@ class MinesweeperGame {
             this.state.grid.forEach(row => row.forEach(cell => {
                 if (cell.isMine && !cell.isFlagged) {
                     cell.isFlagged = true;
-                    cell.element.classList.add('flagged');
+                    cell.element.classList.add('flagged', 'auto-flagged');
                 }
             }));
             this.state.minesLeft = 0;
             this.updateMines();
+
+            // 启动庆祝动画
+            setTimeout(() => {
+                this.startVictoryCelebration();
+            }, 600);
         }
+    }
+
+    /**
+     * 胜利庆祝 - 烟花效果
+     */
+    startVictoryCelebration() {
+        // 创建烟花画布
+        this.createFireworksCanvas();
+        this.launchFireworks();
+    }
+
+    /**
+     * 创建烟花画布
+     */
+    createFireworksCanvas() {
+        if (this.fireworksCanvas) return;
+
+        this.fireworksCanvas = document.createElement('canvas');
+        this.fireworksCanvas.id = 'fireworks-canvas';
+        this.fireworksCanvas.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+        `;
+
+        this.fireworksCtx = this.fireworksCanvas.getContext('2d');
+        this.resizeFireworksCanvas();
+        document.body.appendChild(this.fireworksCanvas);
+
+        window.addEventListener('resize', () => this.resizeFireworksCanvas());
+    }
+
+    /**
+     * 调整烟花画布大小
+     */
+    resizeFireworksCanvas() {
+        if (this.fireworksCanvas) {
+            this.fireworksCanvas.width = window.innerWidth;
+            this.fireworksCanvas.height = window.innerHeight;
+        }
+    }
+
+    /**
+     * 发射烟花
+     */
+    launchFireworks() {
+        const particles = [];
+        const colors = [
+            '#ff0000', '#ff7f00', '#ffff00', '#00ff00',
+            '#0000ff', '#8b00ff', '#ff1493', '#00ced1',
+            '#ffd700', '#ff4500', '#32cd32', '#ff69b4'
+        ];
+
+        // 烟花粒子类
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 2 + Math.random() * 6;
+                this.vx = Math.cos(angle) * velocity;
+                this.vy = Math.sin(angle) * velocity;
+                this.alpha = 1;
+                this.decay = 0.008 + Math.random() * 0.012;
+                this.gravity = 0.08;
+                this.size = 2 + Math.random() * 3;
+            }
+
+            update() {
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+                this.vy += this.gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 发光效果
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.alpha <= 0;
+            }
+        }
+
+        // 五彩纸屑类
+        class Confetti {
+            constructor() {
+                this.x = Math.random() * this.fireworksCanvas.width;
+                this.y = -20;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.size = 5 + Math.random() * 10;
+                this.speedY = 2 + Math.random() * 3;
+                this.speedX = -2 + Math.random() * 4;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = -5 + Math.random() * 10;
+                this.alpha = 1;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.rotation += this.rotationSpeed;
+                this.speedX *= 0.99;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.alpha;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.y > this.fireworksCanvas.height + 20;
+            }
+        }
+
+        // 创建爆炸效果
+        const createExplosion = (x, y) => {
+            const particleCount = 60 + Math.floor(Math.random() * 40);
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        };
+
+        // 初始爆炸
+        const initialExplosions = 5;
+        for (let i = 0; i < initialExplosions; i++) {
+            setTimeout(() => {
+                const x = 100 + Math.random() * (this.fireworksCanvas.width - 200);
+                const y = 100 + Math.random() * (this.fireworksCanvas.height / 2);
+                createExplosion(x, y);
+            }, i * 300);
+        }
+
+        let frameCount = 0;
+        let confettiSpawned = false;
+
+        const animate = () => {
+            if (!this.fireworksCtx) return;
+
+            this.fireworksCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            this.fireworksCtx.fillRect(0, 0, this.fireworksCanvas.width, this.fireworksCanvas.height);
+
+            // 每隔一段时间添加新的爆炸
+            frameCount++;
+            if (frameCount % 60 === 0 && frameCount < 480) {
+                const x = 100 + Math.random() * (this.fireworksCanvas.width - 200);
+                const y = 100 + Math.random() * (this.fireworksCanvas.height / 2);
+                createExplosion(x, y);
+            }
+
+            // 添加五彩纸屑
+            if (frameCount > 180 && frameCount < 600 && frameCount % 10 === 0) {
+                for (let i = 0; i < 3; i++) {
+                    particles.push(new Confetti());
+                }
+            }
+
+            // 更新和绘制粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw(this.fireworksCtx);
+                if (p.isDead()) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // 继续动画或停止
+            if (frameCount < 720 || particles.length > 0) {
+                this.fireworksAnimationId = requestAnimationFrame(animate);
+            } else {
+                this.stopFireworks();
+            }
+        };
+
+        animate();
+    }
+
+    /**
+     * 停止烟花动画
+     */
+    stopFireworks() {
+        if (this.fireworksAnimationId) {
+            cancelAnimationFrame(this.fireworksAnimationId);
+            this.fireworksAnimationId = null;
+        }
+        if (this.fireworksCanvas && this.fireworksCanvas.parentNode) {
+            this.fireworksCanvas.parentNode.removeChild(this.fireworksCanvas);
+        }
+        this.fireworksCanvas = null;
+        this.fireworksCtx = null;
     }
 
     /**

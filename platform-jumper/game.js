@@ -1,6 +1,7 @@
 /**
  * Platform Jumper - 现代化响应式游戏实现
  * 包含可访问性支持和移动端优化
+ * 第1轮物理效果优化：跳跃曲线优化、粒子系统、金币动画、角色动画
  */
 
 const CONFIG = {
@@ -16,6 +17,226 @@ const CONFIG = {
     spike: '#ef4444'
   }
 };
+
+class ParticleSystem {
+  constructor() {
+    this.particles = [];
+  }
+
+  // 创建落地尘土效果
+  createDustParticles(x, y, count = 8) {
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 / count) * i + Math.random() * 0.3;
+      const speed = 1 + Math.random() * 2;
+      this.particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed * 0.5,
+        vy: -Math.abs(Math.sin(angle)) * speed - 0.5, // 向上飘散
+        life: 1,
+        decay: 0.02 + Math.random() * 0.02,
+        size: 2 + Math.random() * 3,
+        color: `rgba(180, 200, 220, ${0.6 + Math.random() * 0.3})`,
+        type: 'dust'
+      });
+    }
+  }
+
+  // 创建金币收集效果
+  createCoinCollectEffect(x, y) {
+    const particles = [];
+    // 主金币粒子（旋转放大）
+    particles.push({
+      x: x,
+      y: y,
+      vx: 0,
+      vy: -2,
+      life: 1,
+      decay: 0.03,
+      size: 15,
+      rotation: 0,
+      rotationSpeed: 0.3,
+      scale: 1.5,
+      scaleSpeed: 0.02,
+      color: '#fbbf24',
+      type: 'coinMain',
+      sparkle: true
+    });
+
+    // 星星粒子
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI * 2 / 6) * i;
+      const speed = 2 + Math.random() * 1.5;
+      particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        decay: 0.025,
+        size: 3 + Math.random() * 2,
+        rotation: 0,
+        rotationSpeed: 0.1 + Math.random() * 0.1,
+        color: '#fcd34d',
+        type: 'star'
+      });
+    }
+
+    // 光环粒子
+    for (let i = 0; i < 3; i++) {
+      particles.push({
+        x: x,
+        y: y,
+        vx: 0,
+        vy: -1,
+        life: 1,
+        decay: 0.02,
+        size: 10 + i * 5,
+        color: `rgba(251, 191, 36, ${0.4 - i * 0.1})`,
+        type: 'ring',
+        expandSpeed: 0.5 + i * 0.2
+      });
+    }
+
+    this.particles.push(...particles);
+  }
+
+  // 创建跳跃轨迹效果
+  createJumpTrail(x, y, vx, vy) {
+    this.particles.push({
+      x: x + Math.random() * 10 - 5,
+      y: y,
+      vx: -vx * 0.1,
+      vy: -vy * 0.1,
+      life: 0.6,
+      decay: 0.04,
+      size: 3 + Math.random() * 2,
+      color: `rgba(244, 63, 94, ${0.3 + Math.random() * 0.2})`,
+      type: 'trail'
+    });
+  }
+
+  update() {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+
+      // 物理更新
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+
+      // 特定类型粒子的特殊行为
+      if (p.type === 'coinMain') {
+        p.rotation += p.rotationSpeed;
+        p.scale += p.scaleSpeed;
+        p.vy *= 0.95;
+        p.vx *= 0.98;
+      } else if (p.type === 'star') {
+        p.rotation += p.rotationSpeed;
+        p.vy += 0.1; // 轻微重力
+        p.vx *= 0.98;
+      } else if (p.type === 'ring') {
+        p.size += p.expandSpeed;
+        p.vy *= 0.95;
+      } else if (p.type === 'dust') {
+        p.vy += 0.05; // 轻微重力
+        p.vx *= 0.98;
+      } else if (p.type === 'trail') {
+        p.vx *= 0.9;
+        p.vy *= 0.9;
+      }
+
+      // 移除死亡粒子
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+
+  draw(ctx) {
+    this.particles.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = p.life;
+
+      if (p.type === 'coinMain') {
+        // 主金币粒子 - 旋转放大效果
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.scale(p.scale, p.scale * Math.abs(Math.cos(p.rotation * 0.5)));
+
+        // 金币主体
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 闪光效果
+        if (p.sparkle) {
+          ctx.beginPath();
+          ctx.arc(-p.size * 0.3, -p.size * 0.3, p.size * 0.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.fill();
+        }
+      } else if (p.type === 'star') {
+        // 星星粒子
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        this.drawStar(ctx, 0, 0, 5, p.size, p.size * 0.5);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      } else if (p.type === 'ring') {
+        // 光环粒子
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else if (p.type === 'dust') {
+        // 尘土粒子
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      } else if (p.type === 'trail') {
+        // 跳跃轨迹
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    });
+  }
+
+  drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    let step = Math.PI / spikes;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+  }
+}
 
 class PlatformJumperGame {
   constructor() {
@@ -40,9 +261,24 @@ class PlatformJumperGame {
       spikes: []
     };
 
+    // 粒子系统
+    this.particles = new ParticleSystem();
+
     this.input = { left: false, right: false };
     this.audioCtx = null;
     this.isMobile = this.checkMobile();
+
+    // 玩家动画状态
+    this.playerAnim = {
+      bouncePhase: 0,
+      wasGrounded: false,
+      squashX: 1,
+      squashY: 1
+    };
+
+    // 时间追踪
+    this.lastTime = 0;
+    this.deltaTime = 0;
 
     // 初始化尺寸
     this.width = 800;
@@ -218,6 +454,12 @@ class PlatformJumperGame {
       grounded: false,
       invulnerable: false
     };
+
+    // 重置动画状态
+    this.playerAnim.bouncePhase = 0;
+    this.playerAnim.wasGrounded = false;
+    this.playerAnim.squashX = 1;
+    this.playerAnim.squashY = 1;
   }
 
   bindEvents() {
@@ -363,6 +605,7 @@ class PlatformJumperGame {
     this.state.running = true;
     this.hideOverlays();
     this.announceScreenReader('游戏开始！当前得分：0，生命值：3，关卡：1');
+    this.lastTime = performance.now();
     this.loop();
   }
 
@@ -374,6 +617,7 @@ class PlatformJumperGame {
     this.state.gameOver = false;
     this.entities.coins = [];
     this.entities.spikes = [];
+    this.particles.particles = [];
     this.resetLevel();
     this.updateUI();
     this.start();
@@ -386,6 +630,7 @@ class PlatformJumperGame {
     this.hideOverlays();
     this.entities.coins = [];
     this.entities.spikes = [];
+    this.particles.particles = [];
     this.resetLevel();
     this.updateUI();
     this.announceScreenReader(`进入第${this.state.level}关！当前得分：${this.state.score}，生命值：${this.state.lives}`);
@@ -395,12 +640,23 @@ class PlatformJumperGame {
     if (this.entities.player.grounded) {
       this.entities.player.vy = CONFIG.jumpForce;
       this.entities.player.grounded = false;
+
+      // 跳跃时的挤压效果
+      this.playerAnim.squashX = 0.8;
+      this.playerAnim.squashY = 1.2;
+
       this.beep(600, 'square', 0.1);
       this.announceScreenReader('跳跃！');
+
+      // 创建跳跃尘土效果
+      this.particles.createDustParticles(
+        this.entities.player.x + this.entities.player.w / 2,
+        this.entities.player.y + this.entities.player.h
+      );
     }
   }
 
-  update() {
+  update(deltaTime) {
     if (!this.state.running) return;
 
     const p = this.entities.player;
@@ -410,13 +666,40 @@ class PlatformJumperGame {
     if (this.input.right) p.vx += 1;
     p.vx *= CONFIG.friction;
 
-    // 物理计算
-    p.vy += CONFIG.gravity;
+    // 优化的跳跃物理曲线
+    // 在空中时应用稍微不同的重力，使跳跃曲线更自然
+    if (!p.grounded) {
+      if (p.vy < 0) {
+        // 上升阶段 - 较轻的重力，使跳跃更"饱满"
+        p.vy += CONFIG.gravity * 0.85;
+      } else {
+        // 下降阶段 - 较重的重力，使下落更快
+        p.vy += CONFIG.gravity * 1.1;
+      }
+    } else {
+      p.vy += CONFIG.gravity;
+    }
+
+    // 跳跃轨迹效果（仅在下落时）
+    if (!p.grounded && p.vy > 2 && Math.random() > 0.7) {
+      this.particles.createJumpTrail(
+        p.x + p.w / 2,
+        p.y + p.h,
+        p.vx,
+        p.vy
+      );
+    }
+
     p.x += p.vx;
     p.y += p.vy;
 
+    // 更新角色动画
+    this.updatePlayerAnimation(p);
+
     // 地面/平台碰撞检测
+    const wasGrounded = p.grounded;
     p.grounded = false;
+
     this.entities.platforms.forEach(plat => {
       // 移动平台
       if (plat.moving) {
@@ -437,6 +720,18 @@ class PlatformJumperGame {
         p.vy = 0;
         p.grounded = true;
 
+        // 落地时的挤压效果
+        if (!wasGrounded) {
+          this.playerAnim.squashX = 1.15;
+          this.playerAnim.squashY = 0.85;
+
+          // 创建落地尘土效果
+          this.particles.createDustParticles(
+            p.x + p.w / 2,
+            p.y + p.h
+          );
+        }
+
         // 平台摩擦
         if (plat.moving) p.x += plat.speed * plat.dir;
       }
@@ -453,6 +748,10 @@ class PlatformJumperGame {
           this.state.collectedCoins++;
           this.beep(880, 'sine', 0.1);
           this.updateUI();
+
+          // 创建金币收集效果
+          this.particles.createCoinCollectEffect(coin.x, coin.y);
+
           this.announceScreenReader(`获得金币！当前得分：${this.state.score}`);
         }
       }
@@ -493,6 +792,25 @@ class PlatformJumperGame {
     if (playerCenterY < goalAreaTop && p.grounded) {
       this.levelComplete();
     }
+
+    // 更新粒子系统
+    this.particles.update();
+  }
+
+  updatePlayerAnimation(player) {
+    // 走路时的身体起伏
+    if (player.grounded && (Math.abs(player.vx) > 0.5)) {
+      // 根据移动速度调整起伏频率
+      const speed = Math.abs(player.vx);
+      this.playerAnim.bouncePhase += speed * 0.15;
+    } else {
+      // 站立时的轻微呼吸效果
+      this.playerAnim.bouncePhase += 0.03;
+    }
+
+    // 挤压效果恢复
+    this.playerAnim.squashX += (1 - this.playerAnim.squashX) * 0.15;
+    this.playerAnim.squashY += (1 - this.playerAnim.squashY) * 0.15;
   }
 
   handleDeath() {
@@ -569,21 +887,43 @@ class PlatformJumperGame {
       }
     });
 
-    // 绘制金币
+    // 绘制金币（带旋转动画）
+    const time = Date.now() / 1000;
     this.entities.coins.forEach(c => {
       if (!c.collected) {
+        this.ctx.save();
+        this.ctx.translate(c.x, c.y);
+
+        // 金币浮动效果
+        const floatY = Math.sin(time * 3 + c.x) * 2;
+        this.ctx.translate(0, floatY);
+
+        // 金币旋转效果（3D感）
+        const scaleX = Math.abs(Math.cos(time * 2 + c.x));
+        this.ctx.scale(scaleX, 1);
+
+        // 金币主体
         this.ctx.beginPath();
-        this.ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
+        this.ctx.arc(0, 0, c.r, 0, Math.PI * 2);
         this.ctx.fillStyle = CONFIG.colors.coin;
         this.ctx.fill();
         this.ctx.strokeStyle = '#fff';
         this.ctx.lineWidth = 2;
         this.ctx.stroke();
+
         // 金币闪光效果
         this.ctx.beginPath();
-        this.ctx.arc(c.x - 3, c.y - 3, c.r/3, 0, Math.PI*2);
-        this.ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        this.ctx.arc(-c.r * 0.3, -c.r * 0.3, c.r * 0.3, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
         this.ctx.fill();
+
+        // 内部闪光（模拟金币反光）
+        this.ctx.beginPath();
+        this.ctx.arc(c.r * 0.2, c.r * 0.2, c.r * 0.15, 0, Math.PI * 2);
+        this.ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        this.ctx.fill();
+
+        this.ctx.restore();
       }
     });
 
@@ -597,34 +937,102 @@ class PlatformJumperGame {
       this.ctx.fill();
     });
 
-    // 绘制玩家
+    // 绘制玩家（带动画效果）
+    this.drawPlayer();
+
+    // 绘制粒子效果
+    this.particles.draw(this.ctx);
+  }
+
+  drawPlayer() {
     const p = this.entities.player;
+    const ctx = this.ctx;
+
+    ctx.save();
 
     // 无敌状态闪烁效果
     if (p.invulnerable && Math.floor(Date.now() / 100) % 2 === 0) {
-      this.ctx.globalAlpha = 0.5;
+      ctx.globalAlpha = 0.5;
     }
 
-    this.ctx.fillStyle = CONFIG.colors.player;
-    this.ctx.fillRect(p.x, p.y, p.w, p.h);
+    // 计算玩家位置（带动画）
+    let playerX = p.x;
+    let playerY = p.y;
+    let playerW = p.w;
+    let playerH = p.h;
+
+    // 应用挤压效果
+    const centerX = playerX + playerW / 2;
+    const centerY = playerY + playerH;
+
+    playerW *= this.playerAnim.squashX;
+    playerH *= this.playerAnim.squashY;
+
+    playerX = centerX - playerW / 2;
+    playerY = centerY - playerH;
+
+    // 走路/呼吸起伏效果
+    if (p.grounded) {
+      const bounceOffset = Math.sin(this.playerAnim.bouncePhase) * 2;
+      playerY += bounceOffset;
+    }
+
+    // 绘制玩家身体（带圆角）
+    ctx.fillStyle = CONFIG.colors.player;
+    ctx.beginPath();
+    const radius = 6;
+    ctx.roundRect(playerX, playerY, playerW, playerH, radius);
+    ctx.fill();
+
+    // 眼睛容器（随起伏移动）
+    const eyeYOffset = p.grounded ? Math.sin(this.playerAnim.bouncePhase) * 1 : 0;
 
     // 眼睛
-    this.ctx.fillStyle = 'white';
-    this.ctx.fillRect(p.x + 5, p.y + 10, 8, 8);
-    this.ctx.fillRect(p.x + p.w - 13, p.y + 10, 8, 8);
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.roundRect(playerX + 5, playerY + 10 + eyeYOffset, 8, 8, 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(playerX + playerW - 13, playerY + 10 + eyeYOffset, 8, 8, 2);
+    ctx.fill();
 
-    // 眼珠
-    this.ctx.fillStyle = '#1f2937';
+    // 眼珠（根据移动方向）
+    ctx.fillStyle = '#1f2937';
     const eyeOffset = this.input.left ? -2 : (this.input.right ? 2 : 0);
-    this.ctx.fillRect(p.x + 7 + eyeOffset, p.y + 12, 4, 4);
-    this.ctx.fillRect(p.x + p.w - 11 + eyeOffset, p.y + 12, 4, 4);
+    ctx.beginPath();
+    ctx.roundRect(playerX + 7 + eyeOffset, playerY + 12 + eyeYOffset, 4, 4, 1);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(playerX + playerW - 11 + eyeOffset, playerY + 12 + eyeYOffset, 4, 4, 1);
+    ctx.fill();
 
-    this.ctx.globalAlpha = 1;
+    // 跳跃时的速度线
+    if (!p.grounded && Math.abs(p.vy) > 5) {
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.3)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const lineY = playerY + playerH + 5 + i * 4;
+        ctx.beginPath();
+        ctx.moveTo(playerX + playerW * 0.2, lineY);
+        ctx.lineTo(playerX + playerW * 0.8, lineY);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
   }
 
   loop() {
     if (!this.state.running) return;
-    this.update();
+
+    const currentTime = performance.now();
+    this.deltaTime = (currentTime - this.lastTime) / 1000;
+    this.lastTime = currentTime;
+
+    // 限制最大帧时间，防止切换标签后出现跳跃
+    if (this.deltaTime > 0.1) this.deltaTime = 0.016;
+
+    this.update(this.deltaTime);
     this.draw();
     requestAnimationFrame(() => this.loop());
   }

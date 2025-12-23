@@ -1,6 +1,7 @@
 /**
  * 打字速度测试游戏 - 现代化实现
  * 包含 Web Audio API 音效、微交互、可访问性和手势支持
+ * 第1轮视觉优化：按键涟漪、WPM进度条、错误抖动、完成庆祝动画
  */
 
 // ============================================
@@ -202,6 +203,309 @@ class AnimationManager {
 }
 
 // ============================================
+// 视觉反馈管理器 - 新增
+// ============================================
+class VisualFeedbackManager {
+    constructor() {
+        this.rippleContainer = null;
+        this.particlesContainer = null;
+        this.initContainers();
+    }
+
+    /**
+     * 初始化容器
+     */
+    initContainers() {
+        // 创建按键涟漪容器
+        this.rippleContainer = document.createElement('div');
+        this.rippleContainer.className = 'key-ripple-container';
+        document.body.appendChild(this.rippleContainer);
+
+        // 创建粒子容器
+        this.particlesContainer = document.createElement('div');
+        this.particlesContainer.className = 'particles-container';
+        document.body.appendChild(this.particlesContainer);
+    }
+
+    /**
+     * 创建按键涟漪效果
+     * @param {boolean} isCorrect - 是否正确按键
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     */
+    createKeyRipple(isCorrect, x = null, y = null) {
+        // 如果没有提供坐标，在屏幕中心创建
+        if (x === null || y === null) {
+            x = window.innerWidth / 2;
+            y = window.innerHeight / 2;
+        }
+
+        const ripple = document.createElement('div');
+        ripple.className = `key-ripple ${isCorrect ? 'correct' : 'incorrect'}`;
+
+        // 随机大小
+        const size = Math.random() * 100 + 100;
+        ripple.style.width = `${size}px`;
+        ripple.style.height = `${size}px`;
+        ripple.style.left = `${x - size / 2}px`;
+        ripple.style.top = `${y - size / 2}px`;
+
+        this.rippleContainer.appendChild(ripple);
+
+        // 动画结束后移除
+        setTimeout(() => ripple.remove(), 600);
+    }
+
+    /**
+     * 创建多个涟漪效果（更强烈的视觉反馈）
+     */
+    createMultipleRipples(isCorrect, count = 3) {
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                this.createKeyRipple(isCorrect, x, y);
+            }, i * 100);
+        }
+    }
+
+    /**
+     * 创建错误抖动效果
+     * @param {HTMLElement} element - 要抖动的元素
+     */
+    createErrorShake(element) {
+        element.classList.remove('error-shake-active');
+        void element.offsetWidth; // 触发重绘
+        element.classList.add('error-shake-active');
+        setTimeout(() => element.classList.remove('error-shake-active'), 300);
+    }
+
+    /**
+     * 创建完成庆祝效果
+     */
+    createCelebrationEffect() {
+        // 彩带效果
+        this.createConfetti();
+        // 粒子效果
+        this.createParticles();
+        // 闪光效果
+        this.createFlashEffect();
+    }
+
+    /**
+     * 创建彩带效果
+     */
+    createConfetti() {
+        const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+        const confettiCount = 50;
+
+        for (let i = 0; i < confettiCount; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = `${Math.random() * 2 + 2}s`;
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+
+                // 随机大小
+                const width = Math.random() * 8 + 6;
+                const height = Math.random() * 12 + 10;
+                confetti.style.width = `${width}px`;
+                confetti.style.height = `${height}px`;
+
+                document.body.appendChild(confetti);
+
+                // 动画结束后移除
+                setTimeout(() => confetti.remove(), 4000);
+            }, i * 30);
+        }
+    }
+
+    /**
+     * 创建粒子效果
+     */
+    createParticles() {
+        const particleCount = 30;
+
+        for (let i = 0; i < particleCount; i++) {
+            setTimeout(() => {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.top = `${Math.random() * 50}vh`;
+
+                // 随机颜色
+                const colors = ['#10b981', '#3b82f6', '#f59e0b'];
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+                // 随机大小
+                const size = Math.random() * 8 + 4;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+
+                this.particlesContainer.appendChild(particle);
+
+                // 动画结束后移除
+                setTimeout(() => particle.remove(), 1000);
+            }, i * 50);
+        }
+    }
+
+    /**
+     * 创建闪光效果
+     */
+    createFlashEffect() {
+        const flash = document.createElement('div');
+        flash.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 9999;
+            animation: flashEffect 0.5s ease-out forwards;
+        `;
+
+        // 添加闪光动画
+        if (!document.getElementById('flashEffectStyle')) {
+            const style = document.createElement('style');
+            style.id = 'flashEffectStyle';
+            style.textContent = `
+                @keyframes flashEffect {
+                    0% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 500);
+    }
+
+    /**
+     * 更新WPM进度条
+     * @param {number} currentWPM - 当前WPM值
+     * @param {number} maxWPM - 最大WPM值（用于计算进度）
+     */
+    updateWPMProgress(currentWPM, maxWPM = 100) {
+        let progressBar = document.getElementById('wpmProgressBar');
+        let progressFill = document.getElementById('wpmProgressFill');
+
+        // 如果进度条不存在，创建它
+        if (!progressBar) {
+            const wpmCard = document.getElementById('wpm')?.closest('.stat-card');
+            if (wpmCard) {
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'wpm-progress-container';
+
+                progressBar = document.createElement('div');
+                progressBar.className = 'wpm-progress-bar';
+                progressBar.id = 'wpmProgressBar';
+
+                progressFill = document.createElement('div');
+                progressFill.className = 'wpm-progress-fill';
+                progressFill.id = 'wpmProgressFill';
+
+                progressBar.appendChild(progressFill);
+                progressContainer.appendChild(progressBar);
+                wpmCard.appendChild(progressContainer);
+            }
+        }
+
+        if (progressFill) {
+            // 计算进度百分比
+            const percentage = Math.min((currentWPM / maxWPM) * 100, 100);
+            progressFill.style.width = `${percentage}%`;
+
+            // 根据WPM值改变颜色
+            if (currentWPM >= 70) {
+                progressFill.style.background = 'linear-gradient(90deg, var(--color-success), #059669)';
+            } else if (currentWPM >= 40) {
+                progressFill.style.background = 'linear-gradient(90deg, var(--color-accent), var(--color-success))';
+            } else if (currentWPM >= 20) {
+                progressFill.style.background = 'linear-gradient(90deg, var(--color-warning), var(--color-accent))';
+            } else {
+                progressFill.style.background = 'linear-gradient(90deg, var(--color-error), var(--color-warning))';
+            }
+        }
+    }
+
+    /**
+     * 添加里程碑动画
+     * @param {number} milestone - 里程碑值（如30, 50, 70 WPM）
+     */
+    showMilestoneAchievement(milestone) {
+        const achievement = document.createElement('div');
+        achievement.className = 'milestone-achievement';
+        achievement.innerHTML = `
+            <div class="milestone-content">
+                <i class="fas fa-trophy"></i>
+                <span>${milestone} WPM 达成！</span>
+            </div>
+        `;
+
+        // 添加样式
+        if (!document.getElementById('milestoneStyle')) {
+            const style = document.createElement('style');
+            style.id = 'milestoneStyle';
+            style.textContent = `
+                .milestone-achievement {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) scale(0);
+                    padding: var(--spacing-lg);
+                    background: var(--color-bg-secondary);
+                    border: 2px solid var(--color-accent);
+                    border-radius: var(--radius-xl);
+                    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+                    z-index: 9999;
+                    animation: milestoneAppear 2s ease forwards;
+                }
+                .milestone-content {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--spacing-sm);
+                    font-size: var(--font-size-xl);
+                    font-weight: var(--font-weight-bold);
+                    color: var(--color-accent);
+                }
+                .milestone-content i {
+                    font-size: var(--font-size-3xl);
+                }
+                @keyframes milestoneAppear {
+                    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                    20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+                    30% { transform: translate(-50%, -50%) scale(1); }
+                    80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                    100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(achievement);
+        setTimeout(() => achievement.remove(), 2000);
+    }
+
+    /**
+     * 清理所有容器
+     */
+    cleanup() {
+        if (this.rippleContainer) {
+            this.rippleContainer.innerHTML = '';
+        }
+        if (this.particlesContainer) {
+            this.particlesContainer.innerHTML = '';
+        }
+    }
+}
+
+// ============================================
 // 手势管理器
 // ============================================
 class GestureManager {
@@ -324,6 +628,7 @@ class TypingTest {
         this.soundManager = new SoundManager();
         this.accessibilityManager = new AccessibilityManager();
         this.animationManager = AnimationManager;
+        this.visualFeedback = new VisualFeedbackManager(); // 新增视觉反馈管理器
 
         // 元素缓存
         this.elements = {
@@ -425,7 +730,10 @@ class TypingTest {
                 accuracy: 100,
                 correct: 0,
                 errors: 0
-            }
+            },
+            // 里程碑追踪（新增）
+            milestones: [20, 30, 40, 50, 60, 70, 80, 90, 100],
+            achievedMilestones: []
         };
 
         // 性能优化 - 防抖定时器
@@ -838,6 +1146,11 @@ class TypingTest {
         this.state.currentPosition = 0;
         this.state.timeRemaining = this.state.timeLimit;
         this.state.lastStats = { wpm: 0, accuracy: 100, correct: 0, errors: 0 };
+        this.state.achievedMilestones = []; // 重置里程碑
+
+        // 清理视觉效果
+        this.visualFeedback.cleanup();
+        this.visualFeedback.updateWPMProgress(0);
 
         // 生成新文本
         this.generateText();
@@ -954,17 +1267,23 @@ class TypingTest {
             }
         }
 
-        // 如果有新字符添加，播放音效
+        // 如果有新字符添加，播放音效并创建视觉反馈
         if (newText.length > this.state.typedText.length) {
             const newCharIndex = newText.length - 1;
-            if (newText[newCharIndex] === this.state.targetText[newCharIndex]) {
+            const isCorrect = newText[newCharIndex] === this.state.targetText[newCharIndex];
+
+            if (isCorrect) {
                 if (this.state.soundEnabled) {
                     this.soundManager.playCorrect();
                 }
+                // 正确按键涟漪效果（绿色）
+                this.visualFeedback.createKeyRipple(true);
             } else {
                 if (this.state.soundEnabled) {
                     this.soundManager.playError();
                 }
+                // 错误按键涟漪效果（红色）
+                this.visualFeedback.createKeyRipple(false);
             }
         }
 
@@ -1022,6 +1341,9 @@ class TypingTest {
         this.calculateFinalStats();
         this.saveToHistory();
         this.updateHistoryDisplay();
+
+        // 创建完成庆祝效果
+        this.visualFeedback.createCelebrationEffect();
 
         setTimeout(() => {
             this.showResultModal();
@@ -1137,7 +1459,7 @@ class TypingTest {
     }
 
     /**
-     * 更新WPM（带动画）
+     * 更新WPM（带动画和进度条）
      */
     updateWPM() {
         const wpmElement = this.elements.wpm;
@@ -1152,10 +1474,28 @@ class TypingTest {
 
         wpmElement.textContent = wpm;
 
+        // 更新WPM进度条（新增）
+        this.visualFeedback.updateWPMProgress(wpm, 100);
+
+        // 检查里程碑（新增）
+        this.checkMilestones(wpm);
+
         // 值变化时添加高亮
         if (wpm !== this.state.lastStats.wpm && wpm > 0) {
             this.animationManager.highlight(wpmElement);
             this.state.lastStats.wpm = wpm;
+        }
+    }
+
+    /**
+     * 检查WPM里程碑（新增）
+     */
+    checkMilestones(currentWPM) {
+        for (const milestone of this.state.milestones) {
+            if (currentWPM >= milestone && !this.state.achievedMilestones.includes(milestone)) {
+                this.state.achievedMilestones.push(milestone);
+                this.visualFeedback.showMilestoneAchievement(milestone);
+            }
         }
     }
 
@@ -1195,15 +1535,19 @@ class TypingTest {
     }
 
     /**
-     * 更新错误字符数（带动画）
+     * 更新错误字符数（带动画和抖动）
      */
     updateErrorCount() {
         const errorsElement = this.elements.errors;
         errorsElement.textContent = this.state.totalErrors;
 
-        // 值变化时添加高亮
+        // 值变化时添加高亮和抖动（新增）
         if (this.state.totalErrors !== this.state.lastStats.errors && this.state.totalErrors > 0) {
             this.animationManager.highlight(errorsElement);
+            // 错误增加时触发抖动效果
+            if (this.state.totalErrors > this.state.lastStats.errors) {
+                this.visualFeedback.createErrorShake(errorsElement);
+            }
             this.state.lastStats.errors = this.state.totalErrors;
         }
     }
@@ -1259,6 +1603,10 @@ class TypingTest {
                     span.className = 'char-correct';
                 } else {
                     span.className = 'char-incorrect';
+                    // 为新错误添加抖动动画（新增）
+                    if (i === typed.length - 1 && typed[i] !== target[i]) {
+                        span.style.animation = 'errorShake 0.3s ease';
+                    }
                 }
             } else if (i === typed.length) {
                 span.className = 'char-current';

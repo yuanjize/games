@@ -18,6 +18,23 @@
     --particle-color: #fbbf24;
     --particle-alt-color: #f43f5e;
 
+    /* 第1轮特效优化 - 粒子颜色 */
+    --particle-gold: #fbbf24;
+    --particle-orange: #f97316;
+    --particle-red: #ef4444;
+    --particle-rose: #f43f5e;
+    --particle-white: #ffffff;
+
+    /* 第1轮特效优化 - 尾焰颜色渐变 */
+    --flame-white: #ffffff;
+    --flame-yellow: #fbbf24;
+    --flame-orange: #f97316;
+    --flame-red: #ef4444;
+
+    /* 第1轮特效优化 - 震动动画 */
+    --shake-intensity: 8px;
+    --shake-duration: 0.3s;
+
     /* 排版系统 */
     --font-title: 'Orbitron', sans-serif;
     --font-body: 'Roboto', sans-serif;
@@ -51,6 +68,12 @@
     --duration-slow: 500ms;
     --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
     --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* 安全区域变量 */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
 /* ==================== 亮色模式 ==================== */
@@ -72,6 +95,13 @@
     --canvas-bg: #1e293b;
     --particle-color: #fbbf24;
     --particle-alt-color: #f43f5e;
+
+    /* 第1轮特效优化 - 亮色模式粒子颜色 */
+    --particle-gold: #fbbf24;
+    --particle-orange: #f97316;
+    --particle-red: #dc2626;
+    --particle-rose: #f43f5e;
+    --particle-white: #ffffff;
 }
 
 /* 基础重置和可访问性 */
@@ -97,7 +127,12 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    min-height: 100dvh;
     padding: var(--space-4);
+    padding-left: env(safe-area-inset-left, var(--space-4));
+    padding-right: env(safe-area-inset-right, var(--space-4));
+    padding-top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
     overflow-x: hidden;
 }
 
@@ -111,8 +146,52 @@ body {
     background: var(--bg-secondary);
     border-radius: 24px;
     padding: var(--space-6);
+    padding-left: calc(var(--space-6) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--space-6) + env(safe-area-inset-right, 0px));
     box-shadow: 0 20px 40px var(--shadow);
     border: 1px solid var(--border);
+}
+
+/* ==================== 第1轮特效优化：屏幕震动动画 ==================== */
+@keyframes screenShake {
+    0% {
+        transform: translate(0, 0);
+    }
+    10% {
+        transform: translate(calc(var(--shake-intensity) * -1), var(--shake-intensity));
+    }
+    20% {
+        transform: translate(var(--shake-intensity), calc(var(--shake-intensity) * -1));
+    }
+    30% {
+        transform: translate(calc(var(--shake-intensity) * -1), calc(var(--shake-intensity) * -0.5));
+    }
+    40% {
+        transform: translate(calc(var(--shake-intensity) * 0.5), var(--shake-intensity));
+    }
+    50% {
+        transform: translate(calc(var(--shake-intensity) * -0.5), calc(var(--shake-intensity) * -0.5));
+    }
+    60% {
+        transform: translate(var(--shake-intensity), calc(var(--shake-intensity) * 0.5));
+    }
+    70% {
+        transform: translate(calc(var(--shake-intensity) * -0.5), var(--shake-intensity));
+    }
+    80% {
+        transform: translate(calc(var(--shake-intensity) * 0.5), calc(var(--shake-intensity) * -0.5));
+    }
+    90% {
+        transform: translate(calc(var(--shake-intensity) * -0.25), calc(var(--shake-intensity) * 0.25));
+    }
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+/* 屏幕震动类（用于UI反馈） */
+.screen-shake-effect {
+    animation: screenShake var(--shake-duration) ease-out;
 }
 
 /* 游戏头部 */
@@ -280,7 +359,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
     animation: shimmer 1.5s infinite;
 }
 
@@ -637,22 +716,38 @@ body {
     font-size: var(--text-sm);
     font-weight: 600;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-1);
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.difficulty-btn:hover:not(.active):not(:disabled) {
+    background: var(--bg-tertiary);
+    border-color: var(--text-tertiary);
+    transform: translateY(-2px);
 }
 
 .difficulty-btn.active {
+    border-color: var(--accent-primary);
     background: var(--accent-primary);
     color: var(--text-primary);
-    border-color: var(--accent-primary);
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
 }
 
-.difficulty-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--shadow);
+.difficulty-btn i {
+    font-size: var(--text-lg);
+}
+
+.difficulty-description {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    line-height: 1.75;
 }
 
 /* 暂停屏幕 */
@@ -1465,7 +1560,7 @@ body {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--text-primary);
-    box-shadow: 0 2px 4px var(--shadow);
+    box-shadow: var(--shadow-sm);
 }
 
 /* ==================== 键盘导航增强 ==================== */
@@ -1593,17 +1688,17 @@ body {
 
 /* 安全区域适配 (支持刘海屏、底部指示条) */
 @supports (padding: env(safe-area-inset-bottom)) {
-    .game-container {
-        padding-left: env(safe-area-inset-left, 0);
-        padding-right: env(safe-area-inset-right, 0);
+    body {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
 
     .touch-controls {
-        padding-bottom: env(safe-area-inset-bottom, 0);
+        padding-bottom: env(safe-area-inset-bottom);
     }
 
     .game-header {
-        padding-top: env(safe-area-inset-top, 0);
+        padding-top: env(safe-area-inset-top);
     }
 }
 
@@ -1661,7 +1756,7 @@ body {
     }
 
     .touch-controls {
-        display: none; /* 平板使用键盘控制 */
+        display: none;
     }
 }
 
@@ -1674,6 +1769,7 @@ body {
         position: fixed;
         width: 100%;
         height: 100%;
+        height: 100dvh;
     }
 
     html {
@@ -1692,8 +1788,11 @@ body {
         gap: 0;
         border-radius: 0;
         min-height: 100vh;
+        min-height: 100dvh;
         max-height: 100vh;
+        max-height: 100dvh;
         height: 100vh;
+        height: 100dvh;
         overflow: hidden;
         display: grid;
         grid-template-rows: auto 1fr auto;
@@ -1723,7 +1822,7 @@ body {
     }
 
     .back-button span {
-        display: none; /* 移动端隐藏"返回游戏大厅"文字 */
+        display: none;
     }
 
     .back-button i {
@@ -1745,7 +1844,7 @@ body {
 
     .game-subtitle {
         font-size: 9px;
-        display: none; /* 移动端隐藏副标题 */
+        display: none;
     }
 
     .version-tag {
@@ -1848,6 +1947,7 @@ body {
         padding: var(--space-3);
         border-radius: 0;
         max-height: 100%;
+        max-height: 100dvh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         width: 100%;
@@ -1890,7 +1990,7 @@ body {
 
     .control-item .key {
         min-width: 28px;
-        padding: 2px 6px;
+        padding: var(--space-1);
         font-size: 10px;
     }
 
@@ -2038,17 +2138,17 @@ body {
 
     /* 音效控制 */
     .audio-controls {
-        display: none; /* 移动端隐藏音效控制以节省空间 */
+        display: none;
     }
 
     /* 游戏说明 - 默认折叠 */
     .game-instructions {
-        display: none; /* 移动端隐藏游戏说明以节省空间 */
+        display: none;
     }
 
     /* 页脚 */
     .game-footer {
-        display: none; /* 移动端隐藏页脚以节省空间 */
+        display: none;
     }
 
     /* 隐藏非必要元素 */

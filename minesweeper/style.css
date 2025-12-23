@@ -1,6 +1,7 @@
 /**
  * Minesweeper - 现代响应式样式
  * 完全优化的CSS，包含移动端适配、性能优化和可访问性支持
+ * Round 1: Enhanced interaction feedback animations
  */
 
 /* ========== 全局变量定义 ========== */
@@ -193,6 +194,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    min-height: 100dvh;
     padding: var(--space-md);
     padding-top: calc(var(--space-md) + var(--safe-area-inset-top));
     padding-bottom: calc(var(--space-md) + var(--safe-area-inset-bottom));
@@ -201,27 +203,22 @@ body {
     background-image: var(--bg-gradient-1), var(--bg-gradient-2);
     background-attachment: fixed;
     overflow-x: hidden;
-    /* 禁用双击缩放和文本选择（移动端优化） */
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
-    /* 防止 iOS 橡皮筋效果 */
     overscroll-behavior: none;
     -webkit-overflow-scrolling: auto;
-    /* 主题切换过渡 */
     transition: background-color var(--transition-slow), color var(--transition-slow);
 }
 
 /* ========== 可访问性支持 ========== */
-/* 键盘导航焦点样式 */
 :focus-visible {
     outline: 3px solid var(--accent-color);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
 }
 
-/* 隐藏但可访问的元素 */
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -234,7 +231,6 @@ body {
     border: 0;
 }
 
-/* 减少动画（用户偏好设置） */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -279,7 +275,6 @@ body {
     box-shadow: var(--shadow-lg), 0 0 20px var(--accent-glow);
 }
 
-/* 返回按钮 */
 .back-button {
     display: flex;
     align-items: center;
@@ -313,7 +308,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* 标题区域 */
 .title-area {
     display: flex;
     flex-direction: column;
@@ -362,7 +356,6 @@ body {
     box-shadow: var(--shadow-md);
 }
 
-/* 难度选择器 */
 .difficulty-selector {
     display: flex;
     gap: var(--space-sm);
@@ -412,7 +405,6 @@ body {
     font-size: 1rem;
 }
 
-/* 游戏状态面板 */
 .game-stats {
     display: flex;
     justify-content: space-between;
@@ -467,7 +459,6 @@ body {
     line-height: 1;
 }
 
-/* 重新开始按钮 */
 #restart-btn {
     width: 60px;
     height: 60px;
@@ -512,12 +503,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* 隐藏滚动条但保留滚动功能 (Firefox) */
     scrollbar-width: thin;
     scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.05);
 }
 
-/* 隐藏滚动条但保留滚动功能 (Webkit/Chrome/Safari) */
 .game-board-container::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -548,7 +537,6 @@ body {
     max-width: 100%;
 }
 
-/* 网格大小设置 */
 .game-board.beginner {
     grid-template-columns: repeat(9, 1fr);
 }
@@ -577,16 +565,13 @@ body {
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
-    /* 移除button默认样式 */
     padding: 0;
     font-family: inherit;
     color: inherit;
-    /* 移动端触摸优化 */
     touch-action: manipulation;
     -webkit-tap-highlight-color: rgba(245, 158, 11, 0.3);
 }
 
-/* 交互状态 */
 .cell:hover:not(.revealed):not(.flagged):not(:disabled) {
     background: var(--cell-hover);
     transform: translateY(-1px);
@@ -605,7 +590,6 @@ body {
     background: rgba(245, 158, 11, 0.3);
 }
 
-/* 翻开状态 */
 .cell.revealed {
     background: var(--cell-revealed);
     transform: none;
@@ -618,7 +602,6 @@ body {
     cursor: default;
 }
 
-/* 数字颜色 */
 .cell.number-1 { color: var(--number-1); }
 .cell.number-2 { color: var(--number-2); }
 .cell.number-3 { color: var(--number-3); }
@@ -628,7 +611,7 @@ body {
 .cell.number-7 { color: var(--number-7); }
 .cell.number-8 { color: var(--number-8); }
 
-/* 旗帜标记 */
+/* ========== 旗帜标记动画 - 增强版 ========== */
 .cell.flagged::before {
     content: "🚩";
     font-size: 1.1rem;
@@ -643,7 +626,87 @@ body {
     opacity: 0.7;
 }
 
-/* 地雷 */
+/* 旗帜弹出动画 - 更有弹性 */
+@keyframes flag-pop-in {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3) rotate(15deg);
+        opacity: 1;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(0.9) rotate(-5deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.cell.flagging::before,
+.cell.flagged::before {
+    animation: flag-pop-in 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6) forwards;
+}
+
+/* 旗帜移除动画 */
+@keyframes flag-pop-out {
+    0% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0) rotate(180deg);
+        opacity: 0;
+    }
+}
+
+.cell.unflagging::before {
+    animation: flag-pop-out 0.35s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+}
+
+/* ========== 数字揭示动画 - 渐变效果 ========== */
+@keyframes number-fade-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+        filter: blur(2px);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+        filter: blur(0.5px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0);
+    }
+}
+
+.cell.number-animating {
+    animation: number-fade-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 数字高亮发光效果 */
+@keyframes number-pulse-glow {
+    0%, 100% {
+        text-shadow: 0 0 3px currentColor;
+        transform: scale(1);
+    }
+    50% {
+        text-shadow: 0 0 12px currentColor, 0 0 20px currentColor;
+        transform: scale(1.05);
+    }
+}
+
+.cell.revealed:not(.mine) {
+    animation: number-fade-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+               number-pulse-glow 0.6s ease-out 0.4s;
+}
+
+/* ========== 地雷爆炸动画 - 增强版 ========== */
 .cell.mine.revealed::before {
     content: "💣";
     font-size: 1.1rem;
@@ -654,7 +717,55 @@ body {
     pointer-events: none;
 }
 
-/* 错误标记 */
+@keyframes mine-bounce-explode {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    30% {
+        transform: translate(-50%, -50%) scale(1.4);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+.cell.mine.revealed::before {
+    animation: mine-bounce-explode 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* 爆炸波纹效果 - 增强版 */
+@keyframes explosion-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8),
+                    0 0 20px 5px rgba(239, 68, 68, 0.4);
+        background-color: rgba(239, 68, 68, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 15px rgba(239, 68, 68, 0.5),
+                    0 0 30px 10px rgba(239, 68, 68, 0.2);
+        background-color: rgba(239, 68, 68, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 0 30px rgba(239, 68, 68, 0),
+                    0 0 40px 15px rgba(239, 68, 68, 0);
+        background-color: var(--cell-revealed);
+    }
+}
+
+.cell.mine.exploded {
+    animation: explosion-pulse 0.8s ease-out forwards;
+}
+
+/* ========== 错误标记动画 - 红色闪烁效果 ========== */
 .cell.wrong-flag {
     background: rgba(239, 68, 68, 0.3) !important;
 }
@@ -667,6 +778,72 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
+}
+
+/* 错误标记抖动动画 - 增强版 */
+@keyframes error-shake {
+    0%, 100% {
+        transform: translateX(0) rotate(0deg);
+    }
+    10% {
+        transform: translateX(-6px) rotate(-3deg);
+        background-color: rgba(239, 68, 68, 0.5);
+    }
+    20% {
+        transform: translateX(6px) rotate(3deg);
+        background-color: rgba(239, 68, 68, 0.3);
+    }
+    30% {
+        transform: translateX(-6px) rotate(-3deg);
+        background-color: rgba(239, 68, 68, 0.5);
+    }
+    40% {
+        transform: translateX(6px) rotate(3deg);
+        background-color: rgba(239, 68, 68, 0.3);
+    }
+    50% {
+        transform: translateX(-4px) rotate(-2deg);
+        background-color: rgba(239, 68, 68, 0.4);
+    }
+    60% {
+        transform: translateX(4px) rotate(2deg);
+        background-color: rgba(239, 68, 68, 0.3);
+    }
+    70%, 100% {
+        transform: translateX(0) rotate(0deg);
+        background-color: rgba(239, 68, 68, 0.3);
+    }
+}
+
+/* 错误标记红色闪烁动画 */
+@keyframes error-flash-pulse {
+    0%, 100% {
+        box-shadow: 0 0 5px 2px rgba(239, 68, 68, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 20px 8px rgba(239, 68, 68, 0.8),
+                    0 0 30px 12px rgba(239, 68, 68, 0.4);
+    }
+}
+
+.cell.wrong-flag {
+    animation: error-shake 0.7s ease-in-out,
+               error-flash-pulse 1s ease-in-out 0.7s 3;
+}
+
+/* 自动标记的旗帜样式 */
+.cell.auto-flagged::before {
+    animation: flag-pop-in 0.4s cubic-bezier(0.68, -0.6, 0.32, 1.6) forwards,
+               victory-pulse 0.5s ease-in-out 0.4s;
+}
+
+@keyframes victory-pulse {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.3);
+    }
 }
 
 /* ========== 游戏说明 ========== */
@@ -748,11 +925,41 @@ body {
     transition: all var(--transition-normal);
 }
 
-/* 游戏胜利状态 */
+/* 游戏胜利状态 - 增强动画 */
 .game-status.won .status-message {
     background: rgba(16, 185, 129, 0.15);
     border-color: var(--success-color);
     color: var(--success-color);
+}
+
+@keyframes victory-bounce {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    25% {
+        transform: translateY(-8px) scale(1.02);
+    }
+    50% {
+        transform: translateY(-15px) scale(1.05);
+    }
+    75% {
+        transform: translateY(-8px) scale(1.02);
+    }
+}
+
+@keyframes victory-glow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.6),
+                    0 0 50px rgba(16, 185, 129, 0.3);
+    }
+}
+
+.game-status.won .status-message {
+    animation: victory-bounce 0.8s ease-in-out 3,
+               victory-glow 2s ease-in-out infinite;
 }
 
 /* 游戏失败状态 */
@@ -760,6 +967,22 @@ body {
     background: rgba(239, 68, 68, 0.15);
     border-color: var(--error-color);
     color: var(--error-color);
+}
+
+@keyframes lose-shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-6px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(6px);
+    }
+}
+
+.game-status.lost .status-message {
+    animation: lose-shake 0.6s ease-in-out;
 }
 
 /* ========== 页脚 ========== */
@@ -825,8 +1048,6 @@ body {
 }
 
 /* ========== 响应式设计 ========== */
-
-/* 平板设备 (768px - 1024px) */
 @media (max-width: 1024px) {
     .game-container {
         gap: var(--space-lg);
@@ -874,7 +1095,6 @@ body {
     }
 }
 
-/* 移动设备 (480px - 768px) */
 @media (max-width: 768px) {
     body {
         padding: var(--space-sm);
@@ -953,7 +1173,6 @@ body {
         min-height: 26px;
     }
 
-    /* 专家级网格 - 使用水平滚动 */
     .game-board.expert {
         min-width: max-content;
     }
@@ -977,7 +1196,6 @@ body {
     }
 }
 
-/* 小屏幕移动设备 (< 480px) */
 @media (max-width: 480px) {
     body {
         padding: var(--space-xs);
@@ -1026,6 +1244,7 @@ body {
     .game-controls {
         padding: var(--space-sm) var(--space-md);
         gap: var(--space-md);
+        border-radius: var(--radius-lg);
     }
 
     .difficulty-selector {
@@ -1085,12 +1304,10 @@ body {
         overflow-x: auto;
         justify-content: flex-start;
         -webkit-overflow-scrolling: touch;
-        /* 隐藏滚动条 */
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
 
-    /* 隐藏滚动条 */
     .game-board-container::-webkit-scrollbar {
         display: none;
     }
@@ -1103,13 +1320,11 @@ body {
         min-height: 22px;
     }
 
-    /* 初级网格在小屏幕上的适配 */
     .game-board.beginner {
         gap: 1px;
         padding: 2px;
     }
 
-    /* 中级和专家级网格支持滚动 */
     .game-board.intermediate,
     .game-board.expert {
         min-width: max-content;
@@ -1170,7 +1385,6 @@ body {
     }
 }
 
-/* ========== 超小屏幕优化 (iPhone SE 及类似设备) ========== */
 @media (max-width: 375px) {
     body {
         padding: 2px;
@@ -1248,7 +1462,6 @@ body {
         border-radius: var(--radius-sm);
     }
 
-    /* 进一步缩小格子尺寸 */
     .cell {
         width: 20px;
         height: 20px;
@@ -1258,7 +1471,6 @@ body {
         border-radius: 2px;
     }
 
-    /* 初级网格紧凑布局 */
     .game-board.beginner {
         gap: 1px;
         padding: 2px;
@@ -1266,7 +1478,6 @@ body {
         overflow: hidden;
     }
 
-    /* 确保9x9网格适应375px宽度 */
     .game-board.beginner .cell {
         width: calc((100vw - 36px) / 9 - 1px);
         height: calc((100vw - 36px) / 9 - 1px);
@@ -1346,7 +1557,6 @@ body {
     }
 }
 
-/* 横屏模式优化 */
 @media (max-height: 600px) and (orientation: landscape) {
     .game-container {
         gap: var(--space-sm);
@@ -1431,7 +1641,6 @@ body {
     }
 }
 
-/* 超小屏幕横屏模式 */
 @media (max-height: 600px) and (orientation: landscape) and (max-width: 667px) {
     .game-header {
         padding: 4px var(--space-sm);
@@ -1519,8 +1728,6 @@ body {
 }
 
 /* ========== 特殊模式支持 ========== */
-
-/* 暗色模式增强 */
 @media (prefers-color-scheme: dark) {
     :root {
         --bg-color: #0a0e17;
@@ -1530,7 +1737,6 @@ body {
     }
 }
 
-/* 高对比度模式支持 */
 @media (prefers-contrast: high) {
     :root {
         --text-primary: #ffffff;
@@ -1544,7 +1750,6 @@ body {
     }
 }
 
-/* 打印样式 */
 @media print {
     body {
         background: white;
@@ -1687,264 +1892,7 @@ body {
     }
 }
 
-/* ========== 微交互动画 ========== */
-
-/* 格子翻开动画 */
-@keyframes cell-reveal {
-    0% {
-        transform: rotateX(0deg) scale(1);
-        opacity: 1;
-    }
-    50% {
-        transform: rotateX(90deg) scale(0.8);
-        opacity: 0.5;
-    }
-    100% {
-        transform: rotateX(0deg) scale(1);
-        opacity: 1;
-    }
-}
-
-.cell.revealing {
-    animation: cell-reveal 0.3s ease-out forwards;
-}
-
-.cell.revealed {
-    animation: cell-reveal 0.25s ease-out backwards;
-}
-
-/* 波纹扩散动画（洪水填充效果） */
-@keyframes ripple-spread {
-    0% {
-        transform: scale(0.8);
-        opacity: 0.5;
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-        box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
-    }
-}
-
-.cell.ripple {
-    animation: ripple-spread 0.4s ease-out forwards;
-}
-
-/* 旗帜标记动画 */
-@keyframes flag-place {
-    0% {
-        transform: translate(-50%, -50%) scale(0) rotate(-180deg);
-        opacity: 0;
-    }
-    60% {
-        transform: translate(-50%, -50%) scale(1.2) rotate(10deg);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
-        opacity: 1;
-    }
-}
-
-.cell.flagged::before {
-    animation: flag-place 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-}
-
-/* 旗帜移除动画 */
-@keyframes flag-remove {
-    0% {
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(0) rotate(180deg);
-        opacity: 0;
-    }
-}
-
-.cell.flagged.removing-flag::before {
-    animation: flag-remove 0.3s ease-in forwards;
-}
-
-/* 数字弹出动画 */
-@keyframes number-pop {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
-    60% {
-        transform: scale(1.2);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-.cell.revealed:not(.mine) {
-    animation: number-pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-}
-
-/* 数字闪烁动画（数字滚动效果） */
-@keyframes number-glow {
-    0%, 100% {
-        text-shadow: 0 0 5px currentColor;
-    }
-    50% {
-        text-shadow: 0 0 15px currentColor, 0 0 25px currentColor;
-    }
-}
-
-.cell.revealed:not(.mine) {
-    animation: number-pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55),
-               number-glow 0.5s ease-out 0.3s;
-}
-
-/* 地雷爆炸动画 */
-@keyframes mine-explode {
-    0% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.5);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-}
-
-.cell.mine.revealed::before {
-    animation: mine-explode 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-}
-
-/* 爆炸波纹效果 */
-@keyframes explosion-wave {
-    0% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8);
-        background-color: rgba(239, 68, 68, 0.3);
-    }
-    100% {
-        box-shadow: 0 0 0 30px rgba(239, 68, 68, 0);
-        background-color: var(--cell-revealed);
-    }
-}
-
-.cell.mine.exploded {
-    animation: explosion-wave 0.6s ease-out forwards;
-}
-
-/* 错误标记抖动动画 */
-@keyframes shake {
-    0%, 100% {
-        transform: translateX(0);
-    }
-    25% {
-        transform: translateX(-4px);
-    }
-    75% {
-        transform: translateX(4px);
-    }
-}
-
-.cell.wrong-flag {
-    animation: shake 0.3s ease-in-out 2, mine-explode 0.3s ease-out 0.6s;
-}
-
-/* 胜利动画 */
-@keyframes victory-bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
-.game-status.won .status-message {
-    animation: victory-bounce 0.6s ease-in-out 3;
-}
-
-/* 失败动画 */
-@keyframes lose-shake {
-    0%, 100% {
-        transform: translateX(0);
-    }
-    10%, 30%, 50%, 70%, 90% {
-        transform: translateX(-5px);
-    }
-    20%, 40%, 60%, 80% {
-        transform: translateX(5px);
-    }
-}
-
-.game-status.lost .status-message {
-    animation: lose-shake 0.6s ease-in-out;
-}
-
-/* 统计数字滚动动画 */
-@keyframes counter-scroll {
-    0% {
-        transform: translateY(-100%);
-    }
-    100% {
-        transform: translateY(0);
-    }
-}
-
-.stat-value.scrolling {
-    animation: counter-scroll 0.3s ease-out;
-}
-
-/* 笑脸按钮动画 */
-@keyframes smile-bounce {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.2) rotate(10deg);
-    }
-    100% {
-        transform: scale(1) rotate(0deg);
-    }
-}
-
-#restart-btn:active #smile-icon {
-    animation: smile-bounce 0.3s ease-in-out;
-}
-
-/* 悬浮提示动画 */
-@keyframes tooltip-fade {
-    0% {
-        opacity: 0;
-        transform: translateX(-50%) translateY(10px);
-    }
-    100% {
-        opacity: 0.95;
-        transform: translateX(-50%) translateY(0);
-    }
-}
-
-.mobile-touch-hint {
-    animation: tooltip-fade 0.3s ease-out forwards;
-}
-
-/* 进度指示器 */
-.progress-indicator {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent-color), var(--accent-light));
-    transition: width var(--transition-normal);
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-/* 帮助模态框样式 */
+/* ========== 帮助模态框样式 ========== */
 .help-modal {
     position: fixed;
     top: 0;
@@ -2057,44 +2005,7 @@ body {
     border: 1px solid var(--panel-border);
 }
 
-/* 暂停覆盖层 */
-.pause-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity var(--transition-normal), visibility var(--transition-normal);
-    border-radius: var(--radius-lg);
-}
-
-.pause-overlay.visible {
-    opacity: 1;
-    visibility: visible;
-}
-
-.pause-overlay i {
-    font-size: 3rem;
-    color: var(--accent-color);
-    margin-bottom: var(--space-md);
-}
-
-.pause-overlay-text {
-    font-size: 1.5rem;
-    color: var(--text-primary);
-    font-weight: 600;
-}
-
-/* 设置面板 */
+/* ========== 设置面板 ========== */
 .settings-panel {
     position: fixed;
     top: 0;
@@ -2188,12 +2099,6 @@ body {
     margin-top: 2px;
 }
 
-.settings-option-control {
-    display: flex;
-    gap: var(--space-xs);
-}
-
-/* 切换开关 */
 .toggle-switch {
     position: relative;
     width: 48px;
@@ -2224,7 +2129,6 @@ body {
     transform: translateX(22px);
 }
 
-/* 设置按钮 */
 .settings-toggle-btn {
     position: fixed;
     top: var(--space-lg);
@@ -2249,7 +2153,6 @@ body {
     transform: rotate(45deg);
 }
 
-/* 设置遮罩层 */
 .settings-overlay {
     position: fixed;
     top: 0;
@@ -2268,7 +2171,6 @@ body {
     visibility: visible;
 }
 
-/* 音量滑块 */
 .volume-slider-container {
     display: flex;
     align-items: center;
@@ -2311,7 +2213,7 @@ body {
     font-size: 0.9rem;
 }
 
-/* 减少动画时禁用所有动画 */
+/* ========== 减少动画时禁用所有动画 ========== */
 @media (prefers-reduced-motion: reduce) {
     .cell,
     .cell.revealed,
@@ -2322,7 +2224,6 @@ body {
     .game-status.won .status-message,
     .game-status.lost .status-message,
     .help-modal-content,
-    .pause-overlay,
     .settings-panel,
     .theme-toggle-btn,
     .toggle-switch,
@@ -2332,14 +2233,14 @@ body {
     }
 }
 
-/* 焦点可见性增强 */
+/* ========== 焦点可见性增强 ========== */
 :focus-visible {
     outline: 3px solid var(--accent-color);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
 }
 
-/* 高对比度模式下的边框增强 */
+/* ========== 高对比度模式下的边框增强 ========== */
 [data-theme="high-contrast"] .cell,
 [data-theme="dark-high-contrast"] .cell {
     border-width: 2px;

@@ -38,7 +38,8 @@ class TicTacToeGame {
             hintBtn: document.getElementById('hintBtn'),
             soundToggle: document.getElementById('soundToggle'),
             resetStatsBtn: document.getElementById('resetStatsBtn'),
-            difficultyButtons: document.querySelectorAll('.difficulty-btn')
+            difficultyButtons: document.querySelectorAll('.difficulty-btn'),
+            confettiContainer: document.getElementById('confettiContainer')
         };
 
         this.init();
@@ -397,6 +398,7 @@ class TicTacToeGame {
         // 清除获胜状态（如果之前游戏已结束）
         if (wasGameOver) {
             this.clearWinningCells();
+            this.clearConfetti();
         }
 
         this.refreshHistoryList();
@@ -577,6 +579,11 @@ class TicTacToeGame {
                 });
             }
 
+            // 玩家获胜时显示彩带庆祝动画
+            if (winner === 'X') {
+                this.createConfetti();
+            }
+
             this.announce(winner === 'X' ? '恭喜！玩家X获胜！按空格键开始新游戏。' : 'AI获胜！按空格键再试一次吧！');
             this.updateUndoButton();
 
@@ -682,6 +689,7 @@ class TicTacToeGame {
 
         this.clearWinningCells();
         this.clearHints();
+        this.clearConfetti();
         this.refreshHistoryList();
         this.render();
         this.updateUI();
@@ -833,6 +841,69 @@ class TicTacToeGame {
         const cells = this.elements.board.querySelectorAll('.cell');
         const index = Array.from(cells).indexOf(cell);
         return [Math.floor(index / 3), index % 3];
+    }
+
+    /**
+     * 创建彩带庆祝效果 - 第1轮优化
+     * 当玩家获胜时触发
+     */
+    createConfetti() {
+        const container = this.elements.confettiContainer;
+        if (!container) return;
+
+        // 清除之前的彩带
+        container.innerHTML = '';
+
+        // 彩带颜色
+        const colors = [
+            '#fbbf24', // 金色
+            '#ef4444', // 红色
+            '#3b82f6', // 蓝色
+            '#10b981', // 绿色
+            '#f59e0b', // 橙色
+            '#8b5cf6', // 紫色
+            '#ec4899'  // 粉色
+        ];
+
+        // 创建100个彩带碎片
+        for (let i = 0; i < 100; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+
+            // 随机位置和颜色
+            const startX = Math.random() * 100;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const size = Math.random() * 10 + 5;
+            const duration = Math.random() * 2 + 2; // 2-4秒
+            const delay = Math.random() * 0.5;
+
+            confetti.style.cssText = `
+                left: ${startX}%;
+                background: ${color};
+                width: ${size}px;
+                height: ${size}px;
+                animation-delay: ${delay}s;
+                animation-duration: ${duration}s;
+                border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+            `;
+
+            container.appendChild(confetti);
+        }
+
+        // 3秒后自动清除
+        setTimeout(() => {
+            this.clearConfetti();
+        }, 4500);
+    }
+
+    /**
+     * 清除彩带庆祝效果
+     */
+    clearConfetti() {
+        const container = this.elements.confettiContainer;
+        if (container) {
+            container.innerHTML = '';
+        }
     }
 
     render() {

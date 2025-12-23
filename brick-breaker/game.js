@@ -1,12 +1,13 @@
 /**
  * 经典打砖块游戏
  * 使用原生JavaScript实现
+ * 第1轮视觉优化: 增强粒子效果、道具动画、挡板反馈、球体拖尾
  */
 
 // 游戏配置
 const CONFIG = {
-    canvasWidth: 800,
-    canvasHeight: 600,
+    baseCanvasWidth: 800,
+    baseCanvasHeight: 600,
     paddleWidth: 100,
     paddleHeight: 15,
     paddleSpeed: 8,
@@ -24,7 +25,11 @@ const CONFIG = {
     maxLives: 3,
     levelBonus: 1000,
     powerupDuration: 10000,  // 道具持续时间 (毫秒)
-    levelSpeedIncrease: 0.1  // 每关球速增加 10%
+    levelSpeedIncrease: 0.1, // 每关球速增加 10%
+    // 新增视觉效果配置
+    particleCount: 30,       // 砖块破碎粒子数量
+    trailLength: 10,         // 球体拖尾长度
+    paddleFlashDuration: 10  // 挡板闪烁持续帧数
 };
 
 // 游戏状态
@@ -68,6 +73,17 @@ class Game {
         this.animationId = null;
         this.activePowerups = [];  // 活跃的道具效果计时器
 
+        // 新增视觉效果状态
+        this.ballTrails = [];      // 球体拖尾记录
+        this.paddleFlash = 0;      // 挡板闪烁计时器
+        this.paddleFlashColor = null; // 挡板闪烁颜色
+
+        // 动态尺寸相关
+        this.canvasWidth = CONFIG.baseCanvasWidth;
+        this.canvasHeight = CONFIG.baseCanvasHeight;
+        this.scaleX = 1;
+        this.scaleY = 1;
+
         this.init();
         this.bindEvents();
         this.updateUI();
@@ -76,17 +92,20 @@ class Game {
     init() {
         // 初始化游戏对象
         this.paddle = {
-            x: (CONFIG.canvasWidth - CONFIG.paddleWidth) / 2,
-            y: CONFIG.canvasHeight - CONFIG.paddleHeight - 10,
+            x: (this.canvasWidth - CONFIG.paddleWidth) / 2,
+            y: this.canvasHeight - CONFIG.paddleHeight - 10,
             width: CONFIG.paddleWidth,
             baseWidth: CONFIG.paddleWidth,  // 记录基础宽度
             height: CONFIG.paddleHeight,
             speed: CONFIG.paddleSpeed,
-            color: '#3498db'
+            color: '#3498db',
+            originalColor: '#3498db' // 记录原始颜色
         };
 
         // 初始化球
         this.resetBall();
+        // 初始化拖尾
+        this.ballTrails = [];
 
         // 初始化砖块
         this.initBricks();
@@ -104,8 +123,8 @@ class Game {
 
     resetBall() {
         this.balls = [{
-            x: CONFIG.canvasWidth / 2,
-            y: CONFIG.canvasHeight - 50,
+            x: this.canvasWidth / 2,
+            y: this.canvasHeight - 50,
             radius: CONFIG.ballRadius,
             dx: 0, // 初始状态球不动
             dy: 0,
@@ -113,6 +132,8 @@ class Game {
             speed: this.getBallSpeedForLevel(),
             launched: false // 球是否已发射
         }];
+        // 清空拖尾记录
+        this.ballTrails = [];
     }
 
     // 获取当前关卡球速
@@ -176,29 +197,71 @@ class Game {
     resizeCanvas() {
         const container = this.canvas.parentElement;
         const containerWidth = container.clientWidth;
-        const scale = containerWidth / CONFIG.canvasWidth;
+        const containerHeight = container.clientHeight || (containerWidth * 0.75);
 
-        this.canvas.style.width = containerWidth + 'px';
-        this.canvas.style.height = (CONFIG.canvasHeight * scale) + 'px';
+        // 计算新的Canvas尺寸
+        const aspectRatio = CONFIG.baseCanvasWidth / CONFIG.baseCanvasHeight;
+        let newWidth = containerWidth;
+        let newHeight = newWidth / aspectRatio;
 
-        // 保持原始尺寸用于绘制
-        this.canvas.width = CONFIG.canvasWidth;
-        this.canvas.height = CONFIG.canvasHeight;
+        // 如果高度超过容器高度，以高度为准
+        if (newHeight > containerHeight) {
+            newHeight = containerHeight;
+            newWidth = newHeight * aspectRatio;
+        }
+
+        // 设置Canvas的实际渲染尺寸
+        this.canvas.width = newWidth;
+        this.canvas.height = newHeight;
+        this.canvasWidth = newWidth;
+        this.canvasHeight = newHeight;
+
+        // 计算缩放比例
+        this.scaleX = this.canvasWidth / CONFIG.baseCanvasWidth;
+        this.scaleY = this.canvasHeight / CONFIG.baseCanvasHeight;
+
+        // 应用缩放比例到挡板位置
+        if (this.paddle) {
+            const oldX = this.paddle.x / (this.scaleX || 1);
+            const oldY = this.paddle.y / (this.scaleY || 1);
+            this.paddle.x = oldX * this.scaleX;
+            this.paddle.y = this.canvasHeight - CONFIG.paddleHeight * this.scaleY - 10 * this.scaleY;
+            this.paddle.width = CONFIG.paddleWidth * this.scaleX;
+            this.paddle.height = CONFIG.paddleHeight * this.scaleY;
+        }
+
+        // 更新砖块位置和尺寸
+        if (this.bricks) {
+            this.bricks.forEach(brick => {
+                brick.x = brick.x / CONFIG.baseCanvasWidth * this.canvasWidth;
+                brick.y = brick.y / CONFIG.baseCanvasHeight * this.canvasHeight;
+                brick.width = CONFIG.brickWidth * this.scaleX;
+                brick.height = CONFIG.brickHeight * this.scaleY;
+            });
+        }
+
+        // 更新球的位置和大小
+        if (this.balls) {
+            this.balls.forEach(ball => {
+                ball.x = ball.x / CONFIG.baseCanvasWidth * this.canvasWidth;
+                ball.y = ball.y / CONFIG.baseCanvasHeight * this.canvasHeight;
+                ball.radius = CONFIG.ballRadius * Math.min(this.scaleX, this.scaleY);
+            });
+        }
     }
 
     bindEvents() {
         // 鼠标移动事件
         this.canvas.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const scale = this.canvas.width / rect.width;
-            const mouseX = (e.clientX - rect.left) * scale;
+            const mouseX = e.clientX - rect.left;
 
             this.paddle.x = mouseX - this.paddle.width / 2;
 
             // 限制挡板在画布内
             if (this.paddle.x < 0) this.paddle.x = 0;
-            if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
-                this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
+            if (this.paddle.x + this.paddle.width > this.canvasWidth) {
+                this.paddle.x = this.canvasWidth - this.paddle.width;
             }
 
             // 如果球还没发射，球跟着挡板移动
@@ -211,16 +274,15 @@ class Game {
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const rect = this.canvas.getBoundingClientRect();
-            const scale = this.canvas.width / rect.width;
             const touch = e.touches[0];
-            const touchX = (touch.clientX - rect.left) * scale;
+            const touchX = touch.clientX - rect.left;
 
             this.paddle.x = touchX - this.paddle.width / 2;
 
             // 限制挡板在画布内
             if (this.paddle.x < 0) this.paddle.x = 0;
-            if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
-                this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
+            if (this.paddle.x + this.paddle.width > this.canvasWidth) {
+                this.paddle.x = this.canvasWidth - this.paddle.width;
             }
 
             // 如果球还没发射，球跟着挡板移动
@@ -255,7 +317,7 @@ class Game {
                     break;
                 case 'ArrowLeft':
                     e.preventDefault();
-                    this.paddle.x -= this.paddle.speed;
+                    this.paddle.x -= this.paddle.speed * this.scaleX;
                     if (this.paddle.x < 0) this.paddle.x = 0;
                     // 如果球还没发射，球跟着挡板移动
                     if (this.balls.length > 0 && !this.balls[0].launched) {
@@ -264,9 +326,9 @@ class Game {
                     break;
                 case 'ArrowRight':
                     e.preventDefault();
-                    this.paddle.x += this.paddle.speed;
-                    if (this.paddle.x + this.paddle.width > CONFIG.canvasWidth) {
-                        this.paddle.x = CONFIG.canvasWidth - this.paddle.width;
+                    this.paddle.x += this.paddle.speed * this.scaleX;
+                    if (this.paddle.x + this.paddle.width > this.canvasWidth) {
+                        this.paddle.x = this.canvasWidth - this.paddle.width;
                     }
                     // 如果球还没发射，球跟着挡板移动
                     if (this.balls.length > 0 && !this.balls[0].launched) {
@@ -375,8 +437,11 @@ class Game {
         this.level = 1;
         this.particles = [];
         this.powerups = [];
-        this.paddle.width = CONFIG.paddleWidth;
-        this.paddle.baseWidth = CONFIG.paddleWidth;
+        this.paddle.width = CONFIG.paddleWidth * this.scaleX;
+        this.paddle.baseWidth = CONFIG.paddleWidth * this.scaleX;
+        this.paddle.color = this.paddle.originalColor;
+        this.paddleFlash = 0;
+        this.paddleFlashColor = null;
 
         // 清除所有活跃的道具效果
         this.clearActivePowerups();
@@ -514,24 +579,24 @@ class Game {
 
     clearCanvas() {
         this.ctx.fillStyle = '#1a1a2e';
-        this.ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+        this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
         // 添加网格背景
         this.ctx.strokeStyle = 'rgba(52, 152, 219, 0.1)';
         this.ctx.lineWidth = 1;
-        const gridSize = 20;
+        const gridSize = 20 * Math.min(this.scaleX, this.scaleY);
 
-        for (let x = 0; x < CONFIG.canvasWidth; x += gridSize) {
+        for (let x = 0; x < this.canvasWidth; x += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, CONFIG.canvasHeight);
+            this.ctx.lineTo(x, this.canvasHeight);
             this.ctx.stroke();
         }
 
-        for (let y = 0; y < CONFIG.canvasHeight; y += gridSize) {
+        for (let y = 0; y < this.canvasHeight; y += gridSize) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
-            this.ctx.lineTo(CONFIG.canvasWidth, y);
+            this.ctx.lineTo(this.canvasWidth, y);
             this.ctx.stroke();
         }
     }
@@ -546,6 +611,9 @@ class Game {
                 continue;
             }
 
+            // 记录球的位置用于拖尾效果
+            this.recordBallTrail(ball);
+
             // 移动球
             ball.x += ball.dx;
             ball.y += ball.dy;
@@ -557,8 +625,8 @@ class Game {
                 this.createParticles(ball.x, ball.y, 3, '#e74c3c');
             }
 
-            if (ball.x + ball.radius > CONFIG.canvasWidth) {
-                ball.x = CONFIG.canvasWidth - ball.radius;
+            if (ball.x + ball.radius > this.canvasWidth) {
+                ball.x = this.canvasWidth - ball.radius;
                 ball.dx = -Math.abs(ball.dx);
                 this.createParticles(ball.x, ball.y, 3, '#e74c3c');
             }
@@ -570,9 +638,11 @@ class Game {
             }
 
             // 球掉落到底部
-            if (ball.y + ball.radius > CONFIG.canvasHeight) {
+            if (ball.y + ball.radius > this.canvasHeight) {
                 this.balls.splice(i, 1);
-                this.createParticles(ball.x, CONFIG.canvasHeight, 10, '#e74c3c');
+                // 移除该球的拖尾记录
+                this.ballTrails = this.ballTrails.filter(trail => trail.ballIndex !== i);
+                this.createParticles(ball.x, this.canvasHeight, 10, '#e74c3c');
                 continue;
             }
 
@@ -590,6 +660,8 @@ class Game {
                 ball.dx = Math.sin(angle) * speed;
                 ball.dy = -Math.abs(Math.cos(angle) * speed);
 
+                // 触发挡板闪烁效果
+                this.triggerPaddleFlash(ball.color);
                 this.createParticles(ball.x, ball.y, 5, '#3498db');
             }
 
@@ -612,17 +684,25 @@ class Game {
         // 更新道具 (只在PLAYING状态下)
         for (let i = this.powerups.length - 1; i >= 0; i--) {
             const powerup = this.powerups[i];
-            powerup.y += 2;
+            powerup.y += 2 * this.scaleY;
+
+            // 更新道具旋转角度
+            powerup.rotation = (powerup.rotation || 0) + 0.05;
+
+            // 更新道具闪烁
+            powerup.blinkPhase = (powerup.blinkPhase || 0) + 0.1;
+            powerup.blinkAlpha = 0.7 + Math.sin(powerup.blinkPhase) * 0.3;
 
             // 道具与挡板碰撞
             if (this.checkPowerupCollision(powerup)) {
                 this.applyPowerup(powerup.type);
+                this.createParticles(powerup.x, powerup.y, 20, powerup.color);
                 this.powerups.splice(i, 1);
                 continue;
             }
 
             // 道具掉落到底部
-            if (powerup.y > CONFIG.canvasHeight) {
+            if (powerup.y > this.canvasHeight) {
                 this.powerups.splice(i, 1);
             }
         }
@@ -630,12 +710,23 @@ class Game {
         // 更新粒子
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
-            particle.x += particle.vx;
-            particle.y += particle.vy;
+            particle.x += particle.vx * this.scaleX;
+            particle.y += particle.vy * this.scaleY;
             particle.life--;
+            particle.vy += 0.05; // 重力效果
+            particle.size *= 0.98; // 粒子逐渐变小
 
-            if (particle.life <= 0) {
+            if (particle.life <= 0 || particle.size < 0.5) {
                 this.particles.splice(i, 1);
+            }
+        }
+
+        // 更新挡板闪烁
+        if (this.paddleFlash > 0) {
+            this.paddleFlash--;
+            if (this.paddleFlash <= 0) {
+                this.paddle.color = this.paddle.originalColor;
+                this.paddleFlashColor = null;
             }
         }
 
@@ -643,6 +734,34 @@ class Game {
         if (this.bricks.every(brick => !brick.visible)) {
             this.levelComplete();
         }
+    }
+
+    // 记录球体拖尾
+    recordBallTrail(ball) {
+        const ballIndex = this.balls.indexOf(ball);
+        // 为每个球维护独立的拖尾数组
+        if (!this.ballTrails[ballIndex]) {
+            this.ballTrails[ballIndex] = [];
+        }
+
+        const trail = this.ballTrails[ballIndex];
+        trail.push({
+            x: ball.x,
+            y: ball.y,
+            radius: ball.radius,
+            color: ball.color
+        });
+
+        // 限制拖尾长度
+        if (trail.length > CONFIG.trailLength) {
+            trail.shift();
+        }
+    }
+
+    // 触发挡板闪烁效果
+    triggerPaddleFlash(color) {
+        this.paddleFlash = CONFIG.paddleFlashDuration;
+        this.paddleFlashColor = color;
     }
 
     checkPaddleCollision(ball) {
@@ -687,12 +806,12 @@ class Game {
                 if (brick.hits <= 0) {
                     brick.visible = false;
 
-                    // 创建砖块破碎粒子
-                    this.createParticles(
+                    // 创建增强版砖块破碎粒子 - 更多数量的粒子 + 颜色变化
+                    this.createEnhancedParticles(
                         brick.x + brick.width / 2,
                         brick.y + brick.height / 2,
-                        15,
-                        brick.color
+                        brick.color,
+                        brick.type
                     );
 
                     // 增加分数
@@ -706,6 +825,14 @@ class Game {
                     if (brick.type === BrickType.SPECIAL) {
                         this.createPowerup(brick.x + brick.width / 2, brick.y);
                     }
+                } else {
+                    // 砖块被击中但未破碎，创建少量粒子
+                    this.createParticles(
+                        ball.x,
+                        ball.y,
+                        8,
+                        brick.color
+                    );
                 }
 
                 this.updateUI();
@@ -721,11 +848,76 @@ class Game {
                powerup.y - powerup.size < this.paddle.y + this.paddle.height;
     }
 
+    // 增强版粒子创建 - 更多样式和颜色变化
+    createEnhancedParticles(x, y, baseColor, brickType) {
+        // 根据砖块类型选择颜色变化
+        let colorVariations = [baseColor];
+
+        switch (brickType) {
+            case BrickType.NORMAL:
+                colorVariations = ['#3498db', '#5dade2', '#85c1e9', '#2980b9', '#ffffff'];
+                break;
+            case BrickType.STRONG:
+                colorVariations = ['#f39c12', '#f8c471', '#fad7a0', '#e67e22', '#ffffff'];
+                break;
+            case BrickType.SPECIAL:
+                colorVariations = ['#9b59b6', '#bb8fce', '#d7bde2', '#8e44ad', '#ffffff', '#f1c40f'];
+                break;
+        }
+
+        const particleCount = CONFIG.particleCount;
+
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 5 + 2;
+            const size = Math.random() * 6 * Math.min(this.scaleX, this.scaleY) + 2;
+            const life = Math.random() * 40 + 30;
+            const color = colorVariations[Math.floor(Math.random() * colorVariations.length)];
+
+            // 添加闪光粒子
+            const isSparkle = Math.random() < 0.2; // 20%概率创建闪光粒子
+
+            this.particles.push({
+                x,
+                y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 1, // 初始向上抛
+                size,
+                color,
+                originalColor: color,
+                life,
+                maxLife: life,
+                isSparkle,
+                sparklePhase: Math.random() * Math.PI * 2
+            });
+        }
+
+        // 添加中心爆炸效果
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 / 8) * i;
+            const speed = 3;
+            const size = 4 * Math.min(this.scaleX, this.scaleY);
+
+            this.particles.push({
+                x,
+                y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size,
+                color: '#ffffff',
+                life: 15,
+                maxLife: 15,
+                isSparkle: true,
+                sparklePhase: 0
+            });
+        }
+    }
+
     createParticles(x, y, count, color) {
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = Math.random() * 3 + 1;
-            const size = Math.random() * 4 + 2;
+            const size = Math.random() * 4 * Math.min(this.scaleX, this.scaleY) + 2;
             const life = Math.random() * 30 + 20;
 
             this.particles.push({
@@ -735,7 +927,8 @@ class Game {
                 vy: Math.sin(angle) * speed,
                 size,
                 color,
-                life
+                life,
+                maxLife: life
             });
         }
     }
@@ -748,9 +941,12 @@ class Game {
             x,
             y,
             type,
-            size: 20,
+            size: 20 * Math.min(this.scaleX, this.scaleY),
             color: this.getPowerupColor(type),
-            icon: this.getPowerupIcon(type)
+            icon: this.getPowerupIcon(type),
+            rotation: 0,
+            blinkPhase: 0,
+            blinkAlpha: 1
         };
 
         this.powerups.push(powerup);
@@ -782,13 +978,13 @@ class Game {
         switch (type) {
             case PowerupType.PADDLE_LONG:
                 this.addPowerupEffect(type, () => {
-                    this.paddle.width = Math.min(this.paddle.baseWidth * 1.5, 200);
+                    this.paddle.width = Math.min(this.paddle.baseWidth * 1.5, 200 * this.scaleX);
                 });
                 break;
 
             case PowerupType.PADDLE_SHORT:
                 this.addPowerupEffect(type, () => {
-                    this.paddle.width = Math.max(this.paddle.baseWidth * 0.7, 50);
+                    this.paddle.width = Math.max(this.paddle.baseWidth * 0.7, 50 * this.scaleX);
                 });
                 break;
 
@@ -849,6 +1045,9 @@ class Game {
     }
 
     draw() {
+        // 绘制球体拖尾 (在球之前绘制)
+        this.drawBallTrails();
+
         // 绘制挡板
         this.drawPaddle();
 
@@ -868,26 +1067,92 @@ class Game {
         this.drawGameState();
     }
 
+    // 绘制球体拖尾
+    drawBallTrails() {
+        for (let trail of this.ballTrails) {
+            if (!trail) continue;
+
+            for (let i = 0; i < trail.length; i++) {
+                const point = trail[i];
+                const alpha = (i / trail.length) * 0.4; // 越新的位置越不透明
+                const sizeRatio = (i / trail.length); // 越新的位置越大
+
+                this.ctx.globalAlpha = alpha;
+                this.ctx.beginPath();
+                this.ctx.arc(point.x, point.y, point.radius * sizeRatio, 0, Math.PI * 2);
+
+                // 创建渐变拖尾
+                const gradient = this.ctx.createRadialGradient(
+                    point.x, point.y, 0,
+                    point.x, point.y, point.radius * sizeRatio
+                );
+                gradient.addColorStop(0, `rgba(231, 76, 60, ${alpha})`);
+                gradient.addColorStop(0.5, `rgba(192, 57, 43, ${alpha * 0.7})`);
+                gradient.addColorStop(1, `rgba(192, 57, 43, 0)`);
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
+            }
+        }
+        this.ctx.globalAlpha = 1;
+    }
+
     drawPaddle() {
+        // 确定挡板颜色 (闪烁效果)
+        let paddleColor = this.paddle.color;
+        if (this.paddleFlash > 0 && this.paddleFlashColor) {
+            // 闪烁颜色过渡
+            const flashIntensity = this.paddleFlash / CONFIG.paddleFlashDuration;
+            paddleColor = this.paddleFlashColor;
+            this.ctx.shadowColor = this.paddleFlashColor;
+            this.ctx.shadowBlur = 20 * flashIntensity * Math.min(this.scaleX, this.scaleY);
+        }
+
         // 绘制挡板阴影
         this.ctx.fillStyle = 'rgba(44, 62, 80, 0.7)';
-        this.ctx.fillRect(this.paddle.x, this.paddle.y + 5, this.paddle.width, this.paddle.height);
+        this.ctx.fillRect(this.paddle.x, this.paddle.y + 5 * this.scaleY, this.paddle.width, this.paddle.height);
 
         // 绘制挡板
         const gradient = this.ctx.createLinearGradient(
             this.paddle.x, this.paddle.y,
             this.paddle.x, this.paddle.y + this.paddle.height
         );
-        gradient.addColorStop(0, this.paddle.color);
-        gradient.addColorStop(1, '#2980b9');
+        gradient.addColorStop(0, paddleColor);
+        gradient.addColorStop(1, this.adjustColor(paddleColor, -30));
 
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
 
         // 绘制挡板边框
         this.ctx.strokeStyle = '#2c3e50';
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 2 * Math.min(this.scaleX, this.scaleY);
         this.ctx.strokeRect(this.paddle.x, this.paddle.y, this.paddle.width, this.paddle.height);
+
+        // 闪烁时添加高光效果
+        if (this.paddleFlash > 0 && this.paddleFlashColor) {
+            const flashIntensity = this.paddleFlash / CONFIG.paddleFlashDuration;
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${flashIntensity * 0.5})`;
+            this.ctx.fillRect(
+                this.paddle.x,
+                this.paddle.y,
+                this.paddle.width,
+                2 * this.scaleY
+            );
+        }
+
+        // 重置阴影
+        this.ctx.shadowColor = 'transparent';
+        this.ctx.shadowBlur = 0;
+    }
+
+    // 辅助方法: 调整颜色亮度
+    adjustColor(color, amount) {
+        const hex = color.replace('#', '');
+        const num = parseInt(hex, 16);
+        const r = Math.max(0, Math.min(255, (num >> 16) + amount));
+        const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + amount));
+        const b = Math.max(0, Math.min(255, (num & 0x0000FF) + amount));
+        return `rgb(${r}, ${g}, ${b})`;
     }
 
     drawBricks() {
@@ -899,7 +1164,7 @@ class Game {
 
             // 绘制砖块阴影
             this.ctx.fillStyle = 'rgba(44, 62, 80, 0.5)';
-            this.ctx.fillRect(brick.x + 2, brick.y + 2, brick.width, brick.height);
+            this.ctx.fillRect(brick.x + 2 * this.scaleX, brick.y + 2 * this.scaleY, brick.width, brick.height);
 
             // 绘制砖块
             const gradient = this.ctx.createLinearGradient(
@@ -926,18 +1191,19 @@ class Game {
 
             // 绘制砖块边框
             this.ctx.strokeStyle = brick.borderColor;
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = 1 * Math.min(this.scaleX, this.scaleY);
             this.ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
 
             // 坚固砖块显示生命值
             if (brick.type === BrickType.STRONG) {
                 this.ctx.fillStyle = '#ffffff';
-                this.ctx.font = '12px Arial';
+                const fontSize = Math.max(12 * Math.min(this.scaleX, this.scaleY), 10);
+                this.ctx.font = `${fontSize}px Arial`;
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(
                     `${brick.hits}`,
                     brick.x + brick.width / 2,
-                    brick.y + brick.height / 2 + 4
+                    brick.y + brick.height / 2 + 4 * Math.min(this.scaleX, this.scaleY)
                 );
             }
         }
@@ -947,7 +1213,7 @@ class Game {
         for (const ball of this.balls) {
             // 绘制球阴影
             this.ctx.beginPath();
-            this.ctx.arc(ball.x + 2, ball.y + 2, ball.radius, 0, Math.PI * 2);
+            this.ctx.arc(ball.x + 2 * this.scaleX, ball.y + 2 * this.scaleY, ball.radius, 0, Math.PI * 2);
             this.ctx.fillStyle = 'rgba(44, 62, 80, 0.5)';
             this.ctx.fill();
 
@@ -967,7 +1233,7 @@ class Game {
 
             // 绘制球边框
             this.ctx.strokeStyle = '#2c3e50';
-            this.ctx.lineWidth = 1;
+            this.ctx.lineWidth = 1 * Math.min(this.scaleX, this.scaleY);
             this.ctx.stroke();
 
             // 绘制球高光
@@ -980,69 +1246,145 @@ class Game {
 
     drawPowerups() {
         for (const powerup of this.powerups) {
-            // 绘制道具发光效果
-            this.ctx.shadowColor = powerup.color;
-            this.ctx.shadowBlur = 15;
+            this.ctx.save();
 
-            // 绘制道具背景
+            // 移动到道具中心
+            this.ctx.translate(powerup.x, powerup.y);
+            this.ctx.rotate(powerup.rotation || 0);
+
+            // 绘制道具发光效果
+            const glowIntensity = 0.5 + Math.sin((powerup.blinkPhase || 0)) * 0.3;
+            this.ctx.shadowColor = powerup.color;
+            this.ctx.shadowBlur = 20 * Math.min(this.scaleX, this.scaleY) * glowIntensity;
+
+            // 绘制道具背景 (带闪烁透明度)
+            this.ctx.globalAlpha = powerup.blinkAlpha || 1;
             this.ctx.beginPath();
-            this.ctx.arc(powerup.x, powerup.y, powerup.size, 0, Math.PI * 2);
-            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            this.ctx.arc(0, 0, powerup.size, 0, Math.PI * 2);
+
+            // 道具背景渐变
+            const bgGradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, powerup.size);
+            bgGradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+            bgGradient.addColorStop(0.7, powerup.color);
+            bgGradient.addColorStop(1, powerup.color);
+
+            this.ctx.fillStyle = bgGradient;
             this.ctx.fill();
 
             // 绘制道具边框
             this.ctx.strokeStyle = powerup.color;
-            this.ctx.lineWidth = 2;
+            this.ctx.lineWidth = 3 * Math.min(this.scaleX, this.scaleY);
             this.ctx.stroke();
 
             // 绘制道具图标
-            this.ctx.fillStyle = powerup.color;
-            this.ctx.font = `${powerup.size}px Arial`;
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = `bold ${powerup.size}px Arial`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(powerup.icon, powerup.x, powerup.y);
+            this.ctx.fillText(powerup.icon, 0, 0);
 
-            // 重置阴影
+            // 绘制外圈光环效果
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, powerup.size + 3 * Math.min(this.scaleX, this.scaleY), 0, Math.PI * 2);
+            this.ctx.strokeStyle = `rgba(255, 255, 255, ${glowIntensity * 0.5})`;
+            this.ctx.lineWidth = 2 * Math.min(this.scaleX, this.scaleY);
+            this.ctx.stroke();
+
+            this.ctx.restore();
             this.ctx.shadowColor = 'transparent';
             this.ctx.shadowBlur = 0;
+            this.ctx.globalAlpha = 1;
         }
     }
 
     drawParticles() {
         for (const particle of this.particles) {
-            this.ctx.globalAlpha = particle.life / 50;
-            this.ctx.fillStyle = particle.color;
-            this.ctx.beginPath();
-            this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-            this.ctx.fill();
+            const lifeRatio = particle.life / particle.maxLife;
+            this.ctx.globalAlpha = lifeRatio;
+
+            if (particle.isSparkle) {
+                // 闪光粒子效果
+                particle.sparklePhase = (particle.sparklePhase || 0) + 0.3;
+                const sparkleIntensity = 0.5 + Math.sin(particle.sparklePhase) * 0.5;
+
+                this.ctx.shadowColor = particle.color;
+                this.ctx.shadowBlur = particle.size * 2 * sparkleIntensity;
+
+                // 绘制星形闪光
+                this.drawStar(
+                    particle.x,
+                    particle.y,
+                    4, // 5个角
+                    particle.size * sparkleIntensity,
+                    particle.size * 0.5 * sparkleIntensity
+                );
+
+                this.ctx.shadowBlur = 0;
+            } else {
+                // 普通粒子
+                this.ctx.fillStyle = particle.color;
+                this.ctx.beginPath();
+                this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
         }
         this.ctx.globalAlpha = 1;
+    }
+
+    // 绘制星形
+    drawStar(cx, cy, spikes, outerRadius, innerRadius) {
+        let rot = Math.PI / 2 * 3;
+        let step = Math.PI / spikes;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx, cy - outerRadius);
+
+        for (let i = 0; i < spikes; i++) {
+            let x = cx + Math.cos(rot) * outerRadius;
+            let y = cy + Math.sin(rot) * outerRadius;
+            this.ctx.lineTo(x, y);
+            rot += step;
+
+            x = cx + Math.cos(rot) * innerRadius;
+            y = cy + Math.sin(rot) * innerRadius;
+            this.ctx.lineTo(x, y);
+            rot += step;
+        }
+
+        this.ctx.lineTo(cx, cy - outerRadius);
+        this.ctx.closePath();
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        this.ctx.fill();
     }
 
     drawGameState() {
         if (this.state === GameState.MENU) {
             // 半透明背景
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            this.ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+            this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
             this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = 'bold 36px Arial';
+            const titleFontSize = Math.max(36 * Math.min(this.scaleX, this.scaleY), 24);
+            const descFontSize = Math.max(24 * Math.min(this.scaleX, this.scaleY), 16);
+            this.ctx.font = `bold ${titleFontSize}px Arial`;
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('点击开始或按空格键', CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2);
+            this.ctx.fillText('点击开始或按空格键', this.canvasWidth / 2, this.canvasHeight / 2);
 
-            this.ctx.font = '24px Arial';
-            this.ctx.fillText('点击Canvas发射球', CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2 + 50);
+            this.ctx.font = `${descFontSize}px Arial`;
+            this.ctx.fillText('点击Canvas发射球', this.canvasWidth / 2, this.canvasHeight / 2 + 50 * Math.min(this.scaleX, this.scaleY));
         } else if (this.state === GameState.PAUSED) {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            this.ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+            this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
             this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = 'bold 48px Arial';
+            const titleFontSize = Math.max(48 * Math.min(this.scaleX, this.scaleY), 32);
+            const descFontSize = Math.max(24 * Math.min(this.scaleX, this.scaleY), 16);
+            this.ctx.font = `bold ${titleFontSize}px Arial`;
             this.ctx.textAlign = 'center';
-            this.ctx.fillText('游戏暂停', CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2);
+            this.ctx.fillText('游戏暂停', this.canvasWidth / 2, this.canvasHeight / 2);
 
-            this.ctx.font = '24px Arial';
-            this.ctx.fillText('按空格键或点击"继续"按钮恢复游戏', CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2 + 60);
+            this.ctx.font = `${descFontSize}px Arial`;
+            this.ctx.fillText('按空格键或点击"继续"按钮恢复游戏', this.canvasWidth / 2, this.canvasHeight / 2 + 60 * Math.min(this.scaleX, this.scaleY));
         }
     }
 }

@@ -1,6 +1,7 @@
 /**
  * Snake Game - Modern Implementation
  * 完整的贪吃蛇游戏实现，支持桌面和移动端
+ * 第1轮视觉增强优化
  */
 
 class SnakeGame {
@@ -15,10 +16,10 @@ class SnakeGame {
 
         // Food types configuration
         this.foodTypes = {
-            normal: { points: 10, color: '#f43f5e', speed: 1 },
-            gold: { points: 50, color: '#fbbf24', speed: 0.98 },
-            fast: { points: 20, color: '#4ade80', speed: 0.95 },
-            mystery: { points: 0, color: '#60a5fa', speed: 1 } // 随机分数
+            normal: { points: 10, color: '#f43f5e', speed: 1, glowColor: 'rgba(244, 63, 94, 0.8)' },
+            gold: { points: 50, color: '#fbbf24', speed: 0.98, glowColor: 'rgba(251, 191, 36, 0.9)' },
+            fast: { points: 20, color: '#4ade80', speed: 0.95, glowColor: 'rgba(74, 222, 128, 0.8)' },
+            mystery: { points: 0, color: '#60a5fa', speed: 1, glowColor: 'rgba(96, 165, 250, 0.8)' } // 随机分数
         };
 
         // State
@@ -29,7 +30,8 @@ class SnakeGame {
             score: 0,
             highScore: parseInt(localStorage.getItem('snake_high') || '0'),
             soundEnabled: true,
-            lastScoreUpdate: 0 // 防止频繁更新DOM
+            lastScoreUpdate: 0, // 防止频繁更新DOM
+            previousScore: 0 // 用于分数动画
         };
 
         this.snake = [];
@@ -60,6 +62,13 @@ class SnakeGame {
         // 窗口resize防抖定时器
         this.resizeTimer = null;
 
+        // 食物发光脉冲动画
+        this.foodPulsePhase = 0;
+        this.foodPulseSpeed = 0.05;
+
+        // 蛇身颜色渐变过渡
+        this.snakeGradientColors = [];
+
         this.init();
     }
 
@@ -73,6 +82,7 @@ class SnakeGame {
         });
         this.bindEvents();
         this.bindAccessibility();
+        this.bindButtonRipple();
         this.reset();
         this.showOverlay('start-screen');
         this.preventScrollOnKeys();
@@ -104,6 +114,47 @@ class SnakeGame {
                         this.previousFocus.focus();
                     }
                 }
+            });
+        });
+    }
+
+    /**
+     * 绑定按钮涟漪效果
+     */
+    bindButtonRipple() {
+        const createRipple = (event, button) => {
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple');
+
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${x}px`;
+            ripple.style.top = `${y}px`;
+
+            button.appendChild(ripple);
+
+            ripple.addEventListener('animationend', () => {
+                ripple.remove();
+            });
+        };
+
+        // 为所有按钮添加涟漪效果
+        const buttons = document.querySelectorAll('.btn, .direction-btn');
+        buttons.forEach(button => {
+            button.addEventListener('click', (e) => createRipple(e, button));
+
+            // 触摸设备支持
+            button.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                const mockEvent = {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                };
+                createRipple(mockEvent, button);
             });
         });
     }
@@ -165,7 +216,9 @@ class SnakeGame {
         this.state.gameOver = false;
         this.state.paused = false;
         this.state.lastScoreUpdate = 0;
+        this.state.previousScore = 0;
         this.stepInterval = 100;
+        this.foodPulsePhase = 0;
 
         // Center snake - 确保蛇在边界内
         const cx = Math.min(Math.floor(this.tileCountX / 2), this.tileCountX - 4);
@@ -180,6 +233,7 @@ class SnakeGame {
         this.dx = 1;
         this.dy = 0;
         this.inputQueue = [];
+        this.snakeGradientColors = [];
 
         this.spawnFood();
         this.updateUI();
@@ -210,7 +264,8 @@ class SnakeGame {
             this.food = {
                 x: Math.floor(Math.random() * this.tileCountX),
                 y: Math.floor(Math.random() * this.tileCountY),
-                type: type
+                type: type,
+                spawnTime: performance.now() // 记录生成时间用于动画
             };
 
             // Check collision with snake
@@ -235,7 +290,8 @@ class SnakeGame {
                 this.food = {
                     x: spot.x,
                     y: spot.y,
-                    type: type
+                    type: type,
+                    spawnTime: performance.now()
                 };
             } else {
                 // 蛇完全填满屏幕，游戏获胜
@@ -409,6 +465,9 @@ class SnakeGame {
         const dt = now - this.lastTime;
         this.lastTime = now;
 
+        // 更新食物发光脉冲相位
+        this.foodPulsePhase += this.foodPulseSpeed;
+
         if (!this.state.paused) {
             this.accumulatedTime += dt;
             while (this.accumulatedTime >= this.stepInterval) {
@@ -477,7 +536,26 @@ class SnakeGame {
             points = Math.floor(Math.random() * 50) + 10;
         }
 
+        const oldScore = this.state.score;
         this.state.score += points;
+
+        // 触发分数动画
+        this.animateScoreChange(oldScore, this.state.score);
+
+        // 触发粒子效果
+        const canvasRect = this.canvas.getBoundingClientRect();
+        const foodX = this.food.x * this.gridSize + this.gridSize / 2;
+        const foodY = this.food.y * this.gridSize + this.gridSize / 2;
+        const screenX = canvasRect.left + foodX;
+        const screenY = canvasRect.top + foodY;
+
+        if (window.gameEffects && window.gameEffects.createFoodParticles) {
+            window.gameEffects.createFoodParticles(screenX, screenY, foodConfig.color);
+        }
+
+        if (window.gameEffects && window.gameEffects.showFloatingScore) {
+            window.gameEffects.showFloatingScore(screenX, screenY, points, foodConfig.color);
+        }
 
         // 调整速度
         if (this.food.type !== 'normal') {
@@ -500,6 +578,28 @@ class SnakeGame {
         }
 
         this.spawnFood();
+    }
+
+    /**
+     * 分数变化动画
+     */
+    animateScoreChange(oldScore, newScore) {
+        const scoreElement = document.getElementById('score');
+
+        // 添加缩放动画类
+        scoreElement.classList.remove('score-pop');
+        void scoreElement.offsetWidth; // 触发重排以重新启动动画
+        scoreElement.classList.add('score-pop');
+
+        // 数字滚动动画
+        if (window.gameEffects && window.gameEffects.animateNumber) {
+            window.gameEffects.animateNumber(scoreElement, newScore, 300);
+        }
+
+        // 移除动画类
+        setTimeout(() => {
+            scoreElement.classList.remove('score-pop');
+        }, 300);
     }
 
     /**
@@ -598,10 +698,10 @@ class SnakeGame {
         // Draw grid
         this.drawGrid();
 
-        // Draw food
+        // Draw food with pulse animation
         this.drawFood();
 
-        // Draw snake
+        // Draw snake with gradient colors
         this.drawSnake();
     }
 
@@ -629,7 +729,7 @@ class SnakeGame {
     }
 
     /**
-     * 绘制食物
+     * 绘制食物 - 带发光脉冲动画
      */
     drawFood() {
         if (!this.food) return;
@@ -639,9 +739,26 @@ class SnakeGame {
         const r = this.gridSize / 2 - 2;
         const foodConfig = this.foodTypes[this.food.type];
 
-        // 发光效果
+        // 计算脉冲效果
+        const pulseIntensity = (Math.sin(this.foodPulsePhase) + 1) / 2; // 0 到 1
+        const glowSize = 10 + pulseIntensity * 15; // 动态发光大小
+        const outerGlowSize = glowSize + 10;
+
+        // 绘制多层发光环
+        // 外层发光
+        const gradient = this.ctx.createRadialGradient(cx, cy, 0, cx, cy, outerGlowSize);
+        gradient.addColorStop(0, foodConfig.glowColor);
+        gradient.addColorStop(0.5, foodConfig.glowColor.replace('0.8', '0.3'));
+        gradient.addColorStop(1, 'transparent');
+
+        this.ctx.fillStyle = gradient;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, outerGlowSize, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 中层发光
         this.ctx.shadowColor = foodConfig.color;
-        this.ctx.shadowBlur = this.food.type === 'gold' ? 15 : 10;
+        this.ctx.shadowBlur = glowSize;
         this.ctx.fillStyle = foodConfig.color;
 
         this.ctx.beginPath();
@@ -650,18 +767,35 @@ class SnakeGame {
 
         // 神秘食物添加闪烁效果
         if (this.food.type === 'mystery') {
-            this.ctx.strokeStyle = '#ffffff';
+            const flashIntensity = (Math.sin(this.foodPulsePhase * 2) + 1) / 2;
+            this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 + flashIntensity * 0.5})`;
             this.ctx.lineWidth = 2;
             this.ctx.stroke();
         }
+
+        // 绘制高光
+        const highlightGradient = this.ctx.createRadialGradient(
+            cx - r * 0.3, cy - r * 0.3, 0,
+            cx, cy, r
+        );
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+        highlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+        highlightGradient.addColorStop(1, 'transparent');
+
+        this.ctx.fillStyle = highlightGradient;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        this.ctx.fill();
 
         this.ctx.shadowBlur = 0;
     }
 
     /**
-     * 绘制蛇
+     * 绘制蛇 - 带平滑颜色渐变
      */
     drawSnake() {
+        const snakeLength = this.snake.length;
+
         this.snake.forEach((segment, index) => {
             // 确保段在画布范围内
             if (segment.x < 0 || segment.x >= this.tileCountX ||
@@ -672,20 +806,33 @@ class SnakeGame {
             const x = segment.x * this.gridSize;
             const y = segment.y * this.gridSize;
 
-            // 渐变透明度
-            const alpha = 1 - (index / this.snake.length) * 0.6;
-            this.ctx.fillStyle = `rgba(16, 185, 129, ${alpha})`;
+            // 平滑颜色渐变 - 从蛇头到蛇尾
+            // 蛇头: #34d399 (鲜绿色)
+            // 蛇身渐变到: #10b981 (深绿色)
+            const progress = index / snakeLength; // 0 (头) 到 1 (尾)
+
+            // 使用HSL颜色空间实现平滑过渡
+            // 蛇头: hue 158, saturation 80%, lightness 60%
+            // 蛇尾: hue 158, saturation 70%, lightness 35%
+            const hue = 158;
+            const saturation = 80 - progress * 10; // 80% -> 70%
+            const lightness = 60 - progress * 25; // 60% -> 35%
+            const alpha = 1 - progress * 0.4; // 1 -> 0.6
+
+            this.ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
 
             // 蛇头特殊处理
             if (index === 0) {
                 this.ctx.fillStyle = '#34d399';
-                this.ctx.shadowColor = '#34d399';
-                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = 'rgba(52, 211, 153, 0.6)';
+                this.ctx.shadowBlur = 12;
 
                 // 绘制眼睛
                 this.drawSnakeEyes(x, y);
             } else {
-                this.ctx.shadowBlur = 0;
+                // 蛇身微弱发光
+                this.ctx.shadowColor = `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha * 0.3})`;
+                this.ctx.shadowBlur = 4 - progress * 3; // 4 -> 1
             }
 
             // 绘制蛇身
@@ -734,6 +881,13 @@ class SnakeGame {
         this.ctx.beginPath();
         this.ctx.arc(eye1X, eye1Y, eyeSize, 0, Math.PI * 2);
         this.ctx.arc(eye2X, eye2Y, eyeSize, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // 眼睛高光
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        this.ctx.beginPath();
+        this.ctx.arc(eye1X + 1, eye1Y - 1, 1, 0, Math.PI * 2);
+        this.ctx.arc(eye2X + 1, eye2Y - 1, 1, 0, Math.PI * 2);
         this.ctx.fill();
     }
 

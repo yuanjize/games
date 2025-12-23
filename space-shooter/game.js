@@ -2,6 +2,7 @@
  * Space Shooter - Modern Implementation
  * 完整功能的太空射击游戏
  * 包含暗色/亮色模式、微交互、加载动画、音效优化、可访问性增强、手势优化
+ * 第1轮特效优化：敌人爆炸粒子、子弹拖尾、飞船尾焰、屏幕震动
  */
 
 class SpaceShooterGame {
@@ -78,6 +79,18 @@ class SpaceShooterGame {
         // 新增：主题管理
         this.currentTheme = localStorage.getItem('theme') || 'dark';
         this.highContrastMode = localStorage.getItem('highContrast') === 'true';
+
+        // ========== 第1轮特效优化：屏幕震动系统 ==========
+        this.screenShake = {
+            active: false,
+            intensity: 0,
+            duration: 0,
+            offsetX: 0,
+            offsetY: 0
+        };
+
+        // ========== 第1轮特效优化：飞船尾焰系统 ==========
+        this.thrusterFlames = [];
 
         this.init();
     }
@@ -478,28 +491,101 @@ class SpaceShooterGame {
         });
     }
 
-    // ========== 粒子效果 ==========
-    createParticles(x, y, color, count = 10) {
-        for (let i = 0; i < count; i++) {
+    // ========== 第1轮特效优化：增强版粒子系统 ==========
+    /**
+     * 创建爆炸粒子效果 - 多色碎片四散
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     * @param {string} type - 粒子类型 ('explosion' | 'hit')
+     * @param {number} count - 粒子数量
+     */
+    createParticles(x, y, type = 'explosion', count = 15) {
+        const isMobile = window.innerWidth < 768;
+        const particleCount = isMobile ? Math.floor(count * 0.7) : count;
+
+        // 多色爆炸粒子颜色
+        const explosionColors = [
+            '#fbbf24', // 金色
+            '#f97316', // 橙色
+            '#ef4444', // 红色
+            '#f43f5e', // 玫红
+            '#ffffff'  // 白色火花
+        ];
+
+        // 被击中时的颜色（更偏向警告色）
+        const hitColors = [
+            '#ef4444', // 红色
+            '#f97316', // 橙色
+            '#fbbf24', // 金色
+            '#dc2626'  // 深红
+        ];
+
+        const colors = type === 'explosion' ? explosionColors : hitColors;
+
+        for (let i = 0; i < particleCount; i++) {
+            const angle = (Math.PI * 2 / particleCount) * i + Math.random() * 0.5;
+            const speed = 100 + Math.random() * 200;
+            const size = 2 + Math.random() * 5;
+
             this.particles.push({
                 x: x,
                 y: y,
-                vx: (Math.random() - 0.5) * 200,
-                vy: (Math.random() - 0.5) * 200,
-                life: 0.5,
-                maxLife: 0.5,
-                color: color,
-                size: Math.random() * 4 + 2
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 0.6 + Math.random() * 0.3, // 0.6-0.9秒
+                maxLife: 0.6 + Math.random() * 0.3,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: size,
+                type: type,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 10,
+                gravity: type === 'explosion' ? 50 : 0 // 爆炸粒子有重力效果
             });
+        }
+
+        // 添加额外的闪光粒子
+        if (type === 'explosion') {
+            for (let i = 0; i < 5; i++) {
+                this.particles.push({
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y + (Math.random() - 0.5) * 20,
+                    vx: (Math.random() - 0.5) * 150,
+                    vy: (Math.random() - 0.5) * 150,
+                    life: 0.2 + Math.random() * 0.2,
+                    maxLife: 0.4,
+                    color: '#ffffff',
+                    size: 1 + Math.random() * 2,
+                    type: 'spark',
+                    rotation: 0,
+                    rotationSpeed: 0,
+                    gravity: 0
+                });
+            }
         }
     }
 
     updateParticles(dt) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
+
+            // 更新位置
             p.x += p.vx * dt;
             p.y += p.vy * dt;
+
+            // 应用重力
+            if (p.gravity > 0) {
+                p.vy += p.gravity * dt;
+            }
+
+            // 更新旋转
+            if (p.rotationSpeed !== 0) {
+                p.rotation += p.rotationSpeed * dt;
+            }
+
+            // 减少生命值
             p.life -= dt;
+
+            // 移除死亡粒子
             if (p.life <= 0) {
                 this.particles.splice(i, 1);
             }
@@ -508,10 +594,131 @@ class SpaceShooterGame {
 
     drawParticles() {
         this.particles.forEach(p => {
-            this.ctx.globalAlpha = p.life / p.maxLife;
+            const alpha = p.life / p.maxLife;
+            this.ctx.globalAlpha = alpha;
             this.ctx.fillStyle = p.color;
-            this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+
+            if (p.type === 'spark') {
+                // 闪光粒子 - 圆形发光效果
+                this.ctx.shadowColor = p.color;
+                this.ctx.shadowBlur = 10;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                this.ctx.fill();
+                this.ctx.shadowBlur = 0;
+            } else {
+                // 普通粒子 - 带旋转的矩形碎片
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                this.ctx.rotate(p.rotation);
+                this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                this.ctx.restore();
+            }
         });
+        this.ctx.globalAlpha = 1;
+    }
+
+    // ========== 第1轮特效优化：屏幕震动系统 ==========
+    /**
+     * 触发屏幕震动效果
+     * @param {number} intensity - 震动强度 (像素)
+     * @param {number} duration - 震动持续时间 (秒)
+     */
+    triggerScreenShake(intensity = 5, duration = 0.2) {
+        this.screenShake.active = true;
+        this.screenShake.intensity = intensity;
+        this.screenShake.duration = duration;
+        this.screenShake.elapsed = 0;
+    }
+
+    updateScreenShake(dt) {
+        if (!this.screenShake.active) return;
+
+        this.screenShake.elapsed += dt;
+
+        if (this.screenShake.elapsed >= this.screenShake.duration) {
+            // 震动结束
+            this.screenShake.active = false;
+            this.screenShake.offsetX = 0;
+            this.screenShake.offsetY = 0;
+        } else {
+            // 计算震动偏移（使用衰减函数）
+            const progress = this.screenShake.elapsed / this.screenShake.duration;
+            const decay = 1 - progress; // 线性衰减
+            const currentIntensity = this.screenShake.intensity * decay;
+
+            // 使用随机偏移模拟震动
+            this.screenShake.offsetX = (Math.random() - 0.5) * currentIntensity * 2;
+            this.screenShake.offsetY = (Math.random() - 0.5) * currentIntensity * 2;
+        }
+    }
+
+    // ========== 第1轮特效优化：飞船推进器尾焰系统 ==========
+    /**
+     * 创建飞船尾焰粒子
+     * @param {number} x - 尾焰中心X坐标
+     * @param {number} y - 尾焰起始Y坐标
+     */
+    createThrusterFlame(x, y) {
+        const isMobile = window.innerWidth < 768;
+        const flameCount = isMobile ? 1 : 2;
+
+        for (let i = 0; i < flameCount; i++) {
+            // 尾焰颜色渐变：从白色到黄色到橙色到红色
+            const colors = ['#ffffff', '#fbbf24', '#f97316', '#ef4444'];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            this.thrusterFlames.push({
+                x: x + (Math.random() - 0.5) * 8,
+                y: y,
+                vx: (Math.random() - 0.5) * 20,
+                vy: 80 + Math.random() * 40, // 向下移动
+                life: 0.1 + Math.random() * 0.1,
+                maxLife: 0.2,
+                color: color,
+                size: 2 + Math.random() * 3,
+                alpha: 0.8 + Math.random() * 0.2
+            });
+        }
+    }
+
+    updateThrusterFlames(dt) {
+        for (let i = this.thrusterFlames.length - 1; i >= 0; i--) {
+            const flame = this.thrusterFlames[i];
+
+            flame.x += flame.vx * dt;
+            flame.y += flame.vy * dt;
+            flame.life -= dt;
+            flame.alpha = (flame.life / flame.maxLife) * 0.8;
+
+            if (flame.life <= 0) {
+                this.thrusterFlames.splice(i, 1);
+            }
+        }
+    }
+
+    drawThrusterFlames() {
+        // 使用 additive blending 创建发光效果
+        this.ctx.globalCompositeOperation = 'lighter';
+
+        this.thrusterFlames.forEach(flame => {
+            const gradient = this.ctx.createRadialGradient(
+                flame.x, flame.y, 0,
+                flame.x, flame.y, flame.size * 2
+            );
+
+            gradient.addColorStop(0, flame.color);
+            gradient.addColorStop(0.5, flame.color + '80');
+            gradient.addColorStop(1, flame.color + '00');
+
+            this.ctx.globalAlpha = flame.alpha;
+            this.ctx.fillStyle = gradient;
+            this.ctx.beginPath();
+            this.ctx.arc(flame.x, flame.y, flame.size * 2, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+
+        this.ctx.globalCompositeOperation = 'source-over';
         this.ctx.globalAlpha = 1;
     }
 
@@ -526,6 +733,8 @@ class SpaceShooterGame {
         this.bullets = [];
         this.enemies = [];
         this.particles = [];
+        this.thrusterFlames = [];
+        this.screenShake.active = false;
         this.player.x = this.width / 2 - this.player.w / 2;
         this.player.y = this.height - 80;
         this.player.cd = 0;
@@ -966,6 +1175,9 @@ class SpaceShooterGame {
         // 更新星空
         this.updateStars();
 
+        // 更新屏幕震动
+        this.updateScreenShake(dt);
+
         // 玩家移动
         this.updatePlayer(dt, settings);
 
@@ -983,6 +1195,9 @@ class SpaceShooterGame {
 
         // 更新粒子
         this.updateParticles(dt);
+
+        // 更新飞船尾焰
+        this.updateThrusterFlames(dt);
 
         // 更新UI
         this.updateUI();
@@ -1010,12 +1225,21 @@ class SpaceShooterGame {
             dy /= length;
         }
 
+        const isMoving = dx !== 0 || dy !== 0;
+
         this.player.x += dx * this.player.speed;
         this.player.y += dy * this.player.speed;
 
         // 边界检测
         this.player.x = Math.max(0, Math.min(this.width - this.player.w, this.player.x));
         this.player.y = Math.max(0, Math.min(this.height - this.player.h, this.player.y));
+
+        // 飞船移动时生成尾焰粒子
+        if (isMoving) {
+            const thrusterX = this.player.x + this.player.w / 2;
+            const thrusterY = this.player.y + this.player.h;
+            this.createThrusterFlame(thrusterX, thrusterY);
+        }
     }
 
     updateShooting(dt, settings) {
@@ -1031,12 +1255,16 @@ class SpaceShooterGame {
             const bulletWidth = isMobile ? 3 : 4;
             const bulletHeight = isMobile ? 12 : 15;
 
+            // 第1轮特效优化：子弹添加拖尾轨迹属性
             this.bullets.push({
                 x: this.player.x + this.player.w / 2 - bulletWidth / 2,
                 y: this.player.y,
                 w: bulletWidth,
                 h: bulletHeight,
-                s: settings.bulletSpeed
+                s: settings.bulletSpeed,
+                // 新增：拖尾效果属性
+                trail: [],
+                maxTrailLength: 8 // 拖尾长度
             });
             this.player.cd = 0.2;
             this.playSound('shootSound');
@@ -1046,6 +1274,13 @@ class SpaceShooterGame {
     updateBullets(dt, settings) {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const b = this.bullets[i];
+
+            // 保存当前位置到拖尾数组
+            b.trail.unshift({ x: b.x, y: b.y });
+            if (b.trail.length > b.maxTrailLength) {
+                b.trail.pop();
+            }
+
             b.y -= b.s * dt;
             if (b.y < -20) {
                 this.bullets.splice(i, 1);
@@ -1077,7 +1312,13 @@ class SpaceShooterGame {
             // 玩家碰撞
             if (this.checkCollision(this.player, e)) {
                 this.state.lives--;
-                this.createParticles(e.x + e.w / 2, e.y + e.h / 2, '#f43f5e', 15);
+
+                // 第1轮特效优化：触发屏幕震动
+                this.triggerScreenShake(8, 0.3);
+
+                // 第1轮特效优化：创建增强版爆炸粒子
+                this.createParticles(e.x + e.w / 2, e.y + e.h / 2, 'hit', 20);
+
                 this.enemies.splice(i, 1);
                 this.playSound('hitSound');
                 this.updateUI();
@@ -1094,7 +1335,10 @@ class SpaceShooterGame {
                 if (this.checkCollision(this.bullets[j], e)) {
                     this.state.score += 10;
                     this.state.enemiesDestroyed++;
-                    this.createParticles(e.x + e.w / 2, e.y + e.h / 2, '#fbbf24', 10);
+
+                    // 第1轮特效优化：创建多色爆炸粒子效果
+                    this.createParticles(e.x + e.w / 2, e.y + e.h / 2, 'explosion', 20);
+
                     this.enemies.splice(i, 1);
                     this.bullets.splice(j, 1);
                     this.playSound('explosionSound');
@@ -1120,13 +1364,24 @@ class SpaceShooterGame {
 
     // ========== 渲染 ==========
     draw() {
+        // 保存当前上下文状态
+        this.ctx.save();
+
+        // 应用屏幕震动偏移
+        if (this.screenShake.active) {
+            this.ctx.translate(this.screenShake.offsetX, this.screenShake.offsetY);
+        }
+
         // 使用 CSS 变量获取当前背景色
         const canvasBg = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#020617';
         this.ctx.fillStyle = canvasBg;
-        this.ctx.fillRect(0, 0, this.width, this.height);
+        this.ctx.fillRect(-this.width, -this.height, this.width * 3, this.height * 3);
 
         // 绘制星空
         this.drawStars();
+
+        // 绘制飞船尾焰（在飞船下方）
+        this.drawThrusterFlames();
 
         // 绘制粒子
         this.drawParticles();
@@ -1134,11 +1389,14 @@ class SpaceShooterGame {
         // 绘制玩家
         this.drawPlayer();
 
-        // 绘制子弹
+        // 绘制子弹（包含拖尾）
         this.drawBullets();
 
         // 绘制敌人
         this.drawEnemies();
+
+        // 恢复上下文状态
+        this.ctx.restore();
     }
 
     drawPlayer() {
@@ -1177,9 +1435,35 @@ class SpaceShooterGame {
     }
 
     drawBullets() {
-        this.ctx.fillStyle = '#fbbf24';
         this.bullets.forEach(b => {
-            // 子弹光晕
+            // 第1轮特效优化：绘制发光拖尾效果
+            if (b.trail && b.trail.length > 0) {
+                // 使用 additive blending 创建发光效果
+                this.ctx.globalCompositeOperation = 'lighter';
+
+                for (let i = 0; i < b.trail.length; i++) {
+                    const trailPoint = b.trail[i];
+                    const alpha = (1 - i / b.trail.length) * 0.5;
+                    const size = b.w * (1 - i / b.trail.length * 0.5);
+
+                    // 拖尾渐变颜色
+                    this.ctx.globalAlpha = alpha;
+                    this.ctx.fillStyle = '#fbbf24';
+                    this.ctx.shadowColor = '#fbbf24';
+                    this.ctx.shadowBlur = 15 - i * 2;
+
+                    this.ctx.beginPath();
+                    this.ctx.arc(trailPoint.x + b.w / 2, trailPoint.y + b.h / 2, size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+
+                this.ctx.globalCompositeOperation = 'source-over';
+                this.ctx.shadowBlur = 0;
+                this.ctx.globalAlpha = 1;
+            }
+
+            // 绘制子弹本体
+            this.ctx.fillStyle = '#fbbf24';
             this.ctx.shadowColor = '#fbbf24';
             this.ctx.shadowBlur = 10;
             this.ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -1543,7 +1827,12 @@ class SpaceShooterGame {
 // 游戏初始化
 window.addEventListener('DOMContentLoaded', () => {
     window.game = new SpaceShooterGame();
-    console.log('太空射击游戏已加载完成');
+    console.log('太空射击游戏已加载完成 - 第1轮特效优化已应用');
+    console.log('优化内容：');
+    console.log('  - 敌人爆炸粒子效果（多色碎片四散）');
+    console.log('  - 子弹轨迹效果（发光拖尾）');
+    console.log('  - 飞船推进器火焰（尾焰动画）');
+    console.log('  - 屏幕震动效果（被击中时震动）');
 });
 
 // 页面卸载时清理资源

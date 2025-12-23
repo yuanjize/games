@@ -35,16 +35,36 @@ class Vector2 {
     clone() {
         return new Vector2(this.x, this.y);
     }
+
+    // 旋转向量
+    rotate(angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return new Vector2(
+            this.x * cos - this.y * sin,
+            this.x * sin + this.y * cos
+        );
+    }
 }
 
 const GameConfig = {
-    gravity: 0.2,
-    friction: 0.98,
-    elasticity: 0.8,
+    gravity: 0.25,
+    friction: 0.995,
+    elasticity: 0.85,
     ballRadius: 10,
     ballSpeed: 8,
     paddleSpeed: 15,
-    maxBallSpeed: 20,
+    maxBallSpeed: 22,
+    minBallSpeed: 3,
+
+    // 轨迹效果配置
+    trail: {
+        enabled: true,
+        maxLength: 25,
+        fadeSpeed: 0.08,
+        width: 3,
+        glowAmount: 15
+    },
 
     colors: {
         ball: '#4285f4',
@@ -53,7 +73,9 @@ const GameConfig = {
         target: '#fbbc05',
         ramp: '#b3b3ff',
         wall: '#2d3748',
-        trail: 'rgba(66, 133, 244, 0.3)'
+        trail: 'rgba(66, 133, 244, 0.4)',
+        paddleGlow: 'rgba(74, 222, 128, 0.8)',
+        bumperGlow: 'rgba(239, 68, 68, 0.8)'
     },
 
     scores: {
@@ -97,58 +119,477 @@ class Ball extends Circle {
         this.active = true;
         this.trail = [];
         this.launched = false;
+        // 添加旋转角度
+        this.rotation = 0;
+        // 添加旋转速度
+        this.angularVelocity = 0;
+        // 轨迹点
+        this.trailPoints = [];
     }
 
     draw(ctx) {
         if (!this.active) return;
 
-        // 绘制轨迹
-        if (this.trail.length > 1) {
-            ctx.beginPath();
-            this.trail.forEach((p, i) => {
-                if (i === 0) ctx.moveTo(p.x, p.y);
-                else ctx.lineTo(p.x, p.y);
-            });
-            ctx.strokeStyle = GameConfig.colors.trail;
-            ctx.lineWidth = 3;
-            ctx.stroke();
+        // 绘制增强轨迹效果
+        this.drawEnhancedTrail(ctx);
+
+        // 计算球的旋转（基于速度）
+        if (this.launched) {
+            const speed = this.velocity.magnitude();
+            this.angularVelocity = speed * 0.05;
+            this.rotation += this.angularVelocity;
         }
 
-        // 更新轨迹
-        this.trail.push({x: this.position.x, y: this.position.y});
-        if (this.trail.length > 15) this.trail.shift();
+        // 保存上下文状态
+        ctx.save();
 
-        // 绘制球体
-        ctx.beginPath();
-        ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        // 移动到球的位置并旋转
+        ctx.translate(this.position.x, this.position.y);
+        ctx.rotate(this.rotation);
 
-        // 创建渐变填充
+        // 绘制球体 - 增强渐变效果
         const gradient = ctx.createRadialGradient(
-            this.position.x - this.radius/2, this.position.y - this.radius/2, 1,
-            this.position.x, this.position.y, this.radius
+            -this.radius * 0.3, -this.radius * 0.3, 0,
+            0, 0, this.radius
         );
+
+        // 高光效果
         gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.2, '#e3f2fd');
         gradient.addColorStop(0.5, GameConfig.colors.ball);
+        gradient.addColorStop(0.8, '#1565c0');
         gradient.addColorStop(1, '#0d47a1');
 
+        // 绘制球体阴影
+        ctx.shadowColor = 'rgba(66, 133, 244, 0.5)';
+        ctx.shadowBlur = GameConfig.trail.glowAmount;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
         ctx.fill();
 
-        // 绘制边框
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
+        // 重置阴影
+        ctx.shadowBlur = 0;
+
+        // 绘制球体纹理/条纹（显示旋转）
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius * 0.7, 0, Math.PI * 1.5);
         ctx.stroke();
+
+        // 绘制高光点
+        ctx.beginPath();
+        ctx.arc(-this.radius * 0.3, -this.radius * 0.3, this.radius * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fill();
+
+        // 绘制边框
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // 更新轨迹
+        this.updateTrail();
+    }
+
+    drawEnhancedTrail(ctx) {
+        if (!GameConfig.trail.enabled || this.trailPoints.length < 2) return;
+
+        ctx.save();
+
+        // 绘制多层轨迹以产生发光效果
+        for (let layer = 0; layer < 3; layer++) {
+            ctx.beginPath();
+
+            const trailLength = Math.min(this.trailPoints.length, GameConfig.trail.maxLength);
+
+            for (let i = 0; i < trailLength; i++) {
+                const point = this.trailPoints[i];
+                const progress = i / trailLength;
+                const alpha = progress * (0.5 - layer * 0.15);
+
+                if (i === 0) {
+                    ctx.moveTo(point.x, point.y);
+                } else {
+                    ctx.lineTo(point.x, point.y);
+                }
+            }
+
+            // 渐变轨迹颜色
+            const gradient = ctx.createLinearGradient(
+                this.trailPoints[0].x, this.trailPoints[0].y,
+                this.position.x, this.position.y
+            );
+            gradient.addColorStop(0, 'rgba(66, 133, 244, 0)');
+            gradient.addColorStop(1, `rgba(66, 133, 244, ${0.6 - layer * 0.2})`);
+
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = GameConfig.trail.width + layer * 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalAlpha = 0.7;
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    updateTrail() {
+        if (!this.launched) return;
+
+        // 添加当前点到轨迹
+        this.trailPoints.push({
+            x: this.position.x,
+            y: this.position.y,
+            time: Date.now()
+        });
+
+        // 限制轨迹长度
+        while (this.trailPoints.length > GameConfig.trail.maxLength) {
+            this.trailPoints.shift();
+        }
     }
 
     limitSpeed() {
         const speed = this.velocity.magnitude();
+
+        // 限制最大速度
         if (speed > GameConfig.maxBallSpeed) {
             this.velocity = this.velocity.normalize().multiply(GameConfig.maxBallSpeed);
         }
-        // 确保最小速度以避免球卡住
-        if (speed < 2 && this.launched) {
-            this.velocity = this.velocity.normalize().multiply(2);
+
+        // 确保最小速度
+        if (speed < GameConfig.minBallSpeed && this.launched && speed > 0) {
+            this.velocity = this.velocity.normalize().multiply(GameConfig.minBallSpeed);
         }
+    }
+
+    // 真实物理反弹计算
+    bounce(normal, elasticity = null) {
+        const e = elasticity ?? GameConfig.elasticity;
+
+        // 使用反射公式: v' = v - 2(v·n)n
+        const dot = this.velocity.dot(normal);
+        const reflection = normal.multiply(2 * dot);
+        this.velocity = this.velocity.subtract(reflection).multiply(e);
+
+        // 添加轻微的随机扰动使反弹更自然
+        const randomAngle = (Math.random() - 0.5) * 0.05;
+        this.velocity = this.velocity.rotate(randomAngle);
+    }
+}
+
+// 挡板类 - 支持发光效果
+class Paddle {
+    constructor(x, y, width, height, color) {
+        this.position = new Vector2(x, y);
+        this.width = width;
+        this.height = height;
+        this.color = color;
+        this.speed = GameConfig.paddleSpeed;
+        this.glowIntensity = 0;
+        this.glowTarget = 0;
+        this.hitAnimation = 0;
+        this.type = 'paddle';
+    }
+
+    update() {
+        // 更新发光效果
+        this.glowIntensity += (this.glowTarget - this.glowIntensity) * 0.2;
+        this.glowTarget *= 0.95;
+
+        // 更新碰撞动画
+        if (this.hitAnimation > 0) {
+            this.hitAnimation -= 0.05;
+        }
+    }
+
+    triggerHitEffect() {
+        this.glowTarget = 1;
+        this.hitAnimation = 1;
+    }
+
+    draw(ctx) {
+        const x = this.position.x;
+        const y = this.position.y;
+
+        ctx.save();
+
+        // 计算动画偏移
+        const animationOffset = Math.sin(this.hitAnimation * Math.PI) * 3;
+
+        // 绘制发光效果
+        if (this.glowIntensity > 0.01) {
+            const glowGradient = ctx.createLinearGradient(
+                x, y,
+                x, y + this.height
+            );
+            glowGradient.addColorStop(0, `rgba(74, 222, 128, ${this.glowIntensity * 0.6})`);
+            glowGradient.addColorStop(1, `rgba(34, 197, 94, ${this.glowIntensity * 0.4})`);
+
+            ctx.shadowColor = `rgba(74, 222, 128, ${this.glowIntensity})`;
+            ctx.shadowBlur = 20 + this.glowIntensity * 30;
+
+            ctx.fillStyle = glowGradient;
+            ctx.fillRect(x - 4, y - 4 - animationOffset, this.width + 8, this.height + 8);
+        }
+
+        // 主挡板渐变
+        const paddleGradient = ctx.createLinearGradient(
+            x, y,
+            x, y + this.height
+        );
+
+        const brightness = 1 + this.hitAnimation * 0.5;
+        paddleGradient.addColorStop(0, `rgba(74, 222, 128, ${brightness})`);
+        paddleGradient.addColorStop(0.5, `rgba(34, 197, 94, ${brightness})`);
+        paddleGradient.addColorStop(1, `rgba(22, 163, 74, ${brightness})`);
+
+        ctx.shadowBlur = this.glowIntensity * 15;
+        ctx.shadowColor = GameConfig.colors.paddleGlow;
+        ctx.fillStyle = paddleGradient;
+        ctx.fillRect(x, y - animationOffset, this.width, this.height);
+
+        ctx.shadowBlur = 0;
+
+        // 高光效果
+        const highlightGradient = ctx.createLinearGradient(
+            x, y,
+            x, y + this.height * 0.3
+        );
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = highlightGradient;
+        ctx.fillRect(x, y - animationOffset, this.width, this.height * 0.3);
+
+        // 边框
+        ctx.strokeStyle = this.glowIntensity > 0.3 ? '#ffffff' : 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2 + this.hitAnimation;
+        ctx.strokeRect(x, y - animationOffset, this.width, this.height);
+
+        // 发光粒子效果
+        if (this.glowIntensity > 0.3) {
+            this.drawGlowParticles(ctx, x, y);
+        }
+
+        ctx.restore();
+    }
+
+    drawGlowParticles(ctx, x, y) {
+        const particleCount = Math.floor(this.glowIntensity * 5);
+        for (let i = 0; i < particleCount; i++) {
+            const px = x + Math.random() * this.width;
+            const py = y + Math.random() * this.height;
+            const size = 2 + Math.random() * 3;
+
+            ctx.beginPath();
+            ctx.arc(px, py, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${this.glowIntensity * 0.5 * Math.random()})`;
+            ctx.fill();
+        }
+    }
+}
+
+// 反弹器类 - 支持碰撞动画
+class Bumper {
+    constructor(x, y, radius, color, scoreValue) {
+        this.position = new Vector2(x, y);
+        this.radius = radius;
+        this.baseRadius = radius;
+        this.color = color;
+        this.scoreValue = scoreValue;
+        this.hitAnimation = 0;
+        this.glowIntensity = 0;
+        this.type = 'bumper';
+    }
+
+    update() {
+        if (this.hitAnimation > 0) {
+            this.hitAnimation -= 0.05;
+            this.radius = this.baseRadius + Math.sin(this.hitAnimation * Math.PI) * 8;
+        } else {
+            this.radius = this.baseRadius;
+        }
+
+        if (this.glowIntensity > 0) {
+            this.glowIntensity -= 0.03;
+        }
+    }
+
+    triggerHitEffect() {
+        this.hitAnimation = 1;
+        this.glowIntensity = 1;
+    }
+
+    draw(ctx) {
+        ctx.save();
+
+        // 外发光效果
+        if (this.glowIntensity > 0.01) {
+            const glowGradient = ctx.createRadialGradient(
+                this.position.x, this.position.y, 0,
+                this.position.x, this.position.y, this.radius * 2
+            );
+            glowGradient.addColorStop(0, `rgba(239, 68, 68, ${this.glowIntensity * 0.5})`);
+            glowGradient.addColorStop(0.5, `rgba(220, 38, 38, ${this.glowIntensity * 0.3})`);
+            glowGradient.addColorStop(1, 'rgba(220, 38, 38, 0)');
+
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(this.position.x, this.position.y, this.radius * 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 主反弹器渐变
+        const bumperGradient = ctx.createRadialGradient(
+            this.position.x - this.radius * 0.3,
+            this.position.y - this.radius * 0.3,
+            0,
+            this.position.x,
+            this.position.y,
+            this.radius
+        );
+
+        const brightness = 1 + this.hitAnimation * 0.8;
+        bumperGradient.addColorStop(0, `rgba(255, 255, 255, ${brightness})`);
+        bumperGradient.addColorStop(0.3, `rgba(255, 200, 200, ${brightness})`);
+        bumperGradient.addColorStop(0.7, this.color);
+        bumperGradient.addColorStop(1, '#991b1b');
+
+        // 阴影效果
+        ctx.shadowColor = 'rgba(239, 68, 68, 0.5)';
+        ctx.shadowBlur = 15 + this.hitAnimation * 20;
+        ctx.shadowOffsetY = 3;
+
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = bumperGradient;
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // 边框
+        ctx.strokeStyle = this.hitAnimation > 0.5 ? '#ffffff' : 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 3 + this.hitAnimation * 2;
+        ctx.stroke();
+
+        // 内圈装饰
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.radius * 0.6, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 分数值显示
+        if (this.glowIntensity > 0.2) {
+            ctx.font = `bold ${this.radius * 0.7}px 'Orbitron', monospace`;
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.glowIntensity})`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.scoreValue.toString(), this.position.x, this.position.y);
+        }
+
+        ctx.restore();
+    }
+}
+
+// 得分飘字动画
+class FloatingScore {
+    constructor(x, y, text, color = '#ffff00') {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.color = color;
+        this.life = 1.0;
+        this.velocity = new Vector2((Math.random() - 0.5) * 2, -3 - Math.random() * 2);
+        this.scale = 0.8;
+        this.rotation = (Math.random() - 0.5) * 0.2;
+    }
+
+    update() {
+        this.life -= 0.015;
+        this.y += this.velocity.y;
+        this.x += this.velocity.x;
+        this.velocity.y *= 0.98; // 减速
+        this.scale = 1 + (1 - this.life) * 0.5; // 逐渐放大
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.scale(this.scale, this.scale);
+
+        // 阴影效果
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 15;
+
+        // 绘制文字
+        ctx.font = `bold 20px 'Orbitron', monospace`;
+        ctx.fillStyle = this.color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.text, 0, 0);
+
+        // 描边
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 3;
+        ctx.strokeText(this.text, 0, 0);
+
+        ctx.restore();
+    }
+
+    isDead() {
+        return this.life <= 0;
+    }
+}
+
+// 粒子效果
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 4;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.life = 1.0;
+        this.size = 3 + Math.random() * 4;
+        this.decay = 0.02 + Math.random() * 0.02;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.1; // 重力
+        this.life -= this.decay;
+        this.size *= 0.97;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    isDead() {
+        return this.life <= 0 || this.size < 0.5;
     }
 }
 
@@ -197,9 +638,11 @@ class EnhancedPinballGame {
             touchX: 0
         };
 
+        // 视觉效果容器
         this.animations = {
             scorePops: [],
-            particleEffects: []
+            particles: [],
+            floatingScores: []
         };
 
         this.soundEnabled = false;
@@ -218,7 +661,6 @@ class EnhancedPinballGame {
     init() {
         this.resize();
         window.addEventListener('resize', () => {
-            // 使用防抖处理resize
             clearTimeout(this.resizeTimeout);
             this.resizeTimeout = setTimeout(() => this.resize(), 100);
         });
@@ -237,15 +679,12 @@ class EnhancedPinballGame {
         const rect = this.canvas.parentElement.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
 
-        // 设置实际画布大小（考虑设备像素比）
         this.canvas.width = rect.width * dpr;
         this.canvas.height = rect.height * dpr;
 
-        // 设置CSS显示大小
         this.canvas.style.width = rect.width + 'px';
         this.canvas.style.height = rect.height + 'px';
 
-        // 缩放上下文以匹配设备像素比
         this.ctx.scale(dpr, dpr);
 
         this.width = rect.width;
@@ -274,7 +713,6 @@ class EnhancedPinballGame {
         const w = this.width;
         const h = this.height;
 
-        // 创建背景渐变
         const grad = ctx.createLinearGradient(0, 0, 0, h);
         grad.addColorStop(0, '#0a0a1a');
         grad.addColorStop(0.5, '#0f172a');
@@ -282,7 +720,6 @@ class EnhancedPinballGame {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
 
-        // 绘制网格（仅在大屏幕上）
         if (w > 640) {
             ctx.strokeStyle = 'rgba(99, 102, 241, 0.1)';
             ctx.lineWidth = 1;
@@ -302,7 +739,6 @@ class EnhancedPinballGame {
             }
         }
 
-        // 绘制装饰性元素
         this.drawBackgroundElements();
     }
 
@@ -311,7 +747,6 @@ class EnhancedPinballGame {
         const w = this.width;
         const h = this.height;
 
-        // 绘制星星效果
         for (let i = 0; i < 15; i++) {
             const x = Math.random() * w;
             const y = Math.random() * h;
@@ -356,30 +791,24 @@ class EnhancedPinballGame {
 
     resetLevel() {
         this.elements.balls = [];
-        this.elements.paddles = [{
-            position: new Vector2(this.width / 2 - 60, this.height - 50),
-            width: 120,
-            height: 20,
-            speed: GameConfig.paddleSpeed,
-            color: GameConfig.colors.paddle,
-            type: 'paddle'
-        }];
 
+        // 创建挡板
+        this.elements.paddles = [new Paddle(
+            this.width / 2 - 60,
+            this.height - 50,
+            120,
+            20,
+            GameConfig.colors.paddle
+        )];
+
+        // 创建反弹器
         this.elements.bumpers = [
-            this.createBumper(this.width * 0.3, this.height * 0.3, 25),
-            this.createBumper(this.width * 0.7, this.height * 0.3, 25),
-            this.createBumper(this.width * 0.5, this.height * 0.5, 30)
+            new Bumper(this.width * 0.3, this.height * 0.3, 25, GameConfig.colors.bumper, GameConfig.scores.bumper),
+            new Bumper(this.width * 0.7, this.height * 0.3, 25, GameConfig.colors.bumper, GameConfig.scores.bumper),
+            new Bumper(this.width * 0.5, this.height * 0.5, 30, GameConfig.colors.bumper, GameConfig.scores.bumper)
         ];
 
         this.spawnBall();
-    }
-
-    createBumper(x, y, radius) {
-        const bumper = new Circle(x, y, radius);
-        bumper.color = GameConfig.colors.bumper;
-        bumper.type = 'bumper';
-        bumper.scoreValue = GameConfig.scores.bumper;
-        return bumper;
     }
 
     spawnBall() {
@@ -392,14 +821,12 @@ class EnhancedPinballGame {
     }
 
     bindEvents() {
-        // 键盘事件
         this.handlers.keyDown = (e) => this.handleKeyDown(e);
         this.handlers.keyUp = (e) => this.handleKeyUp(e);
 
         document.addEventListener('keydown', this.handlers.keyDown);
         document.addEventListener('keyup', this.handlers.keyUp);
 
-        // 按钮事件
         const startBtn = document.getElementById('start-btn');
         const restartBtn = document.getElementById('restart-btn');
 
@@ -435,7 +862,6 @@ class EnhancedPinballGame {
             });
         }
 
-        // 窗口失焦事件
         this.handlers.blur = () => {
             if (this.state.running && !this.state.paused) {
                 this.togglePause();
@@ -443,7 +869,6 @@ class EnhancedPinballGame {
         };
         window.addEventListener('blur', this.handlers.blur);
 
-        // 页面可见性变化
         this.handlers.visibilityChange = () => {
             if (document.hidden && this.state.running && !this.state.paused) {
                 this.togglePause();
@@ -453,7 +878,6 @@ class EnhancedPinballGame {
     }
 
     bindTouchEvents() {
-        // 触摸事件支持
         this.handlers.touchStart = (e) => {
             e.preventDefault();
             this.handleTouchStart(e);
@@ -473,7 +897,6 @@ class EnhancedPinballGame {
         this.canvas.addEventListener('touchmove', this.handlers.touchMove, { passive: false });
         this.canvas.addEventListener('touchend', this.handlers.touchEnd, { passive: false });
 
-        // 鼠标事件（用于桌面触摸模拟）
         this.handlers.mouseDown = (e) => {
             this.handleMouseDown(e);
         };
@@ -493,12 +916,10 @@ class EnhancedPinballGame {
     }
 
     setupAccessibility() {
-        // 设置ARIA属性
         this.canvas.setAttribute('role', 'application');
         this.canvas.setAttribute('aria-label', '物理弹球游戏画布');
         this.canvas.setAttribute('tabindex', '0');
 
-        // 创建屏幕阅读器提示
         const srHint = document.createElement('div');
         srHint.className = 'sr-only';
         srHint.id = 'sr-game-instructions';
@@ -508,7 +929,6 @@ class EnhancedPinballGame {
             document.body.appendChild(srHint);
         }
 
-        // 创建屏幕阅读器实时区域
         this.srLiveRegion = document.createElement('div');
         this.srLiveRegion.className = 'sr-only';
         this.srLiveRegion.setAttribute('aria-live', GameConfig.accessibility.ariaLive);
@@ -524,7 +944,6 @@ class EnhancedPinballGame {
         if (this.srLiveRegion) {
             this.srLiveRegion.textContent = message;
 
-            // 清除消息以便后续更新
             setTimeout(() => {
                 if (this.srLiveRegion && this.srLiveRegion.textContent === message) {
                     this.srLiveRegion.textContent = '';
@@ -534,7 +953,6 @@ class EnhancedPinballGame {
     }
 
     handleKeyDown(e) {
-        // 忽略在输入框中的按键
         if (e.target.matches('input, textarea, select')) {
             return;
         }
@@ -567,7 +985,6 @@ class EnhancedPinballGame {
                 e.preventDefault();
                 break;
             case 'Enter':
-                // 在游戏结束时按回车重新开始
                 if (this.state.gameOver) {
                     this.restart();
                     e.preventDefault();
@@ -594,7 +1011,6 @@ class EnhancedPinballGame {
         this.input.touchX = (touch.clientX - rect.left) * (this.width / rect.width);
         this.updatePaddleFromTouch();
 
-        // 触觉反馈
         if (this.vibrationEnabled && navigator.vibrate) {
             navigator.vibrate(10);
         }
@@ -641,10 +1057,8 @@ class EnhancedPinballGame {
             const paddle = this.elements.paddles[0];
             const targetX = this.input.touchX - paddle.width / 2;
 
-            // 平滑移动
             paddle.position.x += (targetX - paddle.position.x) * 0.3;
 
-            // 限制边界
             paddle.position.x = Math.max(
                 20,
                 Math.min(this.width - 20 - paddle.width, paddle.position.x)
@@ -661,19 +1075,15 @@ class EnhancedPinballGame {
                 this.state.running = true;
                 this.state.ballsLeft--;
 
-                // 更新UI
                 this.updateUI();
 
-                // 隐藏覆盖层
                 const overlay = document.getElementById('game-overlay');
                 if (overlay) {
                     overlay.style.display = 'none';
                 }
 
-                // 屏幕阅读器提示
                 this.announceScreenReaderMessage('球已发射！');
 
-                // 振动反馈（如果可用）
                 if (this.vibrationEnabled && navigator.vibrate) {
                     navigator.vibrate(50);
                 }
@@ -682,7 +1092,6 @@ class EnhancedPinballGame {
     }
 
     restart() {
-        // 保存最高分
         if (this.state.score > this.state.highScore) {
             this.state.highScore = this.state.score;
             try {
@@ -692,7 +1101,6 @@ class EnhancedPinballGame {
             }
         }
 
-        // 重置游戏状态
         this.state = {
             running: false,
             paused: false,
@@ -704,6 +1112,13 @@ class EnhancedPinballGame {
             ballsLeft: 3,
             combo: 0,
             comboMultiplier: 1
+        };
+
+        // 清除所有动画效果
+        this.animations = {
+            scorePops: [],
+            particles: [],
+            floatingScores: []
         };
 
         this.resetLevel();
@@ -733,7 +1148,6 @@ class EnhancedPinballGame {
         if (this.state.paused) {
             this.announceScreenReaderMessage('游戏已暂停。按P键或ESC键继续。');
 
-            // 显示暂停提示
             const overlay = document.getElementById('game-overlay');
             if (overlay) {
                 overlay.style.display = 'flex';
@@ -748,7 +1162,6 @@ class EnhancedPinballGame {
         } else {
             this.announceScreenReaderMessage('游戏继续。');
 
-            // 隐藏覆盖层
             const overlay = document.getElementById('game-overlay');
             if (overlay) {
                 overlay.style.display = 'none';
@@ -769,12 +1182,16 @@ class EnhancedPinballGame {
                 paddle.position.x += paddle.speed;
             }
 
-            // 边界限制
             paddle.position.x = Math.max(
                 20,
                 Math.min(this.width - 20 - paddle.width, paddle.position.x)
             );
+
+            paddle.update(); // 更新挡板动画
         }
+
+        // 更新反弹器
+        this.elements.bumpers.forEach(bumper => bumper.update());
 
         // 更新球
         for (let index = this.elements.balls.length - 1; index >= 0; index--) {
@@ -787,28 +1204,29 @@ class EnhancedPinballGame {
             const wallThickness = 20;
             const radius = ball.radius;
 
-            // 墙壁碰撞 - 左墙
+            // 墙壁碰撞 - 使用真实物理反弹
             if (ball.position.x < wallThickness + radius) {
-                ball.velocity.x *= -GameConfig.elasticity;
+                ball.bounce(new Vector2(1, 0));
                 ball.position.x = wallThickness + radius + 1;
                 this.playCollisionSound();
+                this.addWallHitParticles(ball.position.x, ball.position.y);
             }
 
-            // 墙壁碰撞 - 右墙
             if (ball.position.x > this.width - wallThickness - radius) {
-                ball.velocity.x *= -GameConfig.elasticity;
+                ball.bounce(new Vector2(-1, 0));
                 ball.position.x = this.width - wallThickness - radius - 1;
                 this.playCollisionSound();
+                this.addWallHitParticles(ball.position.x, ball.position.y);
             }
 
-            // 墙壁碰撞 - 顶墙
             if (ball.position.y < wallThickness + radius) {
-                ball.velocity.y *= -GameConfig.elasticity;
+                ball.bounce(new Vector2(0, 1));
                 ball.position.y = wallThickness + radius + 1;
                 this.playCollisionSound();
+                this.addWallHitParticles(ball.position.x, ball.position.y);
             }
 
-            // 挡板碰撞
+            // 挡板碰撞 - 增强物理效果
             if (paddle &&
                 ball.position.y + radius > paddle.position.y &&
                 ball.position.y - radius < paddle.position.y + paddle.height &&
@@ -818,18 +1236,23 @@ class EnhancedPinballGame {
 
                 const relativeIntersectX = (paddle.position.x + (paddle.width / 2)) - ball.position.x;
                 const normalizedRelativeIntersectionX = relativeIntersectX / (paddle.width / 2);
-                const bounceAngle = normalizedRelativeIntersectionX * (Math.PI / 3);
+                const bounceAngle = normalizedRelativeIntersectionX * (Math.PI / 3.5);
 
-                const speed = Math.min(ball.velocity.magnitude(), GameConfig.ballSpeed * 2);
+                const speed = Math.min(ball.velocity.magnitude() * 1.1, GameConfig.ballSpeed * 2);
                 ball.velocity.x = speed * -Math.sin(bounceAngle);
                 ball.velocity.y = -Math.abs(speed * Math.cos(bounceAngle));
                 ball.position.y = paddle.position.y - radius - 1;
+
+                // 触发挡板发光效果
+                paddle.triggerHitEffect();
 
                 this.playPaddleSound();
                 this.state.combo++;
                 this.updateComboMultiplier();
 
-                // 触觉反馈
+                // 添加挡板击球粒子
+                this.addPaddleHitParticles(ball.position.x, paddle.position.y);
+
                 if (this.vibrationEnabled && navigator.vibrate) {
                     navigator.vibrate(20);
                 }
@@ -843,42 +1266,37 @@ class EnhancedPinballGame {
                 if (dist < minDist) {
                     const normal = ball.position.subtract(bumper.position).normalize();
 
-                    // 将球推出反弹器，防止卡住
                     const overlap = minDist - dist;
                     ball.position = ball.position.add(normal.multiply(overlap));
 
-                    const speed = Math.max(GameConfig.ballSpeed * 1.2, ball.velocity.magnitude());
+                    // 使用真实物理反弹
+                    const speed = Math.max(GameConfig.ballSpeed * 1.3, ball.velocity.magnitude() * 1.1);
                     ball.velocity = normal.multiply(speed);
 
                     const score = bumper.scoreValue * this.state.comboMultiplier;
                     this.state.score += score;
 
-                    this.addScoreAnimation(ball.position.x, ball.position.y, `+${score}`);
+                    // 添加得分飘字动画
+                    this.addFloatingScore(ball.position.x, ball.position.y, `+${score}`, '#ffff00');
+
+                    // 触发反弹器动画
+                    bumper.triggerHitEffect();
+
+                    // 添加碰撞粒子
+                    this.addBumperHitParticles(bumper.position.x, bumper.position.y, bumper.color);
+
                     this.playBumperSound();
 
-                    // 微交互：碰撞闪光和粒子效果
-                    if (this.microInteractions) {
-                        const rect = this.canvas.getBoundingClientRect();
-                        const x = (bumper.position.x / this.width) * rect.width + rect.left;
-                        const y = (bumper.position.y / this.height) * rect.height + rect.top;
-                        this.microInteractions.createCollisionFlash(x, y, '#ef4444');
-                        this.microInteractions.createParticles(x, y, 8, '#ef4444');
-                        this.microInteractions.addScoreAnimation(x, y, `+${score}`, '#ffff00');
-                    }
-
-                    // 连击音效
                     if (this.state.comboMultiplier > 1) {
                         this.playScoreBonusSound(this.state.comboMultiplier);
                     }
 
-                    // 屏幕阅读器提示（节流，避免过于频繁）
                     if (this.state.score % 500 === 0) {
                         this.announceScreenReaderMessage(`当前分数${this.state.score}`);
                     }
 
                     this.updateUI();
 
-                    // 触觉反馈
                     if (this.vibrationEnabled && navigator.vibrate) {
                         navigator.vibrate(30);
                     }
@@ -890,6 +1308,40 @@ class EnhancedPinballGame {
                 this.elements.balls.splice(index, 1);
                 this.handleLifeLost();
             }
+        }
+    }
+
+    // 添加墙壁碰撞粒子
+    addWallHitParticles(x, y) {
+        for (let i = 0; i < 5; i++) {
+            this.animations.particles.push(new Particle(x, y, 'rgba(255, 255, 255, 0.6)'));
+        }
+    }
+
+    // 添加挡板击球粒子
+    addPaddleHitParticles(x, y) {
+        for (let i = 0; i < 8; i++) {
+            this.animations.particles.push(new Particle(x, y, '#4ade80'));
+        }
+    }
+
+    // 添加反弹器击球粒子
+    addBumperHitParticles(x, y, color) {
+        for (let i = 0; i < 12; i++) {
+            this.animations.particles.push(new Particle(x, y, color));
+        }
+    }
+
+    // 添加得分飘字动画
+    addFloatingScore(x, y, text, color) {
+        this.animations.floatingScores.push(new FloatingScore(x, y, text, color));
+
+        // 同时触发 DOM 动画（用于额外的视觉效果）
+        if (this.microInteractions) {
+            const rect = this.canvas.getBoundingClientRect();
+            const screenX = (x / this.width) * rect.width + rect.left;
+            const screenY = (y / this.height) * rect.height + rect.top;
+            this.microInteractions.addScoreAnimation(screenX, screenY, text, color);
         }
     }
 
@@ -914,7 +1366,6 @@ class EnhancedPinballGame {
 
         this.announceScreenReaderMessage(`损失一条生命，剩余生命${this.state.lives}`);
 
-        // 触觉反馈
         if (this.vibrationEnabled && navigator.vibrate) {
             navigator.vibrate([50, 50, 50]);
         }
@@ -937,7 +1388,6 @@ class EnhancedPinballGame {
                 if (startBtn) startBtn.innerHTML = '<i class="fas fa-redo" aria-hidden="true"></i> 重新开始';
             }
 
-            // 检查并更新最高分
             if (this.state.score > this.state.highScore) {
                 this.state.highScore = this.state.score;
                 try {
@@ -946,31 +1396,12 @@ class EnhancedPinballGame {
                     console.warn('无法保存最高分到localStorage:', e);
                 }
                 this.announceScreenReaderMessage(`恭喜！创造了新的最高分：${this.state.highScore}`);
-
-                // 新纪录特效
-                if (this.microInteractions) {
-                    const overlay = document.getElementById('game-overlay');
-                    if (overlay) {
-                        const rect = overlay.getBoundingClientRect();
-                        for (let i = 0; i < 20; i++) {
-                            setTimeout(() => {
-                                this.microInteractions.createParticles(
-                                    rect.left + rect.width / 2 + (Math.random() - 0.5) * 200,
-                                    rect.top + rect.height / 2 + (Math.random() - 0.5) * 100,
-                                    4,
-                                    ['#fbbf24', '#f59e0b', '#d97706'][Math.floor(Math.random() * 3)]
-                                );
-                            }, i * 50);
-                        }
-                    }
-                }
             } else {
                 this.announceScreenReaderMessage(`游戏结束。最终分数：${this.state.score}，最高分：${this.state.highScore}`);
             }
         } else {
             this.spawnBall();
 
-            // 显示覆盖层
             const overlay = document.getElementById('game-overlay');
             if (overlay) {
                 overlay.style.display = 'flex';
@@ -996,6 +1427,24 @@ class EnhancedPinballGame {
     }
 
     updateAnimations() {
+        // 更新飘字动画
+        for (let i = this.animations.floatingScores.length - 1; i >= 0; i--) {
+            const fs = this.animations.floatingScores[i];
+            fs.update();
+            if (fs.isDead()) {
+                this.animations.floatingScores.splice(i, 1);
+            }
+        }
+
+        // 更新粒子
+        for (let i = this.animations.particles.length - 1; i >= 0; i--) {
+            const p = this.animations.particles[i];
+            p.update();
+            if (p.isDead()) {
+                this.animations.particles.splice(i, 1);
+            }
+        }
+
         // 更新得分动画
         for (let i = this.animations.scorePops.length - 1; i >= 0; i--) {
             const pop = this.animations.scorePops[i];
@@ -1009,6 +1458,12 @@ class EnhancedPinballGame {
     }
 
     drawAnimations() {
+        // 绘制飘字动画
+        this.animations.floatingScores.forEach(fs => fs.draw(this.ctx));
+
+        // 绘制粒子
+        this.animations.particles.forEach(p => p.draw(this.ctx));
+
         // 绘制得分动画
         this.animations.scorePops.forEach(pop => {
             this.ctx.save();
@@ -1023,26 +1478,22 @@ class EnhancedPinballGame {
     }
 
     updateUI() {
-        // 更新分数显示
         const scoreElement = document.getElementById('score');
         if (scoreElement) {
             const newScore = this.state.score.toString();
             if (scoreElement.textContent !== newScore) {
                 scoreElement.textContent = newScore;
-                // 添加分数变化动画
                 scoreElement.classList.remove('score-pop');
-                void scoreElement.offsetWidth; // 触发重排
+                void scoreElement.offsetWidth;
                 scoreElement.classList.add('score-pop');
             }
         }
 
-        // 更新最高分显示
         const highScoreElement = document.getElementById('high-score');
         if (highScoreElement) {
             highScoreElement.textContent = this.state.highScore.toString();
         }
 
-        // 更新生命显示
         const livesElement = document.getElementById('lives');
         if (livesElement) {
             const heartIcons = '<i class="fas fa-heart" aria-hidden="true"></i>'.repeat(Math.max(0, this.state.lives));
@@ -1050,28 +1501,24 @@ class EnhancedPinballGame {
             livesElement.setAttribute('aria-label', `剩余生命：${this.state.lives}`);
         }
 
-        // 更新剩余球数
         const ballsLeftElement = document.getElementById('balls-left');
         if (ballsLeftElement) {
             ballsLeftElement.textContent = Math.max(0, this.state.ballsLeft).toString();
             ballsLeftElement.setAttribute('aria-label', `剩余球数：${this.state.ballsLeft}`);
         }
 
-        // 更新关卡显示
         const levelElement = document.getElementById('level');
         if (levelElement) {
             levelElement.textContent = this.state.level.toString();
             levelElement.setAttribute('aria-label', `当前关卡：${this.state.level}`);
         }
 
-        // 更新连击显示
         this.updateComboDisplay();
     }
 
     updateComboDisplay() {
         let comboElement = document.getElementById('combo');
         if (!comboElement) {
-            // 如果不存在，添加到游戏信息面板
             const gameInfoPanel = document.querySelector('.game-info-panel');
             if (gameInfoPanel) {
                 const comboDisplay = document.createElement('div');
@@ -1111,7 +1558,6 @@ class EnhancedPinballGame {
         if (this.soundEnabled && this.soundManager) {
             this.soundManager.playPaddleHit();
 
-            // 添加微交互效果
             if (this.microInteractions) {
                 const paddle = this.elements.paddles[0];
                 if (paddle) {
@@ -1149,10 +1595,7 @@ class EnhancedPinballGame {
     }
 
     draw() {
-        // 清除画布
         this.ctx.clearRect(0, 0, this.width, this.height);
-
-        // 绘制背景
         this.ctx.drawImage(this.bgCanvas, 0, 0, this.width, this.height);
 
         // 绘制墙壁
@@ -1160,53 +1603,19 @@ class EnhancedPinballGame {
             this.ctx.fillStyle = w.color;
             this.ctx.fillRect(w.x, w.y, w.w, w.h);
 
-            // 添加边框效果
             this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             this.ctx.lineWidth = 1;
             this.ctx.strokeRect(w.x, w.y, w.w, w.h);
         });
 
+        // 绘制反弹器
+        this.elements.bumpers.forEach(b => b.draw(this.ctx));
+
         // 绘制挡板
         const p = this.elements.paddles[0];
         if (p) {
-            // 挡板渐变效果
-            const paddleGradient = this.ctx.createLinearGradient(
-                p.position.x, p.position.y,
-                p.position.x, p.position.y + p.height
-            );
-            paddleGradient.addColorStop(0, '#4ade80');
-            paddleGradient.addColorStop(1, '#22c55e');
-            this.ctx.fillStyle = paddleGradient;
-            this.ctx.fillRect(p.position.x, p.position.y, p.width, p.height);
-
-            // 挡板边框
-            this.ctx.strokeStyle = '#ffffff';
-            this.ctx.lineWidth = 2;
-            this.ctx.strokeRect(p.position.x, p.position.y, p.width, p.height);
+            p.draw(this.ctx);
         }
-
-        // 绘制反弹器
-        this.elements.bumpers.forEach(b => {
-            this.ctx.beginPath();
-            this.ctx.arc(b.position.x, b.position.y, b.radius, 0, Math.PI * 2);
-
-            // 反弹器渐变
-            const bumperGradient = this.ctx.createRadialGradient(
-                b.position.x, b.position.y, 0,
-                b.position.x, b.position.y, b.radius
-            );
-            bumperGradient.addColorStop(0, '#ffffff');
-            bumperGradient.addColorStop(0.7, b.color);
-            bumperGradient.addColorStop(1, '#b91c1c');
-
-            this.ctx.fillStyle = bumperGradient;
-            this.ctx.fill();
-
-            // 反弹器边框
-            this.ctx.strokeStyle = '#ffffff';
-            this.ctx.lineWidth = 3;
-            this.ctx.stroke();
-        });
 
         // 绘制球
         this.elements.balls.forEach(b => b.draw(this.ctx));
@@ -1227,7 +1636,6 @@ class EnhancedPinballGame {
         this.ctx.save();
         this.ctx.globalAlpha = 0.8;
 
-        // 绘制背景圆
         this.ctx.beginPath();
         this.ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
 
@@ -1256,14 +1664,12 @@ class EnhancedPinballGame {
         this.ctx.lineWidth = 2;
         this.ctx.stroke();
 
-        // 绘制连击数字
         this.ctx.font = 'bold 24px "Orbitron", monospace, sans-serif';
         this.ctx.fillStyle = '#ffffff';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText(this.state.combo.toString(), centerX, centerY);
 
-        // 绘制倍率
         this.ctx.font = 'bold 12px "Orbitron", monospace, sans-serif';
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
         this.ctx.fillText(`x${this.state.comboMultiplier}`, centerX, centerY + 25);
@@ -1272,7 +1678,6 @@ class EnhancedPinballGame {
     }
 
     loop(timestamp) {
-        // 帧率控制
         const elapsed = timestamp - this.lastFrameTime;
 
         if (elapsed > this.frameInterval) {
@@ -1286,13 +1691,11 @@ class EnhancedPinballGame {
         this.animationFrameId = requestAnimationFrame(this.loop);
     }
 
-    // 清理资源
     destroy() {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
 
-        // 移除事件监听器
         if (this.handlers.keyDown) {
             document.removeEventListener('keydown', this.handlers.keyDown);
         }
@@ -1340,7 +1743,6 @@ class EnhancedPinballGame {
     }
 }
 
-// 检查浏览器兼容性并初始化游戏
 function initGame() {
     const canvas = document.getElementById('game-canvas');
     if (!canvas || !canvas.getContext) {
@@ -1352,27 +1754,21 @@ function initGame() {
         return;
     }
 
-    // 创建游戏实例并导出到window
     window.enhancedGame = new EnhancedPinballGame();
 
-    // 添加触摸提示
     if ('ontouchstart' in window) {
         console.log('触摸设备检测到 - 启用手势控制');
     }
 
-    // 添加键盘导航说明
     console.log('键盘控制：←→ 箭头键移动挡板，空格键发射球，R键重新开始，P键暂停');
 }
 
-// 等待DOM加载完成
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initGame);
 } else {
-    // DOM已经加载完成
     initGame();
 }
 
-// 导出游戏类供测试使用
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { EnhancedPinballGame, Vector2, GameConfig };
 }
