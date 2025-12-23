@@ -16,9 +16,14 @@
     <meta property="og:title" content="网页游戏合集">
     <meta property="og:description" content="十个精心设计的网页游戏">
     <meta property="og:type" content="website">
+    <!-- 关键CSS预加载 -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="shared-styles.css" as="style">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="shared-styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome延迟加载 -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
 </head>
 <body>
@@ -798,6 +803,7 @@
                     });
 
                     card.addEventListener('mouseleave', () => {
+                        cancelPrefetch(); // 取消未完成的预加载
                         hideSidebarPreview();
                     });
                 }
@@ -860,13 +866,106 @@
             }, 300);
         }
 
-        function prefetchGame(folder) {
-            if (document.querySelector(`link[rel="prefetch"][href*="${folder}"]`)) return;
+        // ==================== 页面可见性与性能优化 ====================
+        let isPageHidden = false;
 
-            const link = document.createElement('link');
-            link.rel = 'prefetch';
-            link.href = `./${folder}/`;
-            document.head.appendChild(link);
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // 页面隐藏时暂停动画和定时器
+                isPageHidden = true;
+                document.body.classList.add('page-hidden');
+                cancelPrefetch(); // 取消待处理的预加载
+
+                // 暂停CSS动画
+                document.querySelectorAll('.floating-shape').forEach(el => {
+                    el.style.animationPlayState = 'paused';
+                });
+
+                console.log('[性能] 页面隐藏，暂停所有动画');
+            } else {
+                // 页面可见时恢复
+                isPageHidden = false;
+                document.body.classList.remove('page-hidden');
+
+                // 恢复CSS动画
+                document.querySelectorAll('.floating-shape').forEach(el => {
+                    el.style.animationPlayState = 'running';
+                });
+
+                console.log('[性能] 页面可见，恢复动画');
+            }
+        });
+
+        // 在页面隐藏时减少requestAnimationFrame调用
+        const originalRAF = window.requestAnimationFrame;
+        window.requestAnimationFrame = function(callback) {
+            if (isPageHidden) {
+                // 页面隐藏时延迟执行
+                return setTimeout(() => callback(performance.now()), 1000);
+            }
+            return originalRAF(callback);
+        };
+
+        // ==================== 内存管理 ====================
+        // 清理未使用的事件监听器和DOM引用
+        function cleanup() {
+            // 清理预加载缓存（保留最近5个）
+            if (prefetchCache.size > 5) {
+                const cachedArray = Array.from(prefetchCache);
+                cachedArray.slice(0, cachedArray.length - 5).forEach(folder => {
+                    prefetchCache.delete(folder);
+                });
+            }
+
+            // 清理旧的prefetch链接（保留最近10个）
+            const prefetchLinks = document.querySelectorAll('link[rel="prefetch"]');
+            if (prefetchLinks.length > 10) {
+                prefetchLinks.forEach((link, index) => {
+                    if (index < prefetchLinks.length - 10) {
+                        link.remove();
+                    }
+                });
+            }
+        }
+
+        // 每5分钟执行一次内存清理
+        setInterval(cleanup, 300000);
+
+        // ==================== 智能游戏预加载 ====================
+        const prefetchCache = new Set();
+        let prefetchTimeout;
+
+        function prefetchGame(folder) {
+            if (prefetchCache.has(folder)) return;
+
+            // 防抖：只在悬停超过300ms时才预加载
+            clearTimeout(prefetchTimeout);
+            prefetchTimeout = setTimeout(() => {
+                if (prefetchCache.has(folder)) return;
+                prefetchCache.add(folder);
+
+                // 预加载游戏目录的资源
+                const resources = [
+                    `./${folder}/index.html`,
+                    `./${folder}/style.css`,
+                    `./${folder}/game.js`
+                ].filter(Boolean);
+
+                resources.forEach(resource => {
+                    const link = document.createElement('link');
+                    link.rel = 'prefetch';
+                    link.href = resource;
+                    link.as = resource.endsWith('.js') ? 'script' : resource.endsWith('.css') ? 'style' : 'document';
+                    document.head.appendChild(link);
+                });
+
+                console.log(`[预加载] ${folder}`);
+            }, 300);
+        }
+
+        function cancelPrefetch() {
+            clearTimeout(prefetchTimeout);
         }
 
         function showSkeletonScreen() {

@@ -58,6 +58,8 @@ body {
     transition: transform 0.4s var(--ease-bounce);
     max-width: 90vw;
     width: auto;
+    /* 性能优化：限制重排重绘范围 */
+    contain: layout style;
 }
 
 .pwa-install-banner.show {
@@ -580,8 +582,10 @@ body {
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     animation: fadeInUp 0.5s ease both;
+    /* 性能优化：限制重排重绘范围 */
+    contain: layout style paint;
 }
 
 .game-card:hover {
@@ -589,6 +593,15 @@ body {
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* 页面隐藏时暂停动画 */
+body.page-hidden .game-card {
+    animation-play-state: paused;
+}
+
+body.page-hidden .floating-shape {
+    animation-play-state: paused;
 }
 
 .game-card-header {
