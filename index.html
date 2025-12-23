@@ -340,6 +340,12 @@
                     </div>
                 `;
 
+                // 悬停预加载
+                card.addEventListener('mouseenter', () => {
+                    prefetchGame(game.folder);
+                });
+
+                // 点击按钮
                 card.querySelector('.play-btn').addEventListener('click', () => {
                     stats.totalGamesPlayed++;
                     stats.recentlyPlayed = stats.recentlyPlayed.filter(g => g !== game.id);
@@ -347,11 +353,41 @@
                     stats.recentlyPlayed = stats.recentlyPlayed.slice(0, 5);
                     saveStats();
                     updateStats();
+                    showSkeletonScreen();
                     window.location.href = `./${game.folder}/`;
                 });
 
                 container.appendChild(card);
             });
+        }
+
+        // 预加载游戏页面
+        function prefetchGame(folder) {
+            // 检查是否已经预加载
+            if (document.querySelector(`link[rel="prefetch"][href*="${folder}"]`)) return;
+
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = `./${folder}/`;
+            document.head.appendChild(link);
+        }
+
+        // 显示骨架屏
+        function showSkeletonScreen() {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'skeleton-screen';
+            skeleton.innerHTML = `
+                <div class="skeleton-content">
+                    <div class="skeleton-spinner"></div>
+                    <p>正在加载游戏...</p>
+                </div>
+            `;
+            document.body.appendChild(skeleton);
+
+            // 3秒后自动移除（防止页面加载失败）
+            setTimeout(() => {
+                skeleton.remove();
+            }, 3000);
         }
 
         function getDifficultyText(difficulty) {
