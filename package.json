@@ -2,11 +2,18 @@
   "name": "web-games-collection",
   "version": "1.0.0",
   "description": "Collection of 10 web games built with HTML, CSS and JavaScript",
-  "main": "index.html",
+  "main": "worker.js",
   "scripts": {
-    "build": "echo 'Building static site...'"
+    "build": "echo 'Building static site...'",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "deploy:production": "npx wrangler deploy --env production",
+    "tail": "npx wrangler tail"
   },
-  "keywords": ["games", "web-games", "javascript-games"],
+  "keywords": ["games", "web-games", "javascript-games", "cloudflare-workers"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
 }

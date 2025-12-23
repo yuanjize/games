@@ -1,40 +1,55 @@
-# Cloudflare Pages 部署指南
+# Cloudflare Workers 部署指南
 
 ## 项目说明
-纯静态HTML/CSS/JavaScript网站，无需服务器端渲染或后端API。
+纯静态HTML/CSS/JavaScript网站，通过 Cloudflare Workers + Assets 部署。
 
-## 部署步骤
+## 前置要求
+1. Cloudflare 账号
+2. 已安装 Node.js
 
-### 方法1: Git 仓库部署 (推荐)
-1. 在 Cloudflare Pages 控制台点击"创建项目"
-2. 连接到你的 Git 仓库 (GitHub/GitLab等)
-3. **重要：构建设置**
-   - 构建命令: `npm run build`
-   - 构建输出目录: `.` (当前目录，必须是一个点)
-4. 点击"保存并部署"
+## 首次部署
 
-### 方法2: 直接上传
-1. 在 Cloudflare Pages 控制台点击"创建项目"
-2. 选择"直接上传"
-3. 拖拽整个项目文件夹上传
-4. 点击"上传到Cloudflare Pages"
-
-### 方法3: Wrangler CLI 部署
+### 1. 登录 Cloudflare
 ```bash
-# 直接部署（无需安装）
-npx wrangler pages deploy . --project-name=web-games-collection
+npx wrangler login
+```
+
+### 2. 部署 Worker
+```bash
+npm run deploy
+```
+
+### 3. 配置自定义域名（可选）
+
+在 Cloudflare 控制台：
+1. 进入 **Workers & Pages**
+2. 找到 `web-games-collection` Worker
+3. 点击 **Settings** → **Triggers**
+4. 添加 **Custom Domains** 或使用默认的 `*.workers.dev` 域名
+
+## 部署命令
+
+```bash
+# 本地开发（测试 Worker）
+npm run dev
+
+# 部署到生产环境
+npm run deploy
+
+# 查看实时日志
+npm run tail
 ```
 
 ## 项目结构
 ```
 .
+├── worker.js           # Worker 入口文件（服务静态文件）
+├── wrangler.toml       # Cloudflare Workers 配置
+├── package.json        # 项目配置和脚本
 ├── index.html          # 主页面
 ├── style.css           # 主样式
-├── package.json        # 项目配置
-├── _headers            # HTTP 响应头配置
-├── _routes.json        # 路由配置
-├── DEPLOY-CLOUDFLARE.md # 本文件
-├── test-build.sh       # 测试脚本
+├── _headers            # HTTP 响应头配置（参考）
+├── _routes.json        # 路由配置（参考）
 └── 10个游戏文件夹:
     ├── space-shooter/
     ├── platform-jumper/
@@ -48,17 +63,40 @@ npx wrangler pages deploy . --project-name=web-games-collection
     └── physics-pinball/
 ```
 
+## 环境变量
+
+在 `wrangler.toml` 中配置环境变量：
+
+```toml
+[vars]
+ENVIRONMENT = "production"
+```
+
+对于敏感信息，使用 secret：
+```bash
+npx wrangler secret put <SECRET_NAME>
+```
+
 ## 故障排除
 
-### 构建失败
-1. 确认**构建输出目录**设置为 `.` (一个点，不是根路径或空)
-2. 确认**构建命令**设置为 `npm run build`
-3. 检查构建日志中的具体错误信息
+### 部署失败
+```bash
+# 查看详细日志
+npx wrangler deploy --verbose
+```
 
-### 部署后页面404
-1. 确认所有游戏文件夹内都有 `index.html`
-2. 检查 `_routes.json` 配置是否正确
+### 文件404
+- 检查 `worker.js` 中的路径处理逻辑
+- 确认所有游戏文件夹都有 `index.html`
 
-### 游戏无法加载
-- 检查浏览器控制台的 JavaScript 错误
-- 确认所有静态资源路径正确
+### Worker 日志
+```bash
+npm run tail
+```
+
+## 升级说明
+
+从 Cloudflare Pages 迁移到 Workers：
+- 已创建 `worker.js` 处理静态文件服务
+- 已创建 `wrangler.toml` 配置文件
+- 运行 `npm run deploy` 即可部署
