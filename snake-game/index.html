@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pIVpG8hZ5ZkGviBb9NKYr4Mk2JKPgjMZtB9hCqDd0MNVKxnS+5rJ0C3vJNW8i4NxFpB5lJh3RQQl7pLNEQ4A==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-styles.css">
 </head>
 <body>
     <div class="game-container">
@@ -160,6 +161,99 @@
         </footer>
     </div>
 
+    <!-- 主题切换按钮 -->
+    <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <i class="fas fa-moon" aria-hidden="true"></i>
+    </button>
+
+    <!-- 粒子效果容器 -->
+    <div class="particles-container" id="particles-container"></div>
+
     <script src="game.js"></script>
+    <script>
+        // 主题切换功能
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = themeToggle.querySelector('i');
+
+        const savedTheme = localStorage.getItem('snakeGame-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('snakeGame-theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // 粒子效果 - 吃食物时触发
+        function createFoodParticles(x, y, color, count = 6) {
+            const container = document.getElementById('particles-container');
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 6 + 3;
+                const angle = (Math.PI * 2 * i) / count;
+                const distance = Math.random() * 40 + 20;
+                particle.style.cssText = `
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: ${size}px;
+                    height: ${size}px;
+                    background: ${color};
+                    border-radius: 50%;
+                    --tx: ${Math.cos(angle) * distance}px;
+                    --ty: ${Math.sin(angle) * distance}px;
+                `;
+                container.appendChild(particle);
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        // 数字滚动动画
+        function animateNumber(element, targetValue, duration = 300) {
+            const startValue = parseInt(element.textContent) || 0;
+            const difference = targetValue - startValue;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const currentValue = Math.round(startValue + difference * easeProgress);
+                element.textContent = currentValue;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // 浮动得分文字
+        function showFloatingScore(x, y, score, color = '#10b981') {
+            const container = document.getElementById('particles-container');
+            const floatText = document.createElement('div');
+            floatText.className = 'float-text';
+            floatText.style.cssText = `
+                left: ${x}px;
+                top: ${y}px;
+                color: ${color};
+                font-size: 1.2rem;
+                font-weight: bold;
+            `;
+            floatText.textContent = `+${score}`;
+            container.appendChild(floatText);
+            setTimeout(() => floatText.remove(), 800);
+        }
+
+        window.gameEffects = { createFoodParticles, animateNumber, showFloatingScore };
+    </script>
 </body>
 </html>

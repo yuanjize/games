@@ -33,6 +33,92 @@ body {
     overflow-x: hidden;
 }
 
+/* ==================== PWA 安装横幅 ==================== */
+.pwa-install-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(150%);
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    transition: transform 0.4s var(--ease-bounce);
+    max-width: 90vw;
+    width: auto;
+}
+
+.pwa-install-banner.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-icon {
+    font-size: 2rem;
+}
+
+.banner-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.banner-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--light);
+}
+
+.banner-description {
+    font-size: 0.8rem;
+    color: var(--gray);
+}
+
+.banner-close {
+    background: transparent;
+    border: none;
+    color: var(--gray);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+
+.banner-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--light);
+}
+
+.banner-install {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border: none;
+    border-radius: 12px;
+    padding: 10px 20px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.banner-install:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 219, 222, 0.3);
+}
+
 /* ==================== 背景装饰 ==================== */
 .bg-decoration {
     position: fixed;

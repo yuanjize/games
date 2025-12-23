@@ -4,12 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>网页游戏合集 - 十个精彩游戏</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00dbde">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="游戏合集">
+    <meta name="description" content="十个精心设计的网页游戏，纯原生JavaScript实现，支持桌面和移动设备">
+    <meta name="keywords" content="网页游戏,在线游戏,免费游戏,HTML5游戏,JavaScript游戏">
+    <meta name="author" content="Game Collection">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="网页游戏合集">
+    <meta property="og:description" content="十个精心设计的网页游戏">
+    <meta property="og:type" content="website">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="shared-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
 </head>
 <body>
+    <!-- PWA 安装提示横幅 -->
+    <div class="pwa-install-banner" id="pwa-banner">
+        <div class="banner-content">
+            <div class="banner-icon">🎮</div>
+            <div class="banner-text">
+                <div class="banner-title">安装游戏合集</div>
+                <div class="banner-description">添加到主屏幕，获得更好的体验</div>
+            </div>
+            <button class="banner-close" id="banner-close" aria-label="关闭提示">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <button class="banner-install" id="banner-install">
+            <i class="fas fa-download"></i> 安装
+        </button>
+    </div>
+
     <!-- 背景装饰 -->
     <div class="bg-decoration">
         <div class="floating-shape shape-1"></div>
@@ -399,7 +428,109 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderGames();
             updateStats();
+            initPWAInstall();
         });
+
+        // ==================== PWA 安装提示 ====================
+        let deferredPrompt;
+        const pwaBanner = document.getElementById('pwa-banner');
+        const bannerClose = document.getElementById('banner-close');
+        const bannerInstall = document.getElementById('banner-install');
+
+        function initPWAInstall() {
+            // 检查是否已安装
+            const isInstalled = localStorage.getItem('pwa-installed');
+            if (isInstalled) return;
+
+            // 检查是否已关闭提示
+            const dismissedTime = localStorage.getItem('pwa-banner-dismissed');
+            if (dismissedTime) {
+                const daysSinceDismissed = (Date.now() - parseInt(dismissedTime)) / (1000 * 60 * 60 * 24);
+                if (daysSinceDismissed < 7) return; // 7天内不再显示
+            }
+
+            // 检测是否在移动设备
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (!isMobile) return;
+
+            // 显示横幅
+            setTimeout(() => {
+                pwaBanner.classList.add('show');
+            }, 3000);
+        }
+
+        // 监听 beforeinstallprompt 事件
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // 延迟显示安装横幅
+            setTimeout(() => {
+                const isInstalled = localStorage.getItem('pwa-installed');
+                if (!isInstalled) {
+                    pwaBanner.classList.add('show');
+                }
+            }, 5000);
+        });
+
+        // 监听应用安装成功
+        window.addEventListener('appinstalled', () => {
+            localStorage.setItem('pwa-installed', 'true');
+            pwaBanner.classList.remove('show');
+        });
+
+        // 关闭按钮
+        bannerClose.addEventListener('click', () => {
+            pwaBanner.classList.remove('show');
+            localStorage.setItem('pwa-banner-dismissed', Date.now().toString());
+        });
+
+        // 安装按钮
+        bannerInstall.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    localStorage.setItem('pwa-installed', 'true');
+                }
+                deferredPrompt = null;
+            } else {
+                // iOS 提示
+                showIOSInstallInstructions();
+            }
+            pwaBanner.classList.remove('show');
+        });
+
+        function showIOSInstallInstructions() {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2><i class="fab fa-apple"></i> 安装到主屏幕</h2>
+                        <button class="modal-close"><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <ol style="line-height: 2;">
+                            <li>点击底部的 <i class="fab fa-safari" style="color: #00dbde;"></i> Safari 分享按钮</li>
+                            <li>向下滚动并找到"添加到主屏幕"</li>
+                            <li>点击"添加"按钮</li>
+                        </ol>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelector('.modal-close').addEventListener('click', () => {
+                modal.remove();
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
     </script>
 </body>
 </html>
