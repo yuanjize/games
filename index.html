@@ -5,178 +5,143 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>网页游戏合集 - 十个精彩游戏</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="shared-styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(90deg, #00dbde, #fc00ff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: #a0a0c0;
-            margin-bottom: 20px;
-        }
-
-        .games-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .game-card {
-            background: rgba(255, 255, 255, 0.07);
-            border-radius: 15px;
-            padding: 25px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .game-card:hover {
-            transform: translateY(-10px);
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .game-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: #00dbde;
-        }
-
-        .game-title {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            color: #fff;
-        }
-
-        .game-description {
-            color: #b0b0d0;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-
-        .game-status {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .status-ready {
-            background: rgba(0, 255, 136, 0.2);
-            color: #00ff88;
-        }
-
-        .status-dev {
-            background: rgba(255, 193, 7, 0.2);
-            color: #ffc107;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: #8080a0;
-            font-size: 0.9rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .instructions {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-left: 5px solid #00dbde;
-        }
-
-        .instructions h2 {
-            margin-bottom: 10px;
-            color: #00dbde;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5rem;
-            }
-
-            .games-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            }
-        }
-
-        .game-card.coming-soon {
-            opacity: 0.7;
-        }
-
-        .game-card.coming-soon:hover {
-            transform: none;
-            cursor: not-allowed;
-        }
-    </style>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
 </head>
 <body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="floating-shape shape-4"></div>
+        <div class="floating-shape shape-5"></div>
+    </div>
+
     <div class="container">
-        <header>
-            <h1><i class="fas fa-gamepad"></i> 网页游戏合集</h1>
-            <p class="subtitle">十个精心设计的网页游戏，纯原生JavaScript实现，点击卡片开始游戏</p>
+        <!-- 头部 -->
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <div class="header-text">
+                    <h1>网页游戏合集</h1>
+                    <p class="subtitle">十个精心设计的网页游戏，纯原生JavaScript实现</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+                    <i class="fas fa-moon" aria-hidden="true"></i>
+                </button>
+            </div>
         </header>
 
-        <div class="instructions">
-            <h2><i class="fas fa-info-circle"></i> 使用说明</h2>
-            <p>点击下方游戏卡片即可进入游戏页面。所有游戏都使用纯HTML、CSS和JavaScript开发，无需安装任何插件。</p>
-        </div>
+        <!-- 统计面板 -->
+        <section class="stats-panel" id="stats-panel">
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #00dbde;">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="total-games">10</div>
+                    <div class="stat-label">游戏总数</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #4cd964;">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="play-time">0</div>
+                    <div class="stat-label">游戏时长(分)</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="color: #ff6b6b;">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" id="games-played">0</div>
+                    <div class="stat-label">已游玩</div>
+                </div>
+            </div>
+        </section>
 
-        <div class="games-grid" id="games-container">
+        <!-- 分类标签 -->
+        <section class="category-filter">
+            <button class="category-btn active" data-category="all">
+                <i class="fas fa-th"></i> 全部
+            </button>
+            <button class="category-btn" data-category="action">
+                <i class="fas fa-bolt"></i> 动作
+            </button>
+            <button class="category-btn" data-category="puzzle">
+                <i class="fas fa-puzzle-piece"></i> 益智
+            </button>
+            <button class="category-btn" data-category="strategy">
+                <i class="fas fa-chess"></i> 策略
+            </button>
+            <button class="category-btn" data-category="casual">
+                <i class="fas fa-coffee"></i> 休闲
+            </button>
+        </section>
+
+        <!-- 搜索框 -->
+        <section class="search-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="搜索游戏..." aria-label="搜索游戏">
+            </div>
+        </section>
+
+        <!-- 游戏网格 -->
+        <section class="games-grid" id="games-container">
             <!-- 游戏卡片将通过JavaScript动态加载 -->
-        </div>
+        </section>
 
+        <!-- 最近游玩 -->
+        <section class="recent-games" id="recent-games" style="display: none;">
+            <h2><i class="fas fa-history"></i> 最近游玩</h2>
+            <div class="recent-list" id="recent-list"></div>
+        </section>
+
+        <!-- 页脚 -->
         <footer>
-            <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
-            <p>所有游戏均支持桌面和移动设备</p>
+            <div class="footer-content">
+                <p>© 2025 网页游戏合集 | 使用纯原生HTML、CSS和JavaScript开发</p>
+                <p>所有游戏均支持桌面和移动设备</p>
+                <div class="footer-links">
+                    <a href="#" id="about-link"><i class="fas fa-info-circle"></i> 关于</a>
+                    <a href="https://github.com" target="_blank" rel="noopener">
+                        <i class="fab fa-github"></i> GitHub
+                    </a>
+                </div>
+            </div>
         </footer>
+    </div>
+
+    <!-- 关于模态框 -->
+    <div class="modal" id="about-modal" role="dialog" aria-labelledby="about-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="about-title"><i class="fas fa-info-circle"></i> 关于游戏合集</h2>
+                <button class="modal-close" aria-label="关闭">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>这是一个纯原生JavaScript开发的网页游戏合集，包含10个不同类型的游戏。</p>
+                <ul>
+                    <li><i class="fas fa-check" style="color: #10b981;"></i> 无需安装任何插件</li>
+                    <li><i class="fas fa-check" style="color: #10b981;"></i> 支持桌面和移动设备</li>
+                    <li><i class="fas fa-check" style="color: #10b981;"></i> 暗色/亮色主题切换</li>
+                    <li><i class="fas fa-check" style="color: #10b981;"></i> 本地存储游戏进度</li>
+                    <li><i class="fas fa-check" style="color: #10b981;"></i> 完全免费开源</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -185,127 +150,256 @@
             {
                 id: 'space-shooter',
                 title: '太空射击',
-                description: '控制太空飞船躲避陨石和敌人，发射激光保卫地球。',
+                description: '控制太空飞船躲避陨石和敌人，发射激光保卫地球',
                 icon: 'fas fa-rocket',
-                status: 'ready',
+                category: 'action',
                 folder: 'space-shooter',
-                color: '#00dbde'
+                color: '#00dbde',
+                difficulty: 'medium',
+                players: 1
             },
             {
                 id: 'platform-jumper',
                 title: '平台跳跃',
-                description: '控制角色在平台上跳跃，躲避障碍，收集金币。',
+                description: '控制角色在平台上跳跃，躲避障碍，收集金币',
                 icon: 'fas fa-running',
-                status: 'ready',
+                category: 'action',
                 folder: 'platform-jumper',
-                color: '#ff6b6b'
+                color: '#ff6b6b',
+                difficulty: 'hard',
+                players: 1
             },
             {
                 id: 'fruit-2048',
                 title: '水果2048',
-                description: '合并相同水果达到2048，数字游戏的甜美变体。',
+                description: '合并相同水果达到2048，数字游戏的甜美变体',
                 icon: 'fas fa-apple-alt',
-                status: 'ready',
+                category: 'puzzle',
                 folder: 'fruit-2048',
-                color: '#4cd964'
+                color: '#4cd964',
+                difficulty: 'medium',
+                players: 1
             },
             {
                 id: 'memory-cards',
                 title: '记忆翻牌',
-                description: '翻转卡片匹配相同图案，测试你的记忆力。',
+                description: '翻转卡片匹配相同图案，测试你的记忆力',
                 icon: 'fas fa-brain',
-                status: 'ready',
+                category: 'puzzle',
                 folder: 'memory-cards',
-                color: '#ffd166'
+                color: '#ffd166',
+                difficulty: 'easy',
+                players: 1
             },
             {
                 id: 'snake-game',
                 title: '贪吃蛇',
-                description: '经典贪吃蛇游戏，控制蛇吃食物长大，避免撞墙。',
-                icon: 'fas fa-snake',
-                status: 'ready',
+                description: '经典贪吃蛇游戏，控制蛇吃食物长大，避免撞墙',
+                icon: 'fas fa-staff-snake',
+                category: 'casual',
                 folder: 'snake-game',
-                color: '#06d6a0'
+                color: '#06d6a0',
+                difficulty: 'easy',
+                players: 1
             },
             {
                 id: 'brick-breaker',
                 title: '打砖块',
-                description: '用挡板反弹球打碎砖块，挑战高分。',
-                icon: 'fas fa-table-tennis',
-                status: 'ready',
+                description: '用挡板反弹球打碎砖块，挑战高分',
+                icon: 'fas fa-table-tennis-paddle-ball',
+                category: 'action',
                 folder: 'brick-breaker',
-                color: '#118ab2'
+                color: '#118ab2',
+                difficulty: 'medium',
+                players: 1
             },
             {
                 id: 'tic-tac-toe',
                 title: '井字棋AI',
                 description: '与智能AI对战井字棋，你能战胜电脑吗？',
-                icon: 'fas fa-times-circle',
-                status: 'ready',
+                icon: 'fas fa-xmarks-lines',
+                category: 'strategy',
                 folder: 'tic-tac-toe',
-                color: '#ef476f'
+                color: '#ef476f',
+                difficulty: 'easy',
+                players: 1
             },
             {
                 id: 'minesweeper',
                 title: '扫雷游戏',
                 description: '经典扫雷游戏的网页版，小心地雷！',
                 icon: 'fas fa-bomb',
-                status: 'ready',
+                category: 'strategy',
                 folder: 'minesweeper',
-                color: '#ff9e00'
+                color: '#ff9e00',
+                difficulty: 'medium',
+                players: 1
             },
             {
                 id: 'typing-test',
                 title: '打字速度测试',
-                description: '测试你的打字速度和准确率，提升键盘技能。',
+                description: '测试你的打字速度和准确率，提升键盘技能',
                 icon: 'fas fa-keyboard',
-                status: 'ready',
+                category: 'casual',
                 folder: 'typing-test',
-                color: '#9d4edd'
+                color: '#9d4edd',
+                difficulty: 'easy',
+                players: 1
             },
             {
                 id: 'physics-pinball',
                 title: '物理弹球',
-                description: '基于物理引擎的弹球游戏，控制挡板弹跳小球。',
-                icon: 'fas fa-basketball-ball',
-                status: 'ready',
+                description: '基于物理引擎的弹球游戏，控制挡板弹跳小球',
+                icon: 'fas fa-basketball',
+                category: 'action',
                 folder: 'physics-pinball',
-                color: '#ff9e00'
+                color: '#ff9e00',
+                difficulty: 'hard',
+                players: 1
             }
         ];
 
+        // 统计数据
+        let stats = JSON.parse(localStorage.getItem('gameHubStats')) || {
+            totalGamesPlayed: 0,
+            totalPlayTime: 0,
+            recentlyPlayed: []
+        };
+
+        // 更新统计显示
+        function updateStats() {
+            document.getElementById('games-played').textContent = stats.totalGamesPlayed;
+            document.getElementById('play-time').textContent = Math.round(stats.totalPlayTime / 60000);
+        }
+
+        // 保存统计数据
+        function saveStats() {
+            localStorage.setItem('gameHubStats', JSON.stringify(stats));
+        }
+
         // 渲染游戏卡片
-        function renderGames() {
+        function renderGames(filteredGames = games) {
             const container = document.getElementById('games-container');
             container.innerHTML = '';
 
-            games.forEach(game => {
+            filteredGames.forEach((game, index) => {
                 const card = document.createElement('div');
-                card.className = `game-card ${game.status === 'dev' ? 'coming-soon' : ''}`;
+                card.className = 'game-card';
+                card.style.animationDelay = `${index * 50}ms`;
                 card.innerHTML = `
-                    <div class="game-icon" style="color: ${game.color}">
-                        <i class="${game.icon}"></i>
+                    <div class="game-card-header" style="background: linear-gradient(135deg, ${game.color}22, ${game.color}44);">
+                        <div class="game-icon" style="color: ${game.color};">
+                            <i class="${game.icon}"></i>
+                        </div>
+                        <div class="game-badges">
+                            <span class="badge badge-difficulty">${getDifficultyText(game.difficulty)}</span>
+                        </div>
                     </div>
-                    <h3 class="game-title">${game.title}</h3>
-                    <p class="game-description">${game.description}</p>
-                    <span class="game-status ${game.status === 'ready' ? 'status-ready' : 'status-dev'}">
-                        ${game.status === 'ready' ? '可游玩' : '开发中'}
-                    </span>
+                    <div class="game-card-body">
+                        <h3 class="game-title">${game.title}</h3>
+                        <p class="game-description">${game.description}</p>
+                        <div class="game-meta">
+                            <span class="game-category">
+                                <i class="fas fa-tag"></i> ${getCategoryText(game.category)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="game-card-footer">
+                        <button class="btn btn-primary play-btn" data-folder="${game.folder}">
+                            <i class="fas fa-play"></i> 开始游戏
+                        </button>
+                    </div>
                 `;
 
-                // 添加点击事件
-                if (game.status === 'ready') {
-                    card.addEventListener('click', () => {
-                        window.location.href = `./${game.folder}/`;
-                    });
-                }
+                card.querySelector('.play-btn').addEventListener('click', () => {
+                    stats.totalGamesPlayed++;
+                    stats.recentlyPlayed = stats.recentlyPlayed.filter(g => g !== game.id);
+                    stats.recentlyPlayed.unshift(game.id);
+                    stats.recentlyPlayed = stats.recentlyPlayed.slice(0, 5);
+                    saveStats();
+                    updateStats();
+                    window.location.href = `./${game.folder}/`;
+                });
 
                 container.appendChild(card);
             });
         }
 
-        // 页面加载完成后渲染游戏
-        document.addEventListener('DOMContentLoaded', renderGames);
+        function getDifficultyText(difficulty) {
+            const texts = { easy: '简单', medium: '中等', hard: '困难' };
+            return texts[difficulty] || difficulty;
+        }
+
+        function getCategoryText(category) {
+            const texts = { action: '动作', puzzle: '益智', strategy: '策略', casual: '休闲' };
+            return texts[category] || category;
+        }
+
+        // 分类筛选
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const category = btn.dataset.category;
+                const filtered = category === 'all' ? games : games.filter(g => g.category === category);
+                renderGames(filtered);
+            });
+        });
+
+        // 搜索功能
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            const filtered = games.filter(g =>
+                g.title.toLowerCase().includes(query) ||
+                g.description.toLowerCase().includes(query)
+            );
+            renderGames(filtered);
+        });
+
+        // 主题切换
+        const themeToggle = document.getElementById('theme-toggle');
+        const savedTheme = localStorage.getItem('gameHub-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('gameHub-theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+
+        function updateThemeIcon(theme) {
+            themeToggle.querySelector('i').className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // 关于模态框
+        const aboutModal = document.getElementById('about-modal');
+        const aboutLink = document.getElementById('about-link');
+        const closeBtn = aboutModal.querySelector('.modal-close');
+
+        aboutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            aboutModal.classList.add('active');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            aboutModal.classList.remove('active');
+        });
+
+        aboutModal.addEventListener('click', (e) => {
+            if (e.target === aboutModal) {
+                aboutModal.classList.remove('active');
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGames();
+            updateStats();
+        });
     </script>
 </body>
 </html>
