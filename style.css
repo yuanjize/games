@@ -1524,79 +1524,178 @@ footer {
         display: none !important;
     }
 
-    /* 头部优化 */
+    /* 容器优化 */
+    .container {
+        padding: 0;
+        max-width: 100%;
+    }
+
+    /* 头部优化 - 更现代的设计 */
     .main-header {
         flex-direction: column;
-        gap: 15px;
-        padding: 15px;
-        margin-bottom: 15px;
+        gap: 12px;
+        padding: 20px 16px;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, rgba(0, 219, 222, 0.1) 0%, rgba(252, 0, 255, 0.05) 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .header-content {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
+        flex-direction: row;
+        text-align: left;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .logo {
+        width: 48px;
+        height: 48px;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 219, 222, 0.3);
+    }
+
+    .header-text {
+        flex: 1;
     }
 
     .header-text h1 {
-        font-size: 1.6rem;
-        line-height: 1.2;
+        font-size: 1.3rem;
+        line-height: 1.3;
+        font-weight: 700;
+        margin-bottom: 2px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .header-text .subtitle {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
+        opacity: 0.8;
+        line-height: 1.2;
     }
 
     .header-actions {
-        width: 100%;
-        justify-content: center;
+        width: auto;
+        flex-shrink: 0;
+        gap: 8px;
     }
 
-    /* 统计面板优化 */
+    .theme-toggle,
+    .shortcuts-help-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* 统计面板优化 - 卡片式设计 */
     .stats-panel {
-        grid-template-columns: 1fr;
-        gap: 12px;
-        margin-bottom: 20px;
+        display: flex;
+        grid-template-columns: none;
+        gap: 0;
+        margin: 0 16px 16px;
+        padding: 0;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .stats-panel::-webkit-scrollbar {
+        display: none;
     }
 
     .stat-card {
-        padding: 15px;
+        flex: 0 0 auto;
+        width: 100px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        text-align: center;
+        scroll-snap-align: start;
+        margin-right: 10px;
+        backdrop-filter: blur(10px);
+    }
+
+    .stat-card:last-child {
+        margin-right: 16px;
     }
 
     .stat-icon {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.08);
     }
 
     .stat-value {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 2px;
     }
 
     .stat-label {
-        font-size: 0.85rem;
+        font-size: 0.7rem;
+        opacity: 0.7;
     }
 
-    /* 分类筛选优化 */
+    /* 分类筛选优化 - 横向滚动 */
     .category-filter {
-        flex-wrap: wrap;
-        justify-content: center;
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
         gap: 8px;
-        margin-bottom: 20px;
+        margin: 0 16px 16px;
+        padding: 4px 0;
+        justify-content: flex-start;
+    }
+
+    .category-filter::-webkit-scrollbar {
+        display: none;
     }
 
     .category-btn {
-        flex: 0 1 calc(50% - 4px);
-        padding: 10px 12px;
-        font-size: 0.9rem;
-        min-width: 0;
+        flex: 0 0 auto;
+        padding: 10px 16px;
+        font-size: 0.85rem;
+        min-width: auto;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        scroll-snap-align: start;
+        white-space: nowrap;
+    }
+
+    .category-btn.active {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-color: transparent;
+        color: white;
+        font-weight: 600;
     }
 
     .category-key {
         display: none;
     }
 
+    .category-btn i {
+        font-size: 0.9rem;
+    }
+
     /* 搜索框优化 */
     .search-section {
-        margin-bottom: 20px;
+        margin: 0 16px 16px;
     }
 
     .search-box {
@@ -1604,91 +1703,168 @@ footer {
     }
 
     .search-box input {
-        font-size: 16px; /* 防止iOS缩放 */
+        font-size: 16px;
+        padding: 14px 16px 14px 44px;
     }
 
     /* 游戏网格优化 */
     .games-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 12px;
+        padding: 0 16px 16px;
     }
 
     .game-card {
-        border-radius: 15px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
     }
 
     .game-card-header {
-        padding: 25px 20px;
+        padding: 24px 16px;
+        background: linear-gradient(135deg, rgba(0, 219, 222, 0.1) 0%, rgba(252, 0, 255, 0.05) 100%);
+        position: relative;
     }
 
     .game-icon {
-        font-size: 2.8rem;
+        font-size: 3rem;
+        margin-bottom: 8px;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .game-badges {
+        top: 12px;
+        right: 12px;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .game-card-body {
+        padding: 16px;
     }
 
     .game-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 6px;
     }
 
     .game-description {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        opacity: 0.7;
+        line-height: 1.4;
+        margin-bottom: 12px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .game-meta {
+        margin-bottom: 12px;
+    }
+
+    .game-category {
+        font-size: 0.8rem;
+        opacity: 0.6;
     }
 
     .game-shortcut-key {
-        top: 10px;
-        left: 10px;
-        font-size: 0.8rem;
-        padding: 4px 8px;
+        display: none;
     }
 
-    /* 按钮优化 */
+    /* 游戏卡片按钮 */
+    .game-card-footer {
+        padding: 12px 16px 16px;
+    }
+
     .btn {
+        width: 100%;
         padding: 12px 20px;
         font-size: 0.95rem;
-    }
-
-    /* 容器优化 */
-    .container {
-        padding: 12px;
-        max-width: 100%;
+        border-radius: 12px;
+        font-weight: 600;
     }
 
     /* 页脚优化 */
     footer {
-        margin-top: 30px;
-        padding: 20px 15px;
+        margin-top: 20px;
+        padding: 24px 16px;
+        background: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .footer-content p {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+        opacity: 0.7;
+    }
+
+    .version-info {
+        font-size: 0.75rem;
+        margin-top: 12px;
     }
 
     .footer-links {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 15px;
+        gap: 20px;
+        margin-top: 12px;
+    }
+
+    .footer-links a {
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     /* 模态框优化 */
     .modal-content {
-        width: 95%;
-        max-width: 400px;
-        max-height: 90vh;
-        overflow-y: auto;
+        width: 92%;
+        max-width: 380px;
+        max-height: 85vh;
+        margin: 16px;
+        border-radius: 20px;
+    }
+
+    .modal-header {
+        padding: 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .modal-body {
+        padding: 16px;
     }
 
     /* PWA横幅优化 */
     .pwa-install-banner {
-        bottom: calc(10px + env(safe-area-inset-bottom));
-        left: 5%;
-        right: 5%;
+        bottom: calc(8px + env(safe-area-inset-bottom));
+        left: 3%;
+        right: 3%;
         transform: translateX(0) translateY(150%);
         max-width: none;
-        width: 90%;
-        padding: 12px 15px;
-        padding-bottom: calc(12px + env(safe-area-inset-bottom));
-        border-radius: 15px;
-        flex-direction: column;
+        width: 94%;
+        padding: 10px 12px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        border-radius: 16px;
+        flex-direction: row;
         gap: 10px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
     }
 
     .pwa-install-banner.show {
@@ -1696,44 +1872,51 @@ footer {
     }
 
     .banner-content {
-        width: 100%;
-    }
-
-    .banner-text {
         flex: 1;
     }
 
+    .banner-icon {
+        font-size: 1.6rem;
+    }
+
     .banner-title {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        font-weight: 600;
     }
 
     .banner-description {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
+        opacity: 0.8;
     }
 
     .banner-install {
-        width: 100%;
-        padding: 10px 15px;
-        font-size: 0.9rem;
+        flex-shrink: 0;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        border-radius: 10px;
     }
 
     .banner-close {
         position: absolute;
-        top: 5px;
-        right: 5px;
-        padding: 5px;
+        top: 6px;
+        right: 6px;
+        padding: 4px;
+        width: 24px;
+        height: 24px;
     }
 
     /* Toast通知优化 */
     .toast-container {
-        left: 10px;
-        right: 10px;
-        bottom: 80px;
+        left: 12px;
+        right: 12px;
+        bottom: 70px;
     }
 
     .toast {
-        padding: 12px 15px;
-        font-size: 0.9rem;
+        padding: 12px 16px;
+        font-size: 0.85rem;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
     }
 
     /* 背景装饰优化 */
