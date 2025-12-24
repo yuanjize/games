@@ -53,13 +53,14 @@ else
     echo "⚠️  sitemap 脚本不存在，跳过"
 fi
 
-# 6. 生成资源哈希（可选）
-echo -e "${BLUE}🔐 生成资源哈希...${NC}"
-if [ -f "scripts/generate-hashes.js" ]; then
-    node scripts/generate-hashes.js 2>/dev/null || echo "⚠️  资源哈希生成失败或已跳过"
-else
-    echo "⚠️  资源哈希脚本不存在，跳过"
-fi
+# 6. 生成资源哈希（已禁用 - 会导致游戏目录资源引用失效）
+echo -e "${BLUE}🔐 跳过资源哈希生成...${NC}"
+echo "⚠️  资源哈希已禁用，避免游戏目录资源引用问题"
+# if [ -f "scripts/generate-hashes.js" ]; then
+#     node scripts/generate-hashes.js 2>/dev/null || echo "⚠️  资源哈希生成失败或已跳过"
+# else
+#     echo "⚠️  资源哈希脚本不存在，跳过"
+# fi
 
 # 7. 运行测试（如果配置完成）
 echo -e "${BLUE}🧪 运行测试...${NC}"
