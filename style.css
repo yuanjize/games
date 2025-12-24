@@ -1541,41 +1541,48 @@ footer {
     }
 
     .header-content {
-        flex-direction: row;
-        text-align: left;
+        flex-direction: column;
+        text-align: center;
         gap: 12px;
         align-items: center;
     }
 
     .logo {
-        width: 48px;
-        height: 48px;
-        font-size: 1.8rem;
+        width: 56px;
+        height: 56px;
+        font-size: 2rem;
         flex-shrink: 0;
         background: linear-gradient(135deg, var(--primary), var(--secondary));
-        border-radius: 12px;
+        border-radius: 16px;
         box-shadow: 0 4px 15px rgba(0, 219, 222, 0.3);
     }
 
     .header-text {
         flex: 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .header-text h1 {
-        font-size: 1.3rem;
-        line-height: 1.3;
+        font-size: 1.4rem;
+        line-height: 1.4;
         font-weight: 700;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
         background: linear-gradient(90deg, var(--primary), var(--secondary));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        text-align: center;
     }
 
     .header-text .subtitle {
-        font-size: 0.75rem;
-        opacity: 0.8;
-        line-height: 1.2;
+        font-size: 0.8rem;
+        opacity: 0.85;
+        line-height: 1.3;
+        text-align: center;
     }
 
     .header-actions {
@@ -1604,6 +1611,7 @@ footer {
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
+        justify-content: center;
     }
 
     .stats-panel::-webkit-scrollbar {
@@ -1613,41 +1621,51 @@ footer {
     .stat-card {
         flex: 0 0 auto;
         width: 100px;
-        padding: 12px;
+        padding: 14px 12px;
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
         text-align: center;
-        scroll-snap-align: start;
-        margin-right: 10px;
+        scroll-snap-align: center;
+        margin: 0 6px;
         backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stat-card:first-child {
+        margin-left: 0;
     }
 
     .stat-card:last-child {
-        margin-right: 16px;
+        margin-right: 0;
     }
 
     .stat-icon {
         font-size: 1.8rem;
-        margin-bottom: 8px;
-        width: 40px;
-        height: 40px;
+        margin-bottom: 10px;
+        width: 42px;
+        height: 42px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 10px;
+        border-radius: 12px;
         background: rgba(255, 255, 255, 0.08);
     }
 
     .stat-value {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: 700;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
+        text-align: center;
     }
 
     .stat-label {
         font-size: 0.7rem;
-        opacity: 0.7;
+        opacity: 0.75;
+        text-align: center;
     }
 
     /* 分类筛选优化 - 横向滚动 */
@@ -1656,9 +1674,9 @@ footer {
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
-        gap: 8px;
-        margin: 0 16px 16px;
-        padding: 4px 0;
+        gap: 10px;
+        margin: 0 16px 20px;
+        padding: 6px 4px;
         justify-content: flex-start;
     }
 
@@ -1668,14 +1686,18 @@ footer {
 
     .category-btn {
         flex: 0 0 auto;
-        padding: 10px 16px;
-        font-size: 0.85rem;
+        padding: 12px 18px;
+        font-size: 0.9rem;
         min-width: auto;
-        border-radius: 20px;
+        border-radius: 24px;
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        scroll-snap-align: start;
+        scroll-snap-align: center;
         white-space: nowrap;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .category-btn.active {
@@ -1683,6 +1705,7 @@ footer {
         border-color: transparent;
         color: white;
         font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0, 219, 222, 0.3);
     }
 
     .category-key {
@@ -1690,7 +1713,7 @@ footer {
     }
 
     .category-btn i {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
 
     /* 搜索框优化 */
@@ -1722,25 +1745,30 @@ footer {
     }
 
     .game-card-header {
-        padding: 24px 16px;
+        padding: 28px 20px;
         background: linear-gradient(135deg, rgba(0, 219, 222, 0.1) 0%, rgba(252, 0, 255, 0.05) 100%);
         position: relative;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .game-icon {
-        font-size: 3rem;
-        margin-bottom: 8px;
+        font-size: 3.2rem;
+        margin-bottom: 10px;
         filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     }
 
     .game-badges {
-        top: 12px;
-        right: 12px;
+        top: 14px;
+        right: 14px;
     }
 
     .badge {
-        padding: 4px 10px;
-        border-radius: 12px;
+        padding: 5px 12px;
+        border-radius: 14px;
         font-size: 0.7rem;
         font-weight: 600;
         background: rgba(0, 0, 0, 0.3);
@@ -1748,33 +1776,40 @@ footer {
     }
 
     .game-card-body {
-        padding: 16px;
+        padding: 18px;
+        text-align: center;
     }
 
     .game-title {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
         font-weight: 600;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
+        text-align: center;
     }
 
     .game-description {
-        font-size: 0.85rem;
-        opacity: 0.7;
-        line-height: 1.4;
-        margin-bottom: 12px;
+        font-size: 0.87rem;
+        opacity: 0.75;
+        line-height: 1.5;
+        margin-bottom: 14px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        text-align: center;
     }
 
     .game-meta {
-        margin-bottom: 12px;
+        margin-bottom: 14px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .game-category {
-        font-size: 0.8rem;
-        opacity: 0.6;
+        font-size: 0.82rem;
+        opacity: 0.65;
+        text-align: center;
     }
 
     .game-shortcut-key {
@@ -1796,16 +1831,18 @@ footer {
 
     /* 页脚优化 */
     footer {
-        margin-top: 20px;
-        padding: 24px 16px;
+        margin-top: 24px;
+        padding: 28px 20px;
         background: rgba(0, 0, 0, 0.2);
         border-top: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
     }
 
     .footer-content p {
-        font-size: 0.8rem;
-        margin-bottom: 8px;
-        opacity: 0.7;
+        font-size: 0.82rem;
+        margin-bottom: 10px;
+        opacity: 0.75;
+        text-align: center;
     }
 
     .version-info {
