@@ -11,7 +11,6 @@ class FruitGame {
         this.bestScore = parseInt(localStorage.getItem('fruit2048_best') || 0);
         this.gameOver = false;
         this.soundEnabled = true;
-        this.nextFruit = this.getRandomBasicFruit();
 
         // 连击系统
         this.comboCount = 0;
@@ -36,6 +35,8 @@ class FruitGame {
             { level: 9, emoji: "🍒", name: "樱桃", score: 512, color: "#dc2626" },
             { level: 10, emoji: "🍑", name: "桃子", score: 1024, color: "#fbbf24" }
         ];
+
+        this.nextFruit = this.getRandomBasicFruit();
 
         // DOM元素引用
         this.elements = {
