@@ -5,6 +5,20 @@
 
 class FruitGame {
     constructor() {
+        // 水果等级定义 - 必须在最前面定义，因为后续代码依赖它
+        this.fruits = [
+            { level: 1, emoji: "🍎", name: "苹果", score: 2, color: "#ef4444" },
+            { level: 2, emoji: "🍊", name: "橙子", score: 4, color: "#f59e0b" },
+            { level: 3, emoji: "🍇", name: "葡萄", score: 8, color: "#10b981" },
+            { level: 4, emoji: "🍓", name: "草莓", score: 16, color: "#3b82f6" },
+            { level: 5, emoji: "🍉", name: "西瓜", score: 32, color: "#8b5cf6" },
+            { level: 6, emoji: "🍍", name: "菠萝", score: 64, color: "#ec4899" },
+            { level: 7, emoji: "🥭", name: "芒果", score: 128, color: "#f97316" },
+            { level: 8, emoji: "🥝", name: "猕猴桃", score: 256, color: "#84cc16" },
+            { level: 9, emoji: "🍒", name: "樱桃", score: 512, color: "#dc2626" },
+            { level: 10, emoji: "🍑", name: "桃子", score: 1024, color: "#fbbf24" }
+        ];
+
         this.gridSize = 4;
         this.grid = [];
         this.score = 0;
@@ -22,20 +36,6 @@ class FruitGame {
         this.audioContext = null;
         this.previousScore = 0;
         this.lastTouchEnd = 0;
-
-        // 水果等级定义
-        this.fruits = [
-            { level: 1, emoji: "🍎", name: "苹果", score: 2, color: "#ef4444" },
-            { level: 2, emoji: "🍊", name: "橙子", score: 4, color: "#f59e0b" },
-            { level: 3, emoji: "🍇", name: "葡萄", score: 8, color: "#10b981" },
-            { level: 4, emoji: "🍓", name: "草莓", score: 16, color: "#3b82f6" },
-            { level: 5, emoji: "🍉", name: "西瓜", score: 32, color: "#8b5cf6" },
-            { level: 6, emoji: "🍍", name: "菠萝", score: 64, color: "#ec4899" },
-            { level: 7, emoji: "🥭", name: "芒果", score: 128, color: "#f97316" },
-            { level: 8, emoji: "🥝", name: "猕猴桃", score: 256, color: "#84cc16" },
-            { level: 9, emoji: "🍒", name: "樱桃", score: 512, color: "#dc2626" },
-            { level: 10, emoji: "🍑", name: "桃子", score: 1024, color: "#fbbf24" }
-        ];
 
         // DOM元素引用
         this.elements = {
