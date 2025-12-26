@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水果2048 - 调试版本</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 调试样式 */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 10000;
+            max-width: 300px;
+            max-height: 400px;
+            overflow: auto;
+        }
+        .debug-info h3 {
+            margin: 0 0 10px 0;
+            color: #ff0;
+        }
+        .debug-item {
+            margin: 5px 0;
+        }
+        .debug-error {
+            color: #f00;
+        }
+        .debug-success {
+            color: #0f0;
+        }
+        .grid-cell {
+            border: 1px solid rgba(255,255,255,0.3) !important;
+        }
+        .grid-cell.has-fruit {
+            border: 2px solid #0f0 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-info" id="debug-info">
+        <h3>调试信息</h3>
+        <div id="debug-log"></div>
+    </div>
+
+    <div class="container" role="main">
+        <header>
+            <h1>水果2048 - 调试版</h1>
+            <p class="subtitle">正在诊断问题...</p>
+        </header>
+
+        <main>
+            <div class="game-header">
+                <div class="score-container">
+                    <div class="score-box">
+                        <div class="score-label">当前分数</div>
+                        <div class="score-value" id="current-score">0</div>
+                    </div>
+                    <div class="score-box">
+                        <div class="score-label">最高分数</div>
+                        <div class="score-value" id="best-score">0</div>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button class="btn" id="restart-btn">
+                        <i class="fas fa-redo"></i> 重新开始
+                    </button>
+                    <button class="btn" id="test-btn">
+                        <i class="fas fa-bug"></i> 测试渲染
+                    </button>
+                </div>
+            </div>
+
+            <div class="game-board-container">
+                <div class="game-board" id="game-board" role="application">
+                    <!-- 4x4网格将在这里动态生成 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        // 调试脚本
+        const debugLog = document.getElementById('debug-log');
+
+        function addDebug(message, type = 'info') {
+            const item = document.createElement('div');
+            item.className = 'debug-item';
+            if (type === 'error') item.classList.add('debug-error');
+            if (type === 'success') item.classList.add('debug-success');
+            item.textContent = message;
+            debugLog.appendChild(item);
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        // 等待DOM加载
+        document.addEventListener('DOMContentLoaded', () => {
+            addDebug('DOM已加载', 'success');
+
+            // 检查关键元素
+            const board = document.getElementById('game-board');
+            if (board) {
+                addDebug('游戏板元素存在', 'success');
+                addDebug(`游戏板尺寸: ${board.offsetWidth}x${board.offsetHeight}`);
+            } else {
+                addDebug('游戏板元素不存在!', 'error');
+            }
+
+            const scoreEl = document.getElementById('current-score');
+            if (scoreEl) {
+                addDebug('分数元素存在', 'success');
+            } else {
+                addDebug('分数元素不存在!', 'error');
+            }
+
+            // 监听游戏初始化
+            setTimeout(() => {
+                if (window.game) {
+                    addDebug('游戏对象已创建', 'success');
+                    addDebug(`网格大小: ${window.game.gridSize}x${window.game.gridSize}`);
+                    addDebug(`当前分数: ${window.game.score}`);
+
+                    // 检查网格内容
+                    if (window.game.grid) {
+                        let fruitCount = 0;
+                        for (let r = 0; r < window.game.gridSize; r++) {
+                            for (let c = 0; c < window.game.gridSize; c++) {
+                                if (window.game.grid[r][c]) {
+                                    fruitCount++;
+                                }
+                            }
+                        }
+                        addDebug(`网格中的水果数量: ${fruitCount}`, 'success');
+                    }
+
+                    // 检查渲染结果
+                    const cells = board.querySelectorAll('.grid-cell');
+                    addDebug(`渲染的格子数量: ${cells.length}`, cells.length === 16 ? 'success' : 'error');
+
+                    const fruits = board.querySelectorAll('.grid-cell.has-fruit');
+                    addDebug(`有水果的格子数量: ${fruits.length}`, fruits.length > 0 ? 'success' : 'error');
+
+                    // 显示每个格子的内容
+                    cells.forEach((cell, index) => {
+                        const row = Math.floor(index / 4);
+                        const col = index % 4;
+                        const content = cell.textContent || '(空)';
+                        const hasClass = cell.classList.contains('has-fruit') ? '有水果' : '空';
+                        addDebug(`格子[${row},${col}]: ${content} (${hasClass})`);
+                    });
+                } else {
+                    addDebug('游戏对象未创建!', 'error');
+                }
+            }, 500);
+
+            // 测试按钮
+            document.getElementById('test-btn').addEventListener('click', () => {
+                addDebug('--- 手动测试渲染 ---', 'info');
+
+                const board = document.getElementById('game-board');
+                board.innerHTML = '';
+
+                for (let i = 0; i < 16; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    if (i < 2) {
+                        cell.classList.add('has-fruit');
+                        cell.textContent = i === 0 ? '🍎' : '🍊';
+                        cell.style.color = i === 0 ? '#ef4444' : '#f59e0b';
+                    }
+                    board.appendChild(cell);
+                }
+
+                addDebug('手动渲染完成', 'success');
+
+                const cells = board.querySelectorAll('.grid-cell');
+                addDebug(`渲染的格子数量: ${cells.length}`, cells.length === 16 ? 'success' : 'error');
+            });
+        });
+
+        // 错误捕获
+        window.addEventListener('error', (e) => {
+            addDebug(`错误: ${e.message}`, 'error');
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            addDebug(`Promise错误: ${e.reason}`, 'error');
+        });
+    </script>
+</body>
+</html>
