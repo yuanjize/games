@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水果2048 - 独立调试版</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .debug-panel {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .debug-panel h3 {
+            margin-top: 0;
+        }
+
+        #debug-log {
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            padding: 12px;
+            border-radius: 1rem;
+            width: 400px;
+            height: 400px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .grid-cell {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .grid-cell.has-fruit {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .grid-cell.pop {
+            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+
+        button:hover {
+            background: #7c3aed;
+        }
+
+        #grid-status {
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>水果2048 - 独立调试版</h1>
+
+    <div class="debug-panel">
+        <h3>调试日志</h3>
+        <div id="debug-log"></div>
+    </div>
+
+    <div id="game-board"></div>
+
+    <div id="grid-status"></div>
+
+    <div class="controls">
+        <button onclick="testBasicRender()">基础渲染测试</button>
+        <button onclick="testGameInit()">游戏初始化测试</button>
+        <button onclick="clearBoard()">清空</button>
+    </div>
+
+    <script>
+        const debugLog = document.getElementById('debug-log');
+        const gameBoard = document.getElementById('game-board');
+        const gridStatus = document.getElementById('grid-status');
+
+        function log(msg, level = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const color = level === 'error' ? '#ff6b6b' : level === 'warn' ? '#feca57' : '#48dbfb';
+            debugLog.innerHTML += `<div style="color: ${color}">[${time}] ${msg}</div>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`[${level.toUpperCase()}] ${msg}`);
+        }
+
+        function updateGridStatus(grid) {
+            if (!grid) {
+                gridStatus.textContent = '无网格数据';
+                return;
+            }
+
+            let status = '';
+            for(let r = 0; r < 4; r++) {
+                for(let c = 0; c < 4; c++) {
+                    const cell = grid[r][c];
+                    status += cell ? `[${cell.emoji}] ` : '[   ] ';
+                }
+                status += '\n';
+            }
+            gridStatus.textContent = status;
+        }
+
+        function clearBoard() {
+            gameBoard.innerHTML = '';
+            log('棋盘已清空');
+            gridStatus.textContent = '';
+        }
+
+        // 测试1：基础渲染
+        function testBasicRender() {
+            log('=== 开始基础渲染测试 ===');
+            clearBoard();
+
+            const fruits = ['🍎', '🍊', '🍇', '🍓', '🍉', '🍍', '🥭', '🥝'];
+
+            for(let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+
+                if (i % 2 === 0) {
+                    cell.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+                    cell.classList.add('has-fruit', 'pop');
+                }
+
+                gameBoard.appendChild(cell);
+            }
+
+            log(`✓ 创建了 ${gameBoard.children.length} 个格子`);
+
+            // 检查第一个格子
+            const firstCell = gameBoard.children[0];
+            const computedStyle = getComputedStyle(firstCell);
+            log(`第一个格子:`, 'info');
+            log(`  - 内容: "${firstCell.textContent}"`);
+            log(`  - className: ${firstCell.className}`);
+            log(`  - fontSize: ${computedStyle.fontSize}`);
+            log(`  - display: ${computedStyle.display}`);
+            log(`  - visibility: ${computedStyle.visibility}`);
+            log(`  - opacity: ${computedStyle.opacity}`);
+        }
+
+        // 测试2：游戏类初始化
+        async function testGameInit() {
+            log('=== 开始游戏初始化测试 ===');
+            clearBoard();
+
+            try {
+                // 动态加载游戏类
+                log('正在加载 game.js...');
+                const response = await fetch('game.js');
+                if (!response.ok) {
+                    throw new Error(`无法加载 game.js: ${response.status}`);
+                }
+                const gameCode = await response.text();
+                log(`✓ game.js 加载成功 (${gameCode.length} 字符)`);
+
+                // 检查关键函数是否存在
+                const hasFruitGame = gameCode.includes('class FruitGame');
+                const hasInit = gameCode.includes('init()');
+                const hasRender = gameCode.includes('render()');
+
+                log(`代码检查:`, 'info');
+                log(`  - class FruitGame: ${hasFruitGame ? '✓' : '✗'}`);
+                log(`  - init() 方法: ${hasInit ? '✓' : '✗'}`);
+                log(`  - render() 方法: ${hasRender ? '✓' : '✗'}`);
+
+                if (!hasFruitGame) {
+                    throw new Error('FruitGame 类未找到');
+                }
+
+                // 执行游戏代码
+                log('正在执行游戏代码...');
+                const script = document.createElement('script');
+                script.textContent = gameCode;
+                document.head.appendChild(script);
+
+                // 等待初始化
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 检查游戏实例
+                if (window.game) {
+                    log('✓ 游戏实例已创建');
+                    log(`  - Grid大小: ${window.game.gridSize}`);
+                    log(`  - 分数: ${window.game.score}`);
+                    log(`  - 游戏板元素: ${window.game.elements.board ? '✓' : '✗'}`);
+
+                    if (window.game.grid) {
+                        updateGridStatus(window.game.grid);
+
+                        // 检查水果数量
+                        let fruitCount = 0;
+                        for(let r = 0; r < 4; r++) {
+                            for(let c = 0; c < 4; c++) {
+                                if (window.game.grid[r][c]) fruitCount++;
+                            }
+                        }
+                        log(`  - 水果数量: ${fruitCount}`);
+                    }
+
+                    // 手动调用render
+                    log('手动调用 render()...');
+                    window.game.render();
+                    log(`  - 渲染后格子数: ${window.game.elements.board.children.length}`);
+
+                } else {
+                    log('✗ 游戏实例未创建', 'error');
+                }
+
+            } catch (error) {
+                log(`✗ 错误: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // 页面加载时的初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            log('页面加载完成');
+            log(`gameBoard 元素: ${gameBoard ? '✓' : '✗'}`);
+            log(`gameBoard 尺寸: ${gameBoard.offsetWidth}x${gameBoard.offsetHeight}`);
+
+            // 自动运行基础测试
+            setTimeout(() => {
+                testBasicRender();
+            }, 500);
+        });
+
+        // 监听错误
+        window.addEventListener('error', (event) => {
+            log(`JavaScript错误: ${event.message}`, 'error');
+            if (event.filename) {
+                log(`  文件: ${event.filename}:${event.lineno}`);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -67,10 +67,32 @@ class FruitGame {
     }
 
     init() {
+        // 确保DOM元素已正确加载
+        this.validateElements();
+
         this.reset();
         this.bindEvents();
         this.render();
         this.updateUI();
+    }
+
+    /**
+     * 验证所有必需的DOM元素是否存在
+     */
+    validateElements() {
+        const requiredElements = ['board', 'score', 'best'];
+        const missing = [];
+
+        requiredElements.forEach(key => {
+            if (!this.elements[key]) {
+                missing.push(key);
+            }
+        });
+
+        if (missing.length > 0) {
+            console.error('缺少必需的DOM元素:', missing);
+            throw new Error(`游戏初始化失败：缺少元素 ${missing.join(', ')}`);
+        }
     }
 
     reset() {
@@ -710,6 +732,12 @@ class FruitGame {
     }
 
     render() {
+        // 验证游戏板元素
+        if (!this.elements.board) {
+            console.error('游戏板元素不存在，无法渲染');
+            return;
+        }
+
         // 清空游戏板
         this.elements.board.innerHTML = '';
 
@@ -749,6 +777,11 @@ class FruitGame {
 
                 this.elements.board.appendChild(cell);
             }
+        }
+
+        // 调试：记录渲染结果
+        if (console.debug && this.elements.board.children.length === 0) {
+            console.warn('游戏板渲染后为空');
         }
     }
 

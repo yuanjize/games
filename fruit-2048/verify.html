@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水果2048 - 最终验证</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .status-panel h2 {
+            margin-bottom: 15px;
+            color: #64b5f6;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checklist li.pass {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .checklist li.fail {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .checklist li.wait {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .console-output {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .console-line.info {
+            color: #64b5f6;
+        }
+
+        .console-line.success {
+            color: #4caf50;
+        }
+
+        .console-line.error {
+            color: #f44336;
+        }
+
+        .console-line.warn {
+            color: #ffc107;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍎 水果2048游戏验证</h1>
+            <p>自动诊断游戏问题并提供修复建议</p>
+        </header>
+
+        <div class="status-panel">
+            <h2>📋 诊断检查清单</h2>
+            <ul class="checklist" id="checklist">
+                <li class="wait" data-test="files">
+                    <span class="icon">⏳</span>
+                    <span>检查文件存在性</span>
+                </li>
+                <li class="wait" data-test="css">
+                    <span class="icon">⏳</span>
+                    <span>检查CSS样式</span>
+                </li>
+                <li class="wait" data-test="javascript">
+                    <span class="icon">⏳</span>
+                    <span>检查JavaScript代码</span>
+                </li>
+                <li class="wait" data-test="dom">
+                    <span class="icon">⏳</span>
+                    <span>检查DOM元素</span>
+                </li>
+                <li class="wait" data-test="game">
+                    <span class="icon">⏳</span>
+                    <span>测试游戏初始化</span>
+                </li>
+                <li class="wait" data-test="render">
+                    <span class="icon">⏳</span>
+                    <span>测试渲染功能</span>
+                </li>
+            </ul>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <h2>🎮 测试操作</h2>
+            <div class="test-buttons">
+                <a href="index.html" class="btn" target="_blank">打开主游戏</a>
+                <a href="minimal-test.html" class="btn" target="_blank">最小测试</a>
+                <a href="index-standalone.html" class="btn" target="_blank">独立调试</a>
+                <button class="btn" onclick="runAllTests()">重新诊断</button>
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <h2>💻 诊断日志</h2>
+            <div class="console-output" id="console"></div>
+        </div>
+    </div>
+
+    <script>
+        const consoleEl = document.getElementById('console');
+        const checklistEl = document.getElementById('checklist');
+        const progressEl = document.getElementById('progress');
+
+        let testCount = 0;
+        const totalTests = 6;
+
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function updateChecklist(testName, passed, message) {
+            const item = checklistEl.querySelector(`[data-test="${testName}"]`);
+            if (item) {
+                item.className = passed ? 'pass' : 'fail';
+                item.querySelector('.icon').textContent = passed ? '✅' : '❌';
+                item.querySelector('span:last-child').textContent = message;
+            }
+            testCount++;
+            progressEl.style.width = `${(testCount / totalTests) * 100}%`;
+        }
+
+        async function testFiles() {
+            log('测试1: 检查文件存在性...', 'info');
+            const files = ['index.html', 'game.js', 'style.css'];
+            let allExist = true;
+
+            for (const file of files) {
+                try {
+                    const response = await fetch(file, { method: 'HEAD' });
+                    if (response.ok) {
+                        log(`  ✓ ${file} 存在`, 'success');
+                    } else {
+                        log(`  ✗ ${file} 不存在`, 'error');
+                        allExist = false;
+                    }
+                } catch (e) {
+                    log(`  ✗ ${file} 加载失败: ${e.message}`, 'error');
+                    allExist = false;
+                }
+            }
+
+            updateChecklist('files', allExist, allExist ? '所有文件存在' : '部分文件缺失');
+            return allExist;
+        }
+
+        async function testCSS() {
+            log('测试2: 检查CSS样式...', 'info');
+            try {
+                const response = await fetch('style.css');
+                const css = await response.text();
+
+                const checks = [
+                    { name: '.game-board', test: css.includes('.game-board') },
+                    { name: '.grid-cell', test: css.includes('.grid-cell') },
+                    { name: '.grid-cell.has-fruit', test: css.includes('.grid-cell.has-fruit') },
+                    { name: 'font-size', test: css.includes('font-size') }
+                ];
+
+                let allPass = true;
+                for (const check of checks) {
+                    if (check.test) {
+                        log(`  ✓ ${check.name} 已定义`, 'success');
+                    } else {
+                        log(`  ✗ ${check.name} 未定义`, 'error');
+                        allPass = false;
+                    }
+                }
+
+                updateChecklist('css', allPass, allPass ? 'CSS样式完整' : 'CSS样式缺失');
+                return allPass;
+            } catch (e) {
+                log(`  ✗ CSS加载失败: ${e.message}`, 'error');
+                updateChecklist('css', false, 'CSS加载失败');
+                return false;
+            }
+        }
+
+        async function testJavaScript() {
+            log('测试3: 检查JavaScript代码...', 'info');
+            try {
+                const response = await fetch('game.js');
+                const js = await response.text();
+
+                const checks = [
+                    { name: 'FruitGame 类', test: js.includes('class FruitGame') },
+                    { name: 'init() 方法', test: js.includes('init()') },
+                    { name: 'render() 方法', test: js.includes('render()') },
+                    { name: 'validateElements()', test: js.includes('validateElements()') }
+                ];
+
+                let allPass = true;
+                for (const check of checks) {
+                    if (check.test) {
+                        log(`  ✓ ${check.name} 存在`, 'success');
+                    } else {
+                        log(`  ✗ ${check.name} 缺失`, 'error');
+                        allPass = false;
+                    }
+                }
+
+                updateChecklist('javascript', allPass, allPass ? 'JavaScript代码完整' : 'JavaScript代码缺失');
+                return allPass;
+            } catch (e) {
+                log(`  ✗ JavaScript加载失败: ${e.message}`, 'error');
+                updateChecklist('javascript', false, 'JavaScript加载失败');
+                return false;
+            }
+        }
+
+        function testDOM() {
+            log('测试4: 检查DOM元素...', 'info');
+
+            // 创建临时DOM来测试
+            const temp = document.createElement('div');
+            temp.innerHTML = `
+                <div id="game-board"></div>
+                <div id="current-score"></div>
+                <div id="best-score"></div>
+                <div id="next-fruit"></div>
+            `;
+
+            const elements = {
+                'game-board': temp.querySelector('#game-board'),
+                'current-score': temp.querySelector('#current-score'),
+                'best-score': temp.querySelector('#best-score'),
+                'next-fruit': temp.querySelector('#next-fruit')
+            };
+
+            let allExist = true;
+            for (const [name, el] of Object.entries(elements)) {
+                if (el) {
+                    log(`  ✓ ${name} 可以创建`, 'success');
+                } else {
+                    log(`  ✗ ${name} 创建失败`, 'error');
+                    allExist = false;
+                }
+            }
+
+            updateChecklist('dom', allExist, allExist ? 'DOM元素正常' : 'DOM元素异常');
+            return allExist;
+        }
+
+        async function testGame() {
+            log('测试5: 测试游戏初始化...', 'info');
+
+            try {
+                // 动态加载并执行game.js
+                const response = await fetch('game.js');
+                const code = await response.text();
+
+                // 创建沙箱环境
+                const script = document.createElement('script');
+                script.textContent = code;
+                document.head.appendChild(script);
+
+                // 等待DOMContentLoaded
+                await new Promise(resolve => {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', resolve);
+                    } else {
+                        // 手动触发初始化
+                        window.game = new FruitGame();
+                        resolve();
+                    }
+                });
+
+                if (window.game) {
+                    log('  ✓ 游戏实例已创建', 'success');
+                    log(`    - Grid大小: ${window.game.gridSize}`, 'info');
+                    log(`    - 初始分数: ${window.game.score}`, 'info');
+                    updateChecklist('game', true, '游戏初始化成功');
+                    return true;
+                } else {
+                    log('  ✗ 游戏实例未创建', 'error');
+                    updateChecklist('game', false, '游戏初始化失败');
+                    return false;
+                }
+            } catch (e) {
+                log(`  ✗ 游戏初始化错误: ${e.message}`, 'error');
+                updateChecklist('game', false, `初始化错误: ${e.message}`);
+                return false;
+            }
+        }
+
+        function testRender() {
+            log('测试6: 测试渲染功能...', 'info');
+
+            if (!window.game) {
+                log('  ✗ 游戏实例不存在', 'error');
+                updateChecklist('render', false, '无法测试渲染');
+                return false;
+            }
+
+            try {
+                // 创建临时board
+                const tempBoard = document.createElement('div');
+                tempBoard.id = 'temp-board';
+                document.body.appendChild(tempBoard);
+
+                // 替换游戏的board引用
+                const originalBoard = window.game.elements.board;
+                window.game.elements.board = tempBoard;
+
+                // 执行渲染
+                window.game.render();
+
+                // 检查结果
+                const cellCount = tempBoard.children.length;
+                log(`  渲染了 ${cellCount} 个格子`, 'info');
+
+                if (cellCount === 16) {
+                    log('  ✓ 渲染成功', 'success');
+
+                    // 检查水果
+                    let fruitCount = 0;
+                    for (let i = 0; i < cellCount; i++) {
+                        if (tempBoard.children[i].textContent) {
+                            fruitCount++;
+                        }
+                    }
+                    log(`    - 包含 ${fruitCount} 个水果`, 'info');
+
+                    // 恢复原board
+                    window.game.elements.board = originalBoard;
+                    document.body.removeChild(tempBoard);
+
+                    updateChecklist('render', true, `渲染成功 (${fruitCount}个水果)`);
+                    return true;
+                } else {
+                    log('  ✗ 渲染格子数量不正确', 'error');
+
+                    // 恢复原board
+                    window.game.elements.board = originalBoard;
+                    document.body.removeChild(tempBoard);
+
+                    updateChecklist('render', false, '渲染格子数错误');
+                    return false;
+                }
+            } catch (e) {
+                log(`  ✗ 渲染错误: ${e.message}`, 'error');
+                updateChecklist('render', false, `渲染错误: ${e.message}`);
+                return false;
+            }
+        }
+
+        async function runAllTests() {
+            // 重置状态
+            consoleEl.innerHTML = '';
+            testCount = 0;
+            progressEl.style.width = '0%';
+            document.querySelectorAll('#checklist li').forEach(li => {
+                li.className = 'wait';
+                li.querySelector('.icon').textContent = '⏳';
+            });
+
+            log('========================================', 'info');
+            log('开始诊断测试...', 'info');
+            log('========================================', 'info');
+
+            const results = {
+                files: await testFiles(),
+                css: await testCSS(),
+                js: await testJavaScript(),
+                dom: testDOM(),
+                game: await testGame(),
+                render: testRender()
+            };
+
+            log('========================================', 'info');
+            const passCount = Object.values(results).filter(r => r).length;
+            const allPass = passCount === Object.keys(results).length;
+
+            if (allPass) {
+                log('✅ 所有测试通过！游戏应该可以正常运行。', 'success');
+                log('建议：在浏览器中打开 index.html 验证实际游戏体验', 'info');
+            } else {
+                log(`⚠️  ${passCount}/${Object.keys(results).length} 测试通过`, 'warn');
+                log('建议：检查失败的测试项目并修复相关问题', 'info');
+            }
+            log('========================================', 'info');
+        }
+
+        // 页面加载时自动运行测试
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runAllTests, 500);
+        });
+
+        // 监听错误
+        window.addEventListener('error', (event) => {
+            log(`JavaScript错误: ${event.message}`, 'error');
+        });
+    </script>
+</body>
+</html>
