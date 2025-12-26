@@ -34,7 +34,7 @@ cp worker.js dist/
 
 # 4. 复制游戏目录
 echo -e "${BLUE}🎮 复制游戏目录...${NC}"
-GAMES="space-shooter platform-jumper fruit-2048 memory-cards snake-game brick-breaker tic-tac-toe minesweeper typing-test physics-pinball"
+GAMES="space-shooter platform-jumper fruit-2048 memory-cards snake-game brick-breaker tic-tac-toe minesweeper typing-test physics-pinball down-100-floors"
 for game in $GAMES; do
     echo -e "  ${GREEN}→${NC} $game"
     cp -r $game dist/

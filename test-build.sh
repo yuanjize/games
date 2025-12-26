@@ -14,7 +14,7 @@ echo ""
 
 # 检查游戏文件夹
 echo "2. 检查游戏文件夹:"
-for folder in space-shooter platform-jumper fruit-2048 memory-cards snake-game brick-breaker tic-tac-toe minesweeper typing-test physics-pinball; do
+for folder in space-shooter platform-jumper fruit-2048 memory-cards snake-game brick-breaker tic-tac-toe minesweeper typing-test physics-pinball down-100-floors; do
   echo "   $folder: $(test -d $folder && echo "✓ 存在" || echo "✗ 不存在")"
 done
 echo ""
