@@ -265,7 +265,7 @@ function updateGame(delta, timestamp) {
 
     currentFloor = Math.min(
         totalFloors,
-        Math.max(0, Math.floor((player.y - startY + player.height * 0.5) / floorSpacing))
+        Math.max(0, Math.floor((player.y + player.height - startY) / floorSpacing))
     );
     floorEl.textContent = `${currentFloor} / ${totalFloors}`;
 
