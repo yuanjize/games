@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="是男人就下一百层 - 经典下落闯关游戏，随机生成关卡，挑战100层深渊。">
+    <title>是男人就下一百层</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../shared-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pIVpG8hZ5ZkGviBb9NKYr4Mk2JKPgjMZtB9hCqDd0MNVKxnS+5rJ0C3vJNW8i4NxFpB5lJh3RQQl7pLNEQ4A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <a href="../index.html" class="back-button" aria-label="返回游戏大厅" rel="noopener">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回
+            </a>
+            <h1><i class="fas fa-angles-down" aria-hidden="true"></i> 是男人就下一百层</h1>
+            <div class="header-tag">随机生成 · 100层挑战</div>
+        </header>
+
+        <div class="game-info" role="status" aria-live="polite">
+            <div class="info-box">
+                <div class="info-label">当前层数</div>
+                <div id="floor" class="info-value">0 / 100</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">用时</div>
+                <div id="time" class="info-value">0.0s</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">最佳记录</div>
+                <div id="best-time" class="info-value">--</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">状态</div>
+                <div id="status" class="info-value">待开始</div>
+            </div>
+        </div>
+
+        <main class="game-main">
+            <div class="game-board-container">
+                <canvas id="game-canvas"></canvas>
+                <div class="game-overlay" id="start-screen">
+                    <div class="overlay-content">
+                        <h2><i class="fas fa-angles-down"></i> 是男人就下一百层</h2>
+                        <p>随机生成关卡，挑战直下100层</p>
+                        <p>躲开红色陷阱，落入缺口继续下降</p>
+                        <div class="controls-info">
+                            <div class="control-item">
+                                <span class="key"><i class="fas fa-arrow-left"></i></span>
+                                <span>左</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key"><i class="fas fa-arrow-right"></i></span>
+                                <span>右</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key"><i class="fas fa-arrow-down"></i></span>
+                                <span>快速下落</span>
+                            </div>
+                            <div class="control-item">
+                                <span class="key">空格</span>
+                                <span>暂停</span>
+                            </div>
+                        </div>
+                        <button id="start-btn" class="btn btn-primary" aria-label="开始游戏">
+                            <i class="fas fa-play" aria-hidden="true"></i> 开始挑战
+                        </button>
+                    </div>
+                </div>
+                <div class="game-overlay" id="pause-screen" style="display: none;" aria-hidden="true">
+                    <div class="overlay-content">
+                        <h2><i class="fas fa-pause"></i> 游戏暂停</h2>
+                        <button id="resume-btn" class="btn btn-primary" aria-label="继续游戏">
+                            <i class="fas fa-play" aria-hidden="true"></i> 继续
+                        </button>
+                        <button id="restart-pause-btn" class="btn btn-secondary" aria-label="重新开始">
+                            <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                        </button>
+                    </div>
+                </div>
+                <div class="game-overlay" id="game-over-screen" style="display: none;" aria-hidden="true">
+                    <div class="overlay-content">
+                        <h2><i class="fas fa-skull-crossbones"></i> 你掉进陷阱了</h2>
+                        <p>你坚持到了 <span id="final-floor">0</span> 层</p>
+                        <button id="restart-btn" class="btn btn-primary" aria-label="再来一次">
+                            <i class="fas fa-redo" aria-hidden="true"></i> 再来一次
+                        </button>
+                    </div>
+                </div>
+                <div class="game-overlay" id="win-screen" style="display: none;" aria-hidden="true">
+                    <div class="overlay-content">
+                        <h2><i class="fas fa-trophy"></i> 通关成功！</h2>
+                        <p>用时 <span id="final-time">0.0</span> 秒</p>
+                        <button id="restart-win-btn" class="btn btn-primary" aria-label="再来一次">
+                            <i class="fas fa-redo" aria-hidden="true"></i> 再来一次
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-controls">
+                <div class="control-buttons">
+                    <button id="pause-btn" class="btn btn-control" aria-label="暂停游戏">
+                        <i class="fas fa-pause" aria-hidden="true"></i> 暂停
+                    </button>
+                    <button id="restart-game-btn" class="btn btn-control" aria-label="重新开始游戏">
+                        <i class="fas fa-redo" aria-hidden="true"></i> 重新开始
+                    </button>
+                </div>
+
+                <div class="mobile-controls" aria-label="移动端控制">
+                    <div class="d-pad">
+                        <button id="left-btn" class="direction-btn" aria-label="向左移动" tabindex="-1">
+                            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        </button>
+                        <button id="right-btn" class="direction-btn" aria-label="向右移动" tabindex="-1">
+                            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                        </button>
+                        <button id="down-btn" class="direction-btn" aria-label="快速下落" tabindex="-1">
+                            <i class="fas fa-arrow-down" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-instructions">
+                <h3><i class="fas fa-info-circle" aria-hidden="true"></i> 游戏说明</h3>
+                <div class="instruction-grid">
+                    <div class="instruction-item">
+                        <span class="badge badge-safe"></span>
+                        <span>蓝色平台可安全落脚</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="badge badge-gap"></span>
+                        <span>缺口可继续下降</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span class="badge badge-danger"></span>
+                        <span>红色陷阱触碰即失败</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="game-footer">
+            <p>方向键/触控按钮移动 | ↓快速下落 | 空格暂停</p>
+            <p class="author">原生JavaScript随机关卡挑战 © 2025</p>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
